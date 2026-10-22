@@ -25,9 +25,10 @@ while [ $# -gt 0 ]; do
 done
 
 echo "==> building"
-if [ ! -f build/CMakeCache.txt ]; then
-    cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo >/dev/null
-fi
+# Configure on every run, so a first configure that failed (for example before
+# g++ was installed) is retried and CMake repairs flags it cached empty (#12).
+# The build type defaults to RelWithDebInfo; an existing choice is kept.
+cmake -S . -B build >/dev/null
 cmake --build build -j >/dev/null
 
 out="results/$(hostname)-$(date +%Y%m%d-%H%M%S)"

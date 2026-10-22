@@ -50,6 +50,15 @@ std::string json_escape(const std::string& s)
 
 std::string q(const std::string& s) { return "\"" + json_escape(s) + "\""; }
 
+const char* json_tristate(int v) { return v < 0 ? "null" : v ? "true" : "false"; }
+
+std::string optimization_text(const BuildOptimization& o)
+{
+    if (o.c == 1 && o.cxx == 1) return "optimised";
+    const std::string off = unoptimised_languages(o);
+    return off.empty() ? "optimisation unknown" : off + " NOT OPTIMISED, results are wrong";
+}
+
 std::string num(double v)
 {
     if (!std::isfinite(v)) return "null";
@@ -140,6 +149,8 @@ void print_platform(std::ostream& os, const PlatformInfo& p, const Config& cfg)
         os << ")";
     }
     os << "\n";
+    os << "  build          : " << p.compiler << ", " << p.build_type << ", " << optimization_text(p.optimized)
+       << "\n";
     os << "Config\n";
     os << "  samples/warmup : " << cfg.samples << " / " << cfg.warmup << " iterations, CPU warm-up "
        << cfg.cpu_warmup_ms << " ms per benchmark\n";
@@ -216,6 +227,8 @@ void write_json(const std::string& path, const PlatformInfo& p, const Config& cf
     f << "]},\n";
     f << "    \"compiler\": " << q(p.compiler) << ",\n";
     f << "    \"build_type\": " << q(p.build_type) << ",\n";
+    f << "    \"optimized\": {\"c\": " << json_tristate(p.optimized.c) << ", \"cxx\": "
+      << json_tristate(p.optimized.cxx) << "},\n";
     f << "    \"cycle_counter\": {\"ticks_per_ns\": " << num(p.ticks.ticks_per_ns)
       << ", \"from_hardware\": " << (p.ticks.from_hardware ? "true" : "false") << "},\n";
     f << "    \"timer\": {\"now_ns_min\": " << num(p.timer.now_ns_min) << ", \"now_ns_median\": "

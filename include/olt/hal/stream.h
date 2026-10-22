@@ -15,6 +15,8 @@
  *   void olt_stream_write(void* buf, size_t bytes, size_t passes, uint64_t v);
  *       writes buf[0, bytes) `passes` times with vector stores of a value
  *       derived from v and the pass number
+ *   int olt_stream_optimized(void);     1 if the kernels were compiled with
+ *                                       optimisation, 0 if not, -1 if unknown
  *
  * buf must be 64-byte aligned and bytes a non-zero multiple of 64. The
  * implementation (src/hal/stream.c) picks the kernels once, at first use:
@@ -35,6 +37,7 @@ const char* olt_stream_isa(void);
 size_t olt_stream_width(void);
 uint64_t olt_stream_read(const void* buf, size_t bytes, size_t passes);
 void olt_stream_write(void* buf, size_t bytes, size_t passes, uint64_t v);
+int olt_stream_optimized(void);
 
 #ifdef __cplusplus
 }

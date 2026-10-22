@@ -670,6 +670,8 @@ ul.tips li { margin: 4px 0; }
 .warn { border: 1px solid var(--grid); border-left: 4px solid #eda100; border-radius: 6px; padding: 8px 12px; margin: 12px 0; }
 .warn ul { margin: 4px 0 0; padding-left: 20px; }
 .caution { border: 1px solid var(--grid); border-left: 4px solid var(--s1); border-radius: 6px; padding: 8px 12px; margin: 12px 0; color: var(--text-2); }
+.invalid { border: 1px solid var(--grid); border-left: 4px solid #d03b3b; border-radius: 6px; padding: 8px 12px; margin: 12px 0; }
+.invalid p { margin: 4px 0 0; }
 .guide { margin: 4px 0 18px; font-size: 14px; }
 .missing { color: var(--text-2); border: 1px dashed var(--grid); border-radius: 6px; padding: 8px 12px; }
 """
@@ -700,6 +702,19 @@ GROUP_TITLES = {
              "the blocked thread running again."),
     "thread": ("Thread lifecycle", "Cost of starting a new thread and of joining a finished one."),
 }
+
+
+UNOPTIMISED_WARNING = (
+    "The {langs} code of this binary was compiled without optimisation. Its timed loops then measure the "
+    "compiler's stack traffic instead of the hardware: results come out up to several times too slow, and no "
+    "design hints are given. Rebuild in a fresh directory (rm -rf build && cmake -S . -B build "
+    "-DCMAKE_BUILD_TYPE=RelWithDebInfo && cmake --build build -j) and run again.")
+
+
+def unoptimised_languages(plat):
+    """Languages built without optimisation ("C++", "C", "C++ and C"); "" if none or unknown."""
+    opt = plat.get("optimized") or {}
+    return " and ".join(name for key, name in (("cxx", "C++"), ("c", "C")) if opt.get(key) is False)
 
 
 HOT_PATH_WARNING = (
@@ -1046,8 +1061,9 @@ def build_report(doc, src_path, charts_dir):
                          "<p class='missing'>No design-pattern benchmarks in this run (run without <code>-t</code> "
                          "or with <code>-t 'pattern.*'</code>).</p>"))
 
-    # ---- hints
-    tips = build_guidance(summary, caches, plat, results, cfg)
+    # ---- hints (none from an unoptimised build: they would describe the compiler)
+    unopt = unoptimised_languages(plat)
+    tips = [] if unopt else build_guidance(summary, caches, plat, results, cfg)
     if tips:
         sections.insert(0, ("hints", "Design hints for this machine",
                             "<ul class='tips'>" + "".join(f"<li>{e(t)}</li>" for t in tips) + "</ul>"))
@@ -1099,12 +1115,19 @@ def build_report(doc, src_path, charts_dir):
         ("Perf counters", f"{perf.get('backend', 'none')}: {', '.join(perf.get('events', [])) or 'none available'}"),
         ("Run", f"{cfg.get('samples')} samples, affinity {cfg.get('affinity')} (CPU {cfg.get('main_cpu')}/{cfg.get('worker_cpu')}), "
                 f"RT priority {cfg.get('rt_priority') or 'default'}, mlock {'on' if cfg.get('lock_memory') else 'off'}"),
-        ("Compiler", f"{plat.get('compiler', '')} ({plat.get('build_type', '')})"),
+        ("Compiler", f"{plat.get('compiler', '')} ({plat.get('build_type', '')})"
+                     + (f", {unopt} NOT optimised" if unopt else
+                        ", optimised" if all((plat.get("optimized") or {}).get(k) for k in ("c", "cxx")) else "")),
     ]
     out.append("<dl class='plat'>" + "".join(f"<dt>{e(k)}</dt><dd>{e(str(v))}</dd>" for k, v in rows) + "</dl>")
-    if doc.get("warnings"):
+    # the unoptimised-build pre-flight warning gets its own box instead of the "noisy" list
+    warnings = [w for w in doc.get("warnings", []) if not (unopt and w.startswith("This binary's"))]
+    if unopt:
+        out.append("<div class='invalid'><b>⛔ Unoptimised build: these results are not valid</b>"
+                   f"<p>{e(UNOPTIMISED_WARNING.format(langs=unopt))}</p></div>")
+    if warnings:
         out.append("<div class='warn'><b>⚠ Pre-flight warnings: results may be noisy</b><ul>"
-                   + "".join(f"<li>{e(w)}</li>" for w in doc["warnings"]) + "</ul></div>")
+                   + "".join(f"<li>{e(w)}</li>" for w in warnings) + "</ul></div>")
     out.append(f"<div class='caution'>{e(HOT_PATH_WARNING)}</div>")
     out.append(f"<p class='guide'>Terms used below (cache line, TLB, AVX-512, read for ownership, p99, ...) are "
                f"explained in the <a href='{GLOSSARY_URL}'>glossary</a>.</p>")
@@ -1119,9 +1142,12 @@ def build_report(doc, src_path, charts_dir):
     md = [f"# Latency report\n\n{plat.get('cpu_model', '')}{board} · {plat.get('arch', '')} · "
           f"Linux {plat.get('kernel_release', '')} [{plat.get('preempt_model', '')}]\n",
           "| | |\n|---|---|\n" + "".join(f"| {k} | {md_cell(str(v))} |\n" for k, v in rows)]
-    if doc.get("warnings"):
+    if unopt:
+        md.append(f"> [!CAUTION]\n> **Unoptimised build: these results are not valid.** "
+                  f"{UNOPTIMISED_WARNING.format(langs=unopt)}\n")
+    if warnings:
         md.append("> **⚠ Pre-flight warnings: results may be noisy**\n>\n"
-                  + "".join(f"> - {w}\n" for w in doc["warnings"]))
+                  + "".join(f"> - {w}\n" for w in warnings))
     md.append(f"> [!WARNING]\n> {HOT_PATH_WARNING}\n")
     md.append(f"Terms used below (cache line, TLB, AVX-512, read for ownership, p99, ...) are explained in the "
               f"[glossary]({GLOSSARY_URL}).\n")

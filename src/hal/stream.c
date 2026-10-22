@@ -162,3 +162,14 @@ void olt_stream_write(void* buf, size_t bytes, size_t passes, uint64_t v)
     pthread_once(&g_once, pick);
     g_k.write(buf, bytes, passes, v);
 }
+
+int olt_stream_optimized(void)
+{
+#if defined(__OPTIMIZE__)
+    return 1;
+#elif defined(__GNUC__)
+    return 0;  /* GCC and Clang define __OPTIMIZE__ at -O1 and above */
+#else
+    return -1;
+#endif
+}

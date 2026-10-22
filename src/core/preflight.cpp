@@ -5,6 +5,7 @@
 #include <set>
 
 #include "olt/hal/os.h"
+#include "olt/platform.hpp"
 
 namespace olt {
 
@@ -31,6 +32,14 @@ std::string join(const std::vector<int>& v)
 std::vector<std::string> preflight_checks(const Config& cfg, const PreflightInput& in)
 {
     std::vector<std::string> w;
+
+    // 0. unoptimised build: the numbers would describe the compiler, not the machine
+    const std::string unopt = unoptimised_languages(build_optimization());
+    if (!unopt.empty())
+        w.push_back("This binary's " + unopt + " code was compiled without optimisation: results measure the "
+                    "compiler's stack traffic, not the hardware, and come out up to several times too slow. "
+                    "Rebuild in a fresh directory: rm -rf build && cmake -S . -B build "
+                    "-DCMAKE_BUILD_TYPE=RelWithDebInfo && cmake --build build -j");
 
     // CPUs the benchmarks run on (pinned ones, otherwise all allowed)
     std::set<int> used;
