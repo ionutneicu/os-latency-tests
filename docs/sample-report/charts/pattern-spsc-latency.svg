@@ -9,22 +9,24 @@
 <rect class="bg" width="1000" height="464"/>
 <text class="title" x="72" y="18">SPSC hand-off latency by percentile</text>
 <g transform="translate(0,24)">
-<line class="grid" x1="72" x2="980" y1="318.2" y2="318.2"/>
-<text class="ax" x="64" y="322.2" text-anchor="end">200 ns</text>
-<line class="grid" x1="72" x2="980" y1="275.4" y2="275.4"/>
-<text class="ax" x="64" y="279.4" text-anchor="end">500 ns</text>
-<line class="grid" x1="72" x2="980" y1="243.1" y2="243.1"/>
-<text class="ax" x="64" y="247.1" text-anchor="end">1 us</text>
-<line class="grid" x1="72" x2="980" y1="210.8" y2="210.8"/>
-<text class="ax" x="64" y="214.8" text-anchor="end">2 us</text>
-<line class="grid" x1="72" x2="980" y1="168.1" y2="168.1"/>
-<text class="ax" x="64" y="172.1" text-anchor="end">5 us</text>
-<line class="grid" x1="72" x2="980" y1="135.7" y2="135.7"/>
-<text class="ax" x="64" y="139.7" text-anchor="end">10 us</text>
-<line class="grid" x1="72" x2="980" y1="103.4" y2="103.4"/>
-<text class="ax" x="64" y="107.4" text-anchor="end">20 us</text>
-<line class="grid" x1="72" x2="980" y1="60.7" y2="60.7"/>
-<text class="ax" x="64" y="64.7" text-anchor="end">50 us</text>
+<line class="grid" x1="72" x2="980" y1="319.6" y2="319.6"/>
+<text class="ax" x="64" y="323.6" text-anchor="end">200 ns</text>
+<line class="grid" x1="72" x2="980" y1="280.6" y2="280.6"/>
+<text class="ax" x="64" y="284.6" text-anchor="end">500 ns</text>
+<line class="grid" x1="72" x2="980" y1="251.0" y2="251.0"/>
+<text class="ax" x="64" y="255.0" text-anchor="end">1 us</text>
+<line class="grid" x1="72" x2="980" y1="221.4" y2="221.4"/>
+<text class="ax" x="64" y="225.4" text-anchor="end">2 us</text>
+<line class="grid" x1="72" x2="980" y1="182.3" y2="182.3"/>
+<text class="ax" x="64" y="186.3" text-anchor="end">5 us</text>
+<line class="grid" x1="72" x2="980" y1="152.8" y2="152.8"/>
+<text class="ax" x="64" y="156.8" text-anchor="end">10 us</text>
+<line class="grid" x1="72" x2="980" y1="123.2" y2="123.2"/>
+<text class="ax" x="64" y="127.2" text-anchor="end">20 us</text>
+<line class="grid" x1="72" x2="980" y1="84.1" y2="84.1"/>
+<text class="ax" x="64" y="88.1" text-anchor="end">50 us</text>
+<line class="grid" x1="72" x2="980" y1="54.5" y2="54.5"/>
+<text class="ax" x="64" y="58.5" text-anchor="end">100 us</text>
 <text class="ax" x="72.0" y="360" text-anchor="middle">min</text>
 <text class="ax" x="163.1" y="360" text-anchor="middle">p50</text>
 <text class="ax" x="374.7" y="360" text-anchor="middle">p90</text>
@@ -32,65 +34,65 @@
 <text class="ax" x="980.0" y="360" text-anchor="middle">p99.9</text>
 <text class="ax" x="526.0" y="382" text-anchor="middle">percentile (log scale of nines)</text>
 <text class="ax" x="16" y="186.0" transform="rotate(-90 16 186.0)" text-anchor="middle">one-way latency (log)</text>
-<polyline class="s1" fill="none" stroke-width="2" stroke-linejoin="round" points="72.0,164.4 109.8,131.9 163.1,128.1 254.2,124.9 374.7,121.8 465.8,117.1 677.3,90.0 768.4,74.4 980.0,40.4"/>
-<circle class="f1" cx="72.0" cy="164.4" r="3"/>
-<circle class="f1" cx="109.8" cy="131.9" r="3"/>
-<circle class="f1" cx="163.1" cy="128.1" r="3"/>
-<circle class="f1" cx="254.2" cy="124.9" r="3"/>
-<circle class="f1" cx="374.7" cy="121.8" r="3"/>
-<circle class="f1" cx="465.8" cy="117.1" r="3"/>
-<circle class="f1" cx="677.3" cy="90.0" r="3"/>
-<circle class="f1" cx="768.4" cy="74.4" r="3"/>
-<circle class="f1" cx="980.0" cy="40.4" r="3"/>
-<polyline class="s2" fill="none" stroke-width="2" stroke-linejoin="round" points="72.0,315.7 109.8,254.1 163.1,249.1 254.2,243.6 374.7,237.7 465.8,232.0 677.3,193.8 768.4,153.6 980.0,120.1"/>
-<circle class="f2" cx="72.0" cy="315.7" r="3"/>
-<circle class="f2" cx="109.8" cy="254.1" r="3"/>
-<circle class="f2" cx="163.1" cy="249.1" r="3"/>
-<circle class="f2" cx="254.2" cy="243.6" r="3"/>
-<circle class="f2" cx="374.7" cy="237.7" r="3"/>
-<circle class="f2" cx="465.8" cy="232.0" r="3"/>
-<circle class="f2" cx="677.3" cy="193.8" r="3"/>
-<circle class="f2" cx="768.4" cy="153.6" r="3"/>
-<circle class="f2" cx="980.0" cy="120.1" r="3"/>
-<polyline class="s3" fill="none" stroke-width="2" stroke-linejoin="round" points="72.0,331.6 109.8,283.5 163.1,277.4 254.2,271.3 374.7,265.5 465.8,261.1 677.3,251.0 768.4,196.0 980.0,120.0"/>
-<circle class="f3" cx="72.0" cy="331.6" r="3"/>
-<circle class="f3" cx="109.8" cy="283.5" r="3"/>
-<circle class="f3" cx="163.1" cy="277.4" r="3"/>
-<circle class="f3" cx="254.2" cy="271.3" r="3"/>
-<circle class="f3" cx="374.7" cy="265.5" r="3"/>
-<circle class="f3" cx="465.8" cy="261.1" r="3"/>
-<circle class="f3" cx="677.3" cy="251.0" r="3"/>
-<circle class="f3" cx="768.4" cy="196.0" r="3"/>
-<circle class="f3" cx="980.0" cy="120.0" r="3"/>
-<polyline class="s4" fill="none" stroke-width="2" stroke-linejoin="round" points="72.0,325.3 109.8,311.8 163.1,310.7 254.2,308.9 374.7,303.7 465.8,301.0 677.3,294.8 768.4,290.3 980.0,207.6"/>
-<circle class="f4" cx="72.0" cy="325.3" r="3"/>
-<circle class="f4" cx="109.8" cy="311.8" r="3"/>
-<circle class="f4" cx="163.1" cy="310.7" r="3"/>
-<circle class="f4" cx="254.2" cy="308.9" r="3"/>
-<circle class="f4" cx="374.7" cy="303.7" r="3"/>
-<circle class="f4" cx="465.8" cy="301.0" r="3"/>
-<circle class="f4" cx="677.3" cy="294.8" r="3"/>
-<circle class="f4" cx="768.4" cy="290.3" r="3"/>
-<circle class="f4" cx="980.0" cy="207.6" r="3"/>
-<polyline class="s5" fill="none" stroke-width="2" stroke-linejoin="round" points="72.0,325.8 109.8,314.7 163.1,313.9 254.2,313.0 374.7,307.9 465.8,306.2 677.3,303.2 768.4,297.1 980.0,207.1"/>
-<circle class="f5" cx="72.0" cy="325.8" r="3"/>
-<circle class="f5" cx="109.8" cy="314.7" r="3"/>
-<circle class="f5" cx="163.1" cy="313.9" r="3"/>
-<circle class="f5" cx="254.2" cy="313.0" r="3"/>
-<circle class="f5" cx="374.7" cy="307.9" r="3"/>
-<circle class="f5" cx="465.8" cy="306.2" r="3"/>
-<circle class="f5" cx="677.3" cy="303.2" r="3"/>
-<circle class="f5" cx="768.4" cy="297.1" r="3"/>
-<circle class="f5" cx="980.0" cy="207.1" r="3"/>
+<polyline class="s1" fill="none" stroke-width="2" stroke-linejoin="round" points="72.0,180.3 109.8,152.6 163.1,148.9 254.2,145.0 374.7,140.7 465.8,136.8 677.3,103.4 768.4,88.0 980.0,39.5"/>
+<circle class="f1" cx="72.0" cy="180.3" r="3"/>
+<circle class="f1" cx="109.8" cy="152.6" r="3"/>
+<circle class="f1" cx="163.1" cy="148.9" r="3"/>
+<circle class="f1" cx="254.2" cy="145.0" r="3"/>
+<circle class="f1" cx="374.7" cy="140.7" r="3"/>
+<circle class="f1" cx="465.8" cy="136.8" r="3"/>
+<circle class="f1" cx="677.3" cy="103.4" r="3"/>
+<circle class="f1" cx="768.4" cy="88.0" r="3"/>
+<circle class="f1" cx="980.0" cy="39.5" r="3"/>
+<polyline class="s2" fill="none" stroke-width="2" stroke-linejoin="round" points="72.0,325.1 109.8,261.2 163.1,257.7 254.2,254.5 374.7,248.1 465.8,243.1 677.3,229.7 768.4,184.1 980.0,133.3"/>
+<circle class="f2" cx="72.0" cy="325.1" r="3"/>
+<circle class="f2" cx="109.8" cy="261.2" r="3"/>
+<circle class="f2" cx="163.1" cy="257.7" r="3"/>
+<circle class="f2" cx="254.2" cy="254.5" r="3"/>
+<circle class="f2" cx="374.7" cy="248.1" r="3"/>
+<circle class="f2" cx="465.8" cy="243.1" r="3"/>
+<circle class="f2" cx="677.3" cy="229.7" r="3"/>
+<circle class="f2" cx="768.4" cy="184.1" r="3"/>
+<circle class="f2" cx="980.0" cy="133.3" r="3"/>
+<polyline class="s3" fill="none" stroke-width="2" stroke-linejoin="round" points="72.0,332.5 109.8,294.9 163.1,289.3 254.2,283.2 374.7,277.7 465.8,274.4 677.3,267.2 768.4,263.4 980.0,172.5"/>
+<circle class="f3" cx="72.0" cy="332.5" r="3"/>
+<circle class="f3" cx="109.8" cy="294.9" r="3"/>
+<circle class="f3" cx="163.1" cy="289.3" r="3"/>
+<circle class="f3" cx="254.2" cy="283.2" r="3"/>
+<circle class="f3" cx="374.7" cy="277.7" r="3"/>
+<circle class="f3" cx="465.8" cy="274.4" r="3"/>
+<circle class="f3" cx="677.3" cy="267.2" r="3"/>
+<circle class="f3" cx="768.4" cy="263.4" r="3"/>
+<circle class="f3" cx="980.0" cy="172.5" r="3"/>
+<polyline class="s4" fill="none" stroke-width="2" stroke-linejoin="round" points="72.0,325.9 109.8,314.4 163.1,313.4 254.2,311.2 374.7,307.3 465.8,305.9 677.3,299.9 768.4,296.9 980.0,217.0"/>
+<circle class="f4" cx="72.0" cy="325.9" r="3"/>
+<circle class="f4" cx="109.8" cy="314.4" r="3"/>
+<circle class="f4" cx="163.1" cy="313.4" r="3"/>
+<circle class="f4" cx="254.2" cy="311.2" r="3"/>
+<circle class="f4" cx="374.7" cy="307.3" r="3"/>
+<circle class="f4" cx="465.8" cy="305.9" r="3"/>
+<circle class="f4" cx="677.3" cy="299.9" r="3"/>
+<circle class="f4" cx="768.4" cy="296.9" r="3"/>
+<circle class="f4" cx="980.0" cy="217.0" r="3"/>
+<polyline class="s5" fill="none" stroke-width="2" stroke-linejoin="round" points="72.0,325.5 109.8,312.3 163.1,311.3 254.2,306.8 374.7,305.0 465.8,303.6 677.3,297.4 768.4,294.4 980.0,179.6"/>
+<circle class="f5" cx="72.0" cy="325.5" r="3"/>
+<circle class="f5" cx="109.8" cy="312.3" r="3"/>
+<circle class="f5" cx="163.1" cy="311.3" r="3"/>
+<circle class="f5" cx="254.2" cy="306.8" r="3"/>
+<circle class="f5" cx="374.7" cy="305.0" r="3"/>
+<circle class="f5" cx="465.8" cy="303.6" r="3"/>
+<circle class="f5" cx="677.3" cy="297.4" r="3"/>
+<circle class="f5" cx="768.4" cy="294.4" r="3"/>
+<circle class="f5" cx="980.0" cy="179.6" r="3"/>
 <line class="s1" stroke-width="2" x1="72" x2="94" y1="404" y2="404"/>
-<text class="ax" x="100" y="408">mutex_condvar (max 1.72 ms)</text>
-<line class="s2" stroke-width="2" x1="301" x2="323" y1="404" y2="404"/>
-<text class="ax" x="329" y="408">mutex_poll (max 184 us)</text>
+<text class="ax" x="100" y="408">mutex_condvar (max 975 us)</text>
+<line class="s2" stroke-width="2" x1="294" x2="316" y1="404" y2="404"/>
+<text class="ax" x="322" y="408">mutex_poll (max 52.3 us)</text>
 <line class="s3" stroke-width="2" x1="502" x2="524" y1="404" y2="404"/>
-<text class="ax" x="530" y="408">spinlock (max 248 us)</text>
-<line class="s4" stroke-width="2" x1="689" x2="711" y1="404" y2="404"/>
-<text class="ax" x="717" y="408">lockfree (max 9.08 us)</text>
+<text class="ax" x="530" y="408">spinlock (max 34.8 us)</text>
+<line class="s4" stroke-width="2" x1="696" x2="718" y1="404" y2="404"/>
+<text class="ax" x="724" y="408">lockfree (max 60 us)</text>
 <line class="s5" stroke-width="2" x1="72" x2="94" y1="424" y2="424"/>
-<text class="ax" x="100" y="428">lockfree_cached (max 73.5 us)</text>
+<text class="ax" x="100" y="428">lockfree_cached (max 92.8 us)</text>
 </g>
 </svg>

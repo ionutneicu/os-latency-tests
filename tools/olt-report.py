@@ -116,6 +116,9 @@ def safe_padding(fs):
     return ok
 
 
+# mem.read_seq / mem.write_seq param "isa" (olt/hal/stream.h) -> display name
+ISA_NAMES = {"avx512": "AVX-512", "avx2": "AVX2", "sse2": "SSE2", "neon": "NEON", "generic": "16-byte"}
+
 ILP_OPS = [("int_mul", "integer multiply"), ("fp_add", "double add"),
            ("fp_mul", "double multiply"), ("load_l1", "load hitting L1"), ("load_mem", "load missing to DRAM")]
 
@@ -800,20 +803,25 @@ def build_report(doc, src_path, charts_dir):
         if not cfg.get("hugepages"):
             mem_html.append("<p class='note'>Base pages were used, so latency past the TLB reach also includes page "
                             "walks. Re-run with <code>--hugepages</code> to separate TLB misses from cache misses.</p>")
-        mem_html.append("<p class='sub'>Sequential read and write over the same buffer with 16-byte vector "
-                        "loads and stores: prefetchers are effective, so the drops are smaller than for random "
-                        "access and show each level's bandwidth. A normal store must first read its line in, so "
+        isa = next((r["params"].get("isa") for r in results
+                    if r["name"] == "mem.read_seq" and r.get("params", {}).get("isa")), None)
+        mem_html.append("<p class='sub'>Sequential read and write over the same buffer"
+                        + (f" with {e(ISA_NAMES.get(isa, isa))} vector loads and stores" if isa else "")
+                        + ": prefetchers are effective, so the drops are smaller than for random "
+                        "access and show each level's bandwidth (log scale: equal steps are equal ratios). A normal store must first read its line in, so "
                         "each written line crosses the bus twice: read for ownership, then write-back."
                         + (" Dashed curve: streaming (non-temporal) stores, which skip that read and the caches: slow "
                            "while the data would fit in cache, faster beyond it." if nt else "")
-                        + " AVX2/AVX-512 code moves up to 2-4x more per cycle in L1 and L2.</p>")
+                        + (" Narrower vectors (scalar or SSE code) cannot reach the L1 and L2 figures: those levels "
+                           "deliver as many bytes per cycle as the core can request." if isa in ("avx512", "avx2") else "")
+                        + "</p>")
         bw_series = [{"name": "read", "slot": 1, "points": [(p["x"], line / p["p50"]) for p in rd]},
                      {"name": "write", "slot": 2, "points": [(p["x"], line / p["p50"]) for p in wr]}]
         if nt:
             bw_series.append({"name": "streaming write", "slot": 3, "dash": True,
                               "points": [(p["x"], line / p["p50"]) for p in nt]})
         mem_html.append(chart_block(Chart(
-            "mem-bandwidth", "Sequential bandwidth vs working set", "bytes", False, "GB/s", "GB/s",
+            "mem-bandwidth", "Sequential bandwidth vs working set", "bytes", True, "GB/s (log)", "GB/s",
             bw_series, zones, markers)))
         if zones:
             summary = level_summary(lat, rd, wr, zones, line, nt, wrr)

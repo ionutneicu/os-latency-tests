@@ -35,10 +35,13 @@ for (size_t i = 0; i < k_random_stores; ++i)
     *reinterpret_cast<uint64_t*>(buf + order[i % lines] * line) = i;   // independent stores
 ```
 
-**Sequential read and write**: streaming through the same buffer with 16-byte
-vector loads and stores (SSE2 / NEON, two per iteration so the loop overhead
-does not limit them), the prefetcher-friendly best case. Reported as ns per
-cache line and GB/s.
+**Sequential read and write**: streaming through the same buffer with the
+widest vector loads and stores the CPU has (AVX-512, AVX2 or SSE2 on x86-64,
+picked at run time; NEON on AArch64), four independent accumulators for reads
+and two stores per iteration, so neither the instruction width nor the loop
+overhead hides the cache's bandwidth. The prefetcher-friendly best case.
+Reported as ns per cache line and GB/s; the ISA used is in the result's `isa`
+parameter. Kernels: [src/hal/stream.c](../../src/hal/stream.c).
 
 **Streaming write**: the same sequential write with non-temporal stores
 (`movntdq` on x86-64, `stnp` on AArch64), which go towards memory without
@@ -59,8 +62,10 @@ filling the caches and without reading the line first.
 * Streaming writes are slow while the buffer would fit in cache (the data has
   to go all the way out) and fastest of all beyond the last cache, often
   2-3x a normal write, because they skip the read for ownership.
-* In L1 and L2 the measured bandwidth is that of 16-byte vectors; AVX2 or
-  AVX-512 code moves up to 2-4x more per cycle there.
+* L1 and L2 bandwidth depend on the vector width: L1 serves as many bytes per
+  cycle as the core requests (two 64-byte loads per cycle on recent x86), so
+  scalar or SSE code reaches only a quarter to a half of the figures here. From
+  L3 outwards the memory, not the instruction width, is the limit.
 
 ## Using it in C++
 
