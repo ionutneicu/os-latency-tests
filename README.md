@@ -46,6 +46,10 @@ sits behind a small hardware abstraction layer (see [Architecture](#architecture
 so other architectures and operating systems can be added without touching the
 benchmarks.
 
+Plans and next measurements: [docs/ROADMAP.md](docs/ROADMAP.md). Tuning
+beyond a stock kernel (isolated cores, PREEMPT_RT, boot options, kernel
+bypass), with what to expect: [docs/expert-setup.md](docs/expert-setup.md).
+
 ## Prerequisites
 
 | What | Why | Debian/Ubuntu | Fedora | Arch |
