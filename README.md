@@ -243,6 +243,7 @@ Installed packages provide it as `olt-report`.
 | `mem.latency_random` | dependent loads along a random cycle of cache lines (pointer chase) in a buffer of each size: load-to-use latency of the level the working set fits in |
 | `mem.read_seq`, `mem.write_seq` | sequential read / write of the same buffer, cost per cache line (GB/s = line size / value) |
 | `multicore.c2c_latency` | one-way cache-line hand-off between every pair of CPUs (atomic ping-pong), drawn as a heatmap |
+| `multicore.false_sharing` | cost per increment when two cores update counters 8 to 512 bytes apart (plain `++` and atomic `fetch_add`), vs one core alone: the padding this CPU needs |
 | `pattern.*` | design-pattern comparisons, see [Design patterns](#design-patterns) |
 | `alloc.malloc`, `alloc.free` | `malloc()`/`free()` of one block, 16 B to 16 MiB, allocator best case (block reused, memory untouched) |
 
@@ -311,6 +312,16 @@ topology as the software sees it: SMT siblings (shared L1/L2) are fastest,
 cores in the same cluster or die next, other clusters (big.LITTLE), CCXs or
 sockets slowest. Use it to choose where producer/consumer pairs run, for
 example with `--cpus A,B` for the SPSC patterns.
+
+`multicore.false_sharing` answers how far apart data written by different
+threads must be. Two threads on different physical cores (never SMT siblings,
+which share the L1) each increment their own counter, placed 8 to 512 bytes
+apart. Two variants are measured: a plain load + store (a non-atomic `++`,
+where the store buffer hides part of the cost) and an atomic `fetch_add` (which
+pays every cache-line transfer). The report finds the smallest distance at which
+the cost falls back to the single-core figure. On many x86 CPUs that is
+128 bytes, not 64, because the adjacent-line prefetcher fetches lines in pairs.
+Use that value in `alignas()` for per-thread counters, queue indices and locks.
 
 ## Measurement hygiene
 

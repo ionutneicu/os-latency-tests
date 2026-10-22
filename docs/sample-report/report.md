@@ -30,15 +30,16 @@ Intel(R) Xeon(R) Processor @ 2.10GHz · x86_64 · Linux 6.18.44-fc-v140 [PREEMPT
 
 ## Design hints for this machine
 
-- A random access that misses all caches costs about 175x an L1 hit (292 ns vs 1.67 ns). Keep the data a hot loop touches under ~36 KiB per core where possible.
-- Working sets up to ~1.5 MiB still get L2 latency (6.14 ns): size per-thread buffers, lookup tables and queues to fit there.
-- Beyond the last cache, sequential reads cost 8.1 ns per 64-byte line vs 292 ns per random access: prefer contiguous arrays and streaming over pointer-heavy structures.
-- A blocking hand-off (mutex/condvar wake-up) costs 39.1 us typically and 215 us at p99: avoid blocking on the critical path below that budget.
-- Starting a thread costs 6.72 us typically but 79 us at p99 (max 5.06 ms): reuse threads from a pool instead of spawning per task.
-- Thread-to-thread hand-off: a blocking mutex+condvar queue takes 13.4 us (p99 38.2 us), a polling lock-free SPSC ring 387 ns (p99 632 ns): 35x faster, at the price of a core spinning while it waits. Give each polling thread its own core.
-- Streaming between two threads: lockfree_cached moves 29.7 M items/s, 12.1x more than spinlock.
-- Node-based containers: a std::pmr::monotonic_buffer_resource arena makes building a list 4.2x cheaper than new/delete (6.88 ns vs 29.1 ns per node). Use arenas for short-lived, per-request or per-frame data that is freed all at once.
-- std::vector: reserve() up front saves 27% of the build cost by avoiding regrowth copies.
+- A random access that misses all caches costs about 167x an L1 hit (259 ns vs 1.55 ns). Keep the data a hot loop touches under ~36 KiB per core where possible.
+- Working sets up to ~1.5 MiB still get L2 latency (5.23 ns): size per-thread buffers, lookup tables and queues to fit there.
+- Beyond the last cache, sequential reads cost 5.53 ns per 64-byte line vs 259 ns per random access: prefer contiguous arrays and streaming over pointer-heavy structures.
+- A blocking hand-off (mutex/condvar wake-up) costs 35.8 us typically and 155 us at p99: avoid blocking on the critical path below that budget.
+- Starting a thread costs 5.27 us typically but 191 us at p99 (max 1.94 ms): reuse threads from a pool instead of spawning per task.
+- False sharing: two cores updating counters in the same cache line pay 51.9 ns per atomic increment instead of 5.63 ns (9x). Keep data written by different threads at least 64 bytes apart (alignas(64) or padding).
+- Thread-to-thread hand-off: a blocking mutex+condvar queue takes 11.4 us (p99 23.6 us), a polling lock-free SPSC ring 403 ns (p99 532 ns): 28x faster, at the price of a core spinning while it waits. Give each polling thread its own core.
+- Streaming between two threads: lockfree_cached moves 15.2 M items/s, 8.4x more than spinlock.
+- Node-based containers: a std::pmr::monotonic_buffer_resource arena makes building a list 5.6x cheaper than new/delete (3.9 ns vs 21.8 ns per node). Use arenas for short-lived, per-request or per-frame data that is freed all at once.
+- std::vector: reserve() up front saves 29% of the build cost by avoiding regrowth copies.
 
 <a id="memory"></a>
 
@@ -58,10 +59,10 @@ Streaming read and write over the same buffer: prefetchers are effective, so the
 
 | data fits in | sizes used | random load | seq read | seq write |
 |---|---|---|---|---|
-| L1 | up to 36 KiB | 1.67 ns | 44 GB/s | 20.1 GB/s |
-| L2 | 72 KiB – 1.5 MiB | 6.14 ns | 49.6 GB/s | 21.3 GB/s |
-| L3 | 3 MiB – 195 MiB | 176 ns | 17.8 GB/s | 12.9 GB/s |
-| DRAM | > 390 MiB | 292 ns | 7.9 GB/s | 5.97 GB/s |
+| L1 | up to 36 KiB | 1.55 ns | 45.2 GB/s | 22.7 GB/s |
+| L2 | 72 KiB – 1.5 MiB | 5.23 ns | 71.7 GB/s | 34.4 GB/s |
+| L3 | 3 MiB – 195 MiB | 158 ns | 20.2 GB/s | 16.8 GB/s |
+| DRAM | > 390 MiB | 259 ns | 11.6 GB/s | 6.19 GB/s |
 
 <a id="sync"></a>
 
@@ -95,7 +96,15 @@ Two threads pinned to a pair of CPUs ping-pong one value through a `std::atomic`
 
 ![Core-to-core latency (one-way, p50)](charts/multicore-c2c.svg)
 
-> Fastest pair: CPU 0 ↔ 1 (82.6 ns); slowest: CPU 0 ↔ 2 (95.9 ns); median 85.1 ns. Pin threads that talk a lot (producer/consumer pairs) to a fast pair with `--cpus A,B` or in your application.
+> Fastest pair: CPU 2 ↔ 3 (55.8 ns); slowest: CPU 1 ↔ 2 (87.5 ns); median 77.3 ns. Pin threads that talk a lot (producer/consumer pairs) to a fast pair with `--cpus A,B` or in your application.
+
+### False sharing: how far apart must per-thread data be?
+
+Threads on CPU 3 and CPU 0 (different physical cores) each increment their own counter; the counters sit the given distance apart. While both share a cache line, every write pulls the line away from the other core. Atomic read-modify-writes pay each transfer; plain stores hide most of it in the store buffer, so the penalty there is smaller but not zero. Dashed: the same loop on one core alone. Band: min to p90.
+
+![False sharing: cost per increment vs distance between counters](charts/multicore-false-sharing.svg)
+
+> On this CPU, counters written by different threads need at least 64 bytes between them (vertical line: the 64-byte cache line).
 
 <a id="patterns"></a>
 
@@ -129,54 +138,70 @@ Grey values have fewer than ~10 samples beyond the percentile and are not statis
 
 | benchmark | n | min | p50 | p90 | p99 | p99.9 | p99.99 | max |
 |---|---|---|---|---|---|---|---|---|
-| alloc.malloc [size=16] | 10000 | 29 ns | 31 ns | 32 ns | 36 ns | 44 ns | 298 ns | 18.2 us |
-| alloc.free [size=16] | 10000 | 30 ns | 33 ns | 34 ns | 47 ns | 220 ns | 294 ns | 3.46 us |
-| alloc.malloc [size=64] | 10000 | 28 ns | 31 ns | 32 ns | 36 ns | 56 ns | 109 ns | 3.55 us |
-| alloc.free [size=64] | 10000 | 30 ns | 33 ns | 34 ns | 45 ns | 171 ns | 16.9 us | 41.6 us |
-| alloc.malloc [size=256] | 10000 | 29 ns | 31 ns | 32 ns | 41 ns | 74 ns | 9 us | 11.7 us |
-| alloc.free [size=256] | 10000 | 28 ns | 31 ns | 33 ns | 44 ns | 80 ns | 145 ns | 212 ns |
-| alloc.malloc [size=1K] | 10000 | 29 ns | 31 ns | 32 ns | 37 ns | 58 ns | 88 ns | 119 ns |
-| alloc.free [size=1K] | 10000 | 28 ns | 31 ns | 32 ns | 40 ns | 69 ns | 11.3 us | 16.9 us |
-| alloc.malloc [size=4K] | 10000 | 54 ns | 57 ns | 58 ns | 76 ns | 110 ns | 3.08 us | 10.7 us |
-| alloc.free [size=4K] | 10000 | 42 ns | 45 ns | 46 ns | 62 ns | 105 ns | 260 ns | 262 ns |
-| alloc.malloc [size=16K] | 10000 | 51 ns | 54 ns | 56 ns | 81 ns | 253 ns | 411 ns | 4.45 us |
-| alloc.free [size=16K] | 10000 | 43 ns | 45 ns | 48 ns | 63 ns | 115 ns | 6.66 us | 27.7 us |
-| alloc.malloc [size=64K] | 10000 | 52 ns | 55 ns | 56 ns | 68 ns | 106 ns | 11.3 us | 18.1 us |
-| alloc.free [size=64K] | 10000 | 42 ns | 45 ns | 46 ns | 62 ns | 70 ns | 235 ns | 289 ns |
-| alloc.malloc [size=256K] | 10000 | 40 ns | 43 ns | 44 ns | 103 ns | 249 ns | 359 ns | 15.8 us |
-| alloc.free [size=256K] | 10000 | 40 ns | 43 ns | 44 ns | 57 ns | 91 ns | 220 ns | 36.7 us |
-| alloc.malloc [size=1M] | 10000 | 41 ns | 43 ns | 44 ns | 179 ns | 268 ns | 423 ns | 26.1 us |
-| alloc.free [size=1M] | 10000 | 40 ns | 43 ns | 44 ns | 46 ns | 74 ns | 7.98 us | 14.2 us |
-| alloc.malloc [size=4M] | 10000 | 41 ns | 43 ns | 44 ns | 182 ns | 345 ns | 783 ns | 1.18 us |
-| alloc.free [size=4M] | 10000 | 40 ns | 43 ns | 44 ns | 55 ns | 70 ns | 4.2 us | 26.9 us |
-| alloc.malloc [size=16M] | 10000 | 43 ns | 52 ns | 133 ns | 287 ns | 453 ns | 27 us | 72.6 us |
-| alloc.free [size=16M] | 10000 | 42 ns | 50 ns | 66 ns | 74 ns | 193 ns | 684 ns | 16 us |
-| multicore.c2c_latency [cpu_a=0, cpu_b=1] | 15 | 78.9 ns | 82.6 ns | 99.5 ns | 104 ns | 105 ns | 105 ns | 105 ns |
-| multicore.c2c_latency [cpu_a=0, cpu_b=2] | 15 | 84.5 ns | 95.9 ns | 115 ns | 134 ns | 136 ns | 136 ns | 136 ns |
-| multicore.c2c_latency [cpu_a=0, cpu_b=3] | 15 | 80.8 ns | 83.2 ns | 93.1 ns | 101 ns | 101 ns | 101 ns | 101 ns |
-| multicore.c2c_latency [cpu_a=1, cpu_b=2] | 15 | 82 ns | 86.9 ns | 107 ns | 117 ns | 118 ns | 118 ns | 118 ns |
-| multicore.c2c_latency [cpu_a=1, cpu_b=3] | 15 | 80.8 ns | 83.2 ns | 88.2 ns | 112 ns | 116 ns | 116 ns | 116 ns |
-| multicore.c2c_latency [cpu_a=2, cpu_b=3] | 15 | 85.9 ns | 87.4 ns | 102 ns | 108 ns | 108 ns | 108 ns | 108 ns |
-| pattern.alloc_vector [allocator=new_delete] | 10000 | 1.36 ns | 1.39 ns | 1.93 ns | 3.55 ns | 20.4 ns | 293 ns | 1.14 us |
-| pattern.alloc_vector [allocator=reserve] | 10000 | 0.996 ns | 1.01 ns | 1.02 ns | 1.71 ns | 12.1 ns | 68.5 ns | 126 ns |
-| pattern.alloc_vector [allocator=pmr_monotonic] | 10000 | 1.37 ns | 1.47 ns | 1.72 ns | 3.04 ns | 17 ns | 61.1 ns | 77.4 ns |
-| pattern.alloc_vector [allocator=pmr_pool] | 10000 | 1.9 ns | 1.97 ns | 2.26 ns | 3.63 ns | 55.8 ns | 984 ns | 2.15 us |
-| pattern.alloc_list [allocator=new_delete] | 10000 | 27.4 ns | 29.1 ns | 37.7 ns | 85.2 ns | 184 ns | 833 ns | 963 ns |
-| pattern.alloc_list [allocator=pmr_monotonic] | 10000 | 4.98 ns | 6.88 ns | 8.17 ns | 8.84 ns | 102 ns | 281 ns | 299 ns |
-| pattern.alloc_list [allocator=pmr_pool] | 10000 | 21.8 ns | 30.8 ns | 40.2 ns | 92.1 ns | 299 ns | 476 ns | 575 ns |
-| pattern.spsc_latency [queue=mutex_condvar] | 10000 | 6.56 us | 13.4 us | 17.8 us | 38.2 us | 143 us | 518 us | 651 us |
-| pattern.spsc_throughput [queue=mutex_condvar] | 15 | 202 ns | 229 ns | 249 ns | 253 ns | 253 ns | 253 ns | 253 ns |
-| pattern.spsc_latency [queue=mutex_poll] | 10000 | 412 ns | 1.33 us | 8.89 us | 18.3 us | 72.4 us | 171 us | 511 us |
-| pattern.spsc_throughput [queue=mutex_poll] | 15 | 164 ns | 185 ns | 193 ns | 241 ns | 248 ns | 248 ns | 248 ns |
-| pattern.spsc_latency [queue=spinlock] | 10000 | 376 ns | 824 ns | 982 ns | 1.3 us | 10.1 us | 164 us | 547 us |
-| pattern.spsc_throughput [queue=spinlock] | 15 | 274 ns | 409 ns | 548 ns | 580 ns | 583 ns | 583 ns | 583 ns |
-| pattern.spsc_latency [queue=lockfree] | 10000 | 231 ns | 344 ns | 520 ns | 563 ns | 6.65 us | 17.9 us | 24 us |
-| pattern.spsc_throughput [queue=lockfree] | 15 | 50.4 ns | 61.3 ns | 92.5 ns | 230 ns | 249 ns | 251 ns | 251 ns |
-| pattern.spsc_latency [queue=lockfree_cached] | 10000 | 256 ns | 387 ns | 470 ns | 632 ns | 4.93 us | 34 us | 35.9 us |
-| pattern.spsc_throughput [queue=lockfree_cached] | 15 | 24.5 ns | 33.7 ns | 44.5 ns | 47.5 ns | 47.8 ns | 47.8 ns | 47.8 ns |
-| sync.mutex_wakeup | 10000 | 13.6 us | 39.1 us | 101 us | 215 us | 1.25 ms | 2.11 ms | 2.62 ms |
-| sync.condvar_wakeup | 10000 | 14.1 us | 39.7 us | 104 us | 238 us | 1.65 ms | 5.76 ms | 7.55 ms |
-| thread.create_to_start | 10000 | 4.06 us | 6.72 us | 12.5 us | 79 us | 527 us | 3.23 ms | 5.06 ms |
-| thread.exit_to_join | 10000 | 2.77 us | 4 us | 5.05 us | 14.9 us | 121 us | 481 us | 845 us |
+| alloc.malloc [size=16] | 10000 | 29 ns | 41 ns | 43 ns | 46 ns | 53 ns | 3.55 us | 16.5 us |
+| alloc.free [size=16] | 10000 | 30 ns | 43 ns | 45 ns | 47 ns | 55 ns | 207 ns | 3.72 us |
+| alloc.malloc [size=64] | 10000 | 29 ns | 41 ns | 43 ns | 46 ns | 53 ns | 93 ns | 182 ns |
+| alloc.free [size=64] | 10000 | 30 ns | 43 ns | 45 ns | 48 ns | 63 ns | 286 ns | 5.77 us |
+| alloc.malloc [size=256] | 10000 | 29 ns | 41 ns | 43 ns | 46 ns | 53 ns | 3.56 us | 3.59 us |
+| alloc.free [size=256] | 10000 | 30 ns | 43 ns | 45 ns | 48 ns | 56 ns | 394 ns | 47.4 us |
+| alloc.malloc [size=1K] | 10000 | 30 ns | 41 ns | 43 ns | 45 ns | 51 ns | 166 ns | 5 us |
+| alloc.free [size=1K] | 10000 | 30 ns | 43 ns | 45 ns | 47 ns | 55 ns | 324 ns | 14.9 us |
+| alloc.malloc [size=4K] | 10000 | 58 ns | 82 ns | 86 ns | 91 ns | 218 ns | 3.59 us | 16.9 us |
+| alloc.free [size=4K] | 10000 | 46 ns | 63 ns | 66 ns | 71 ns | 121 ns | 3.59 us | 43.9 us |
+| alloc.malloc [size=16K] | 10000 | 55 ns | 74 ns | 78 ns | 86 ns | 210 ns | 22.9 us | 23.3 us |
+| alloc.free [size=16K] | 10000 | 45 ns | 62 ns | 65 ns | 74 ns | 109 ns | 315 ns | 376 ns |
+| alloc.malloc [size=64K] | 10000 | 55 ns | 75 ns | 78 ns | 86 ns | 172 ns | 262 ns | 291 ns |
+| alloc.free [size=64K] | 10000 | 46 ns | 63 ns | 65 ns | 71 ns | 91 ns | 182 ns | 14.7 us |
+| alloc.malloc [size=256K] | 10000 | 43 ns | 60 ns | 63 ns | 67 ns | 156 ns | 243 ns | 379 ns |
+| alloc.free [size=256K] | 10000 | 43 ns | 59 ns | 61 ns | 64 ns | 79 ns | 5.48 us | 21.9 us |
+| alloc.malloc [size=1M] | 10000 | 42 ns | 60 ns | 63 ns | 83 ns | 230 ns | 22.1 us | 51 us |
+| alloc.free [size=1M] | 10000 | 42 ns | 58 ns | 61 ns | 65 ns | 87 ns | 5.69 us | 22.8 us |
+| alloc.malloc [size=4M] | 10000 | 42 ns | 60 ns | 63 ns | 173 ns | 320 ns | 37.4 us | 42.9 us |
+| alloc.free [size=4M] | 10000 | 42 ns | 58 ns | 60 ns | 63 ns | 80 ns | 8.47 us | 17.1 us |
+| alloc.malloc [size=16M] | 10000 | 43 ns | 60 ns | 63 ns | 235 ns | 393 ns | 433 ns | 27.8 us |
+| alloc.free [size=16M] | 10000 | 42 ns | 58 ns | 61 ns | 64 ns | 82 ns | 237 ns | 3.59 us |
+| multicore.false_sharing_alone [op=plain, cpu_a=3, cpu_b=0] | 15 | 0.305 ns | 0.306 ns | 0.323 ns | 0.337 ns | 0.337 ns | 0.337 ns | 0.337 ns |
+| multicore.false_sharing [op=plain, distance=8, cpu_a=3, cpu_b=0] | 15 | 0.325 ns | 0.342 ns | 0.425 ns | 0.446 ns | 0.447 ns | 0.447 ns | 0.447 ns |
+| multicore.false_sharing [op=plain, distance=16, cpu_a=3, cpu_b=0] | 15 | 0.325 ns | 0.328 ns | 0.428 ns | 0.505 ns | 0.511 ns | 0.512 ns | 0.512 ns |
+| multicore.false_sharing [op=plain, distance=32, cpu_a=3, cpu_b=0] | 15 | 0.324 ns | 0.329 ns | 0.357 ns | 0.37 ns | 0.371 ns | 0.371 ns | 0.371 ns |
+| multicore.false_sharing [op=plain, distance=64, cpu_a=3, cpu_b=0] | 15 | 0.306 ns | 0.307 ns | 0.48 ns | 0.585 ns | 0.597 ns | 0.598 ns | 0.598 ns |
+| multicore.false_sharing [op=plain, distance=128, cpu_a=3, cpu_b=0] | 15 | 0.306 ns | 0.307 ns | 0.376 ns | 0.441 ns | 0.447 ns | 0.447 ns | 0.448 ns |
+| multicore.false_sharing [op=plain, distance=256, cpu_a=3, cpu_b=0] | 15 | 0.307 ns | 0.307 ns | 0.327 ns | 0.385 ns | 0.392 ns | 0.393 ns | 0.393 ns |
+| multicore.false_sharing [op=plain, distance=512, cpu_a=3, cpu_b=0] | 15 | 0.306 ns | 0.308 ns | 0.493 ns | 0.591 ns | 0.602 ns | 0.603 ns | 0.603 ns |
+| multicore.false_sharing_alone [op=atomic, cpu_a=3, cpu_b=0] | 15 | 5.46 ns | 5.63 ns | 5.9 ns | 6.15 ns | 6.19 ns | 6.19 ns | 6.19 ns |
+| multicore.false_sharing [op=atomic, distance=8, cpu_a=3, cpu_b=0] | 15 | 19.9 ns | 44.7 ns | 52.1 ns | 53 ns | 53.1 ns | 53.1 ns | 53.1 ns |
+| multicore.false_sharing [op=atomic, distance=16, cpu_a=3, cpu_b=0] | 15 | 21.3 ns | 44.7 ns | 56.3 ns | 58.2 ns | 58.4 ns | 58.4 ns | 58.4 ns |
+| multicore.false_sharing [op=atomic, distance=32, cpu_a=3, cpu_b=0] | 15 | 39.7 ns | 51.9 ns | 62.6 ns | 62.9 ns | 63 ns | 63 ns | 63 ns |
+| multicore.false_sharing [op=atomic, distance=64, cpu_a=3, cpu_b=0] | 15 | 5.6 ns | 5.66 ns | 5.99 ns | 6.14 ns | 6.15 ns | 6.15 ns | 6.15 ns |
+| multicore.false_sharing [op=atomic, distance=128, cpu_a=3, cpu_b=0] | 15 | 5.69 ns | 6.03 ns | 6.66 ns | 6.75 ns | 6.77 ns | 6.77 ns | 6.77 ns |
+| multicore.false_sharing [op=atomic, distance=256, cpu_a=3, cpu_b=0] | 15 | 5.48 ns | 5.83 ns | 7.4 ns | 8.93 ns | 9.13 ns | 9.15 ns | 9.15 ns |
+| multicore.false_sharing [op=atomic, distance=512, cpu_a=3, cpu_b=0] | 15 | 5.93 ns | 6.81 ns | 9.95 ns | 12.3 ns | 12.6 ns | 12.6 ns | 12.6 ns |
+| multicore.c2c_latency [cpu_a=0, cpu_b=1] | 15 | 73.3 ns | 74.6 ns | 84.8 ns | 96.3 ns | 97.8 ns | 98 ns | 98 ns |
+| multicore.c2c_latency [cpu_a=0, cpu_b=2] | 15 | 85.1 ns | 86.3 ns | 93.1 ns | 106 ns | 107 ns | 108 ns | 108 ns |
+| multicore.c2c_latency [cpu_a=0, cpu_b=3] | 15 | 77.2 ns | 80 ns | 96.1 ns | 338 ns | 373 ns | 377 ns | 377 ns |
+| multicore.c2c_latency [cpu_a=1, cpu_b=2] | 15 | 84.8 ns | 87.5 ns | 102 ns | 117 ns | 119 ns | 119 ns | 119 ns |
+| multicore.c2c_latency [cpu_a=1, cpu_b=3] | 15 | 67.9 ns | 69.7 ns | 105 ns | 197 ns | 208 ns | 209 ns | 210 ns |
+| multicore.c2c_latency [cpu_a=2, cpu_b=3] | 15 | 55.6 ns | 55.8 ns | 64.6 ns | 70.1 ns | 70.3 ns | 70.3 ns | 70.3 ns |
+| pattern.alloc_vector [allocator=new_delete] | 10000 | 1.11 ns | 1.13 ns | 1.71 ns | 2.5 ns | 12.7 ns | 63.2 ns | 64.3 ns |
+| pattern.alloc_vector [allocator=reserve] | 10000 | 0.781 ns | 0.797 ns | 0.965 ns | 1.55 ns | 2.43 ns | 51.7 ns | 62.2 ns |
+| pattern.alloc_vector [allocator=pmr_monotonic] | 10000 | 1.02 ns | 1.37 ns | 1.83 ns | 2.41 ns | 15.3 ns | 103 ns | 110 ns |
+| pattern.alloc_vector [allocator=pmr_pool] | 10000 | 1.53 ns | 1.59 ns | 2.34 ns | 2.97 ns | 19.7 ns | 94.5 ns | 673 ns |
+| pattern.alloc_list [allocator=new_delete] | 10000 | 21.4 ns | 21.8 ns | 27.6 ns | 42.3 ns | 142 ns | 561 ns | 626 ns |
+| pattern.alloc_list [allocator=pmr_monotonic] | 10000 | 3.84 ns | 3.9 ns | 4.19 ns | 6.18 ns | 49.4 ns | 72.6 ns | 279 ns |
+| pattern.alloc_list [allocator=pmr_pool] | 10000 | 13.6 ns | 17.6 ns | 24.7 ns | 38.2 ns | 152 ns | 7.94 us | 9.39 us |
+| pattern.spsc_latency [queue=mutex_condvar] | 10000 | 376 ns | 11.4 us | 12.2 us | 23.6 us | 38.7 us | 97.6 us | 105 us |
+| pattern.spsc_throughput [queue=mutex_condvar] | 15 | 262 ns | 331 ns | 371 ns | 395 ns | 397 ns | 397 ns | 397 ns |
+| pattern.spsc_latency [queue=mutex_poll] | 10000 | 516 ns | 1.72 us | 2.51 us | 15 us | 30.5 us | 48.8 us | 78.8 us |
+| pattern.spsc_throughput [queue=mutex_poll] | 15 | 194 ns | 243 ns | 279 ns | 365 ns | 376 ns | 377 ns | 377 ns |
+| pattern.spsc_latency [queue=spinlock] | 10000 | 348 ns | 791 ns | 982 ns | 1.26 us | 11.9 us | 53.8 us | 57.7 us |
+| pattern.spsc_throughput [queue=spinlock] | 15 | 461 ns | 553 ns | 661 ns | 809 ns | 830 ns | 832 ns | 832 ns |
+| pattern.spsc_latency [queue=lockfree] | 10000 | 222 ns | 370 ns | 451 ns | 531 ns | 13.8 us | 60.2 us | 97.9 us |
+| pattern.spsc_throughput [queue=lockfree] | 15 | 63.6 ns | 69.3 ns | 92.2 ns | 159 ns | 168 ns | 169 ns | 169 ns |
+| pattern.spsc_latency [queue=lockfree_cached] | 10000 | 288 ns | 403 ns | 486 ns | 532 ns | 8.92 us | 17 us | 18.6 us |
+| pattern.spsc_throughput [queue=lockfree_cached] | 15 | 58.6 ns | 65.8 ns | 69.4 ns | 77.3 ns | 78.3 ns | 78.5 ns | 78.5 ns |
+| sync.mutex_wakeup | 10000 | 5.74 us | 35.8 us | 78.3 us | 155 us | 1.23 ms | 3.78 ms | 10.4 ms |
+| sync.condvar_wakeup | 10000 | 6.5 us | 35.9 us | 87.8 us | 166 us | 678 us | 2.2 ms | 2.22 ms |
+| thread.create_to_start | 10000 | 3.9 us | 5.27 us | 25.6 us | 191 us | 454 us | 761 us | 1.94 ms |
+| thread.exit_to_join | 10000 | 2.77 us | 3.1 us | 4.3 us | 9.7 us | 52.7 us | 181 us | 1.78 ms |
 
 *Generated from results.json by tools/olt-report.py. An interactive version with hover details is in report.html next to this file.*
