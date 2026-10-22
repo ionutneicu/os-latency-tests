@@ -460,7 +460,7 @@ def level_zones(caches, max_bytes):
     return zones
 
 
-def level_summary(lat, rd, wr, zones, line):
+def level_summary(lat, rd, wr, zones, line, nt=(), wrr=()):
     rows = []
     for z in zones:
         lo = z["from"] * 1.5 if z["from"] else 0
@@ -478,6 +478,8 @@ def level_summary(lat, rd, wr, zones, line):
             "latency": med(lat),
             "read_gbs": med(rd, lambda v: line / v),
             "write_gbs": med(wr, lambda v: line / v),
+            "nt_gbs": med(nt, lambda v: line / v),
+            "store_ns": med(wrr),
         })
     return rows
 
@@ -500,6 +502,17 @@ def build_guidance(summary, caches, platform, results, cfg):
         tips.append(f"Beyond the last cache, sequential reads cost {fmt_ns(line / by['DRAM']['read_gbs'])} per "
                     f"{line}-byte line vs {fmt_ns(by['DRAM']['latency'])} per random access: prefer contiguous "
                     f"arrays and streaming over pointer-heavy structures.")
+    dram = by.get("DRAM", {})
+    if dram.get("store_ns") and dram.get("latency") and dram["latency"] > 2 * dram["store_ns"]:
+        tips.append(f"A store that misses to DRAM costs {fmt_ns(dram['store_ns'])} of throughput vs "
+                    f"{fmt_ns(dram['latency'])} for a dependent load: the store buffer lets the core move on and "
+                    f"overlaps the misses. Scattered writes (histograms, scatter, logging) hurt far less than "
+                    f"scattered reads; what stalls is reading the data back or filling the store buffer.")
+    if dram.get("nt_gbs") and dram.get("write_gbs") and dram["nt_gbs"] > 1.3 * dram["write_gbs"]:
+        tips.append(f"Writing a buffer larger than the last cache: streaming (non-temporal) stores reach "
+                    f"{dram['nt_gbs']:.3g} GB/s vs {dram['write_gbs']:.3g} GB/s for normal stores, which first read "
+                    f"each line in. Use them for large output written once and not read again soon "
+                    f"(_mm_stream_si128 / stnp, or a memcpy/memset that switches to them).")
     named = {r["name"]: r for r in results if not r.get("params")}
     wake = named.get("sync.mutex_wakeup")
     if wake:
@@ -762,6 +775,8 @@ def build_report(doc, src_path, charts_dir):
     lat = sweep_series(results, "mem.latency_random")
     rd = sweep_series(results, "mem.read_seq")
     wr = sweep_series(results, "mem.write_seq")
+    nt = sweep_series(results, "mem.write_nt")
+    wrr = sweep_series(results, "mem.write_random")
     summary, mem_html = [], []
     if lat:
         max_x = max(p["x"] for p in lat)
@@ -769,27 +784,47 @@ def build_report(doc, src_path, charts_dir):
         markers = [{"x": c["size_bytes"]} for c in caches]
         mem_html.append("<p class='sub'>Dependent loads in random order through a buffer of the given size, so "
                         "hardware prefetchers cannot help. Each step up is the working set spilling out of a cache "
-                        "level; dashed lines are the cache sizes reported by the OS. Band: min to p90 across samples.</p>")
+                        "level; dashed lines are the cache sizes reported by the OS. Band: min to p90 across samples."
+                        + (" Second line: independent stores to random lines of the same buffer. A store miss "
+                           "does not stall the core (the store buffer holds it while the line is fetched), so misses "
+                           "overlap and a store costs far less than a dependent load at every level." if wrr else "")
+                        + "</p>")
+        lat_series = [{"name": "random load latency (p50)", "slot": 1, "band": True,
+                       "points": [(p["x"], p["p50"], p["lo"], p["hi"]) for p in lat]}]
+        if wrr:
+            lat_series.append({"name": "random store, independent (p50)", "slot": 2,
+                               "points": [(p["x"], p["p50"]) for p in wrr]})
         mem_html.append(chart_block(Chart(
-            "mem-latency", "Random load latency vs working set", "bytes", True, "ns per load (log)", "ns",
-            [{"name": "random load latency (p50)", "slot": 1, "band": True,
-              "points": [(p["x"], p["p50"], p["lo"], p["hi"]) for p in lat]}], zones, markers)))
+            "mem-latency", "Random access cost vs working set", "bytes", True, "ns per access (log)", "ns",
+            lat_series, zones, markers)))
         if not cfg.get("hugepages"):
             mem_html.append("<p class='note'>Base pages were used, so latency past the TLB reach also includes page "
                             "walks. Re-run with <code>--hugepages</code> to separate TLB misses from cache misses.</p>")
-        mem_html.append("<p class='sub'>Streaming read and write over the same buffer: prefetchers are effective, so "
-                        "the drops are smaller than for random access and show each level's bandwidth.</p>")
+        mem_html.append("<p class='sub'>Sequential read and write over the same buffer with 16-byte vector "
+                        "loads and stores: prefetchers are effective, so the drops are smaller than for random "
+                        "access and show each level's bandwidth. A normal store must first read its line in, so "
+                        "each written line crosses the bus twice: read for ownership, then write-back."
+                        + (" Dashed curve: streaming (non-temporal) stores, which skip that read and the caches: slow "
+                           "while the data would fit in cache, faster beyond it." if nt else "")
+                        + " AVX2/AVX-512 code moves up to 2-4x more per cycle in L1 and L2.</p>")
+        bw_series = [{"name": "read", "slot": 1, "points": [(p["x"], line / p["p50"]) for p in rd]},
+                     {"name": "write", "slot": 2, "points": [(p["x"], line / p["p50"]) for p in wr]}]
+        if nt:
+            bw_series.append({"name": "streaming write", "slot": 3, "dash": True,
+                              "points": [(p["x"], line / p["p50"]) for p in nt]})
         mem_html.append(chart_block(Chart(
             "mem-bandwidth", "Sequential bandwidth vs working set", "bytes", False, "GB/s", "GB/s",
-            [{"name": "read", "slot": 1, "points": [(p["x"], line / p["p50"]) for p in rd]},
-             {"name": "write", "slot": 2, "points": [(p["x"], line / p["p50"]) for p in wr]}], zones, markers)))
+            bw_series, zones, markers)))
         if zones:
-            summary = level_summary(lat, rd, wr, zones, line)
+            summary = level_summary(lat, rd, wr, zones, line, nt, wrr)
             gb = lambda v: f"{v:.3g} GB/s" if v else "n/a"
+            ns = lambda v: fmt_ns(v) if v else "n/a"
             mem_html.append("<h3>Per-level summary</h3><div class='table-wrap'><table><tr><th>data fits in</th>"
-                            "<th>sizes used</th><th>random load</th><th>seq read</th><th>seq write</th></tr>"
-                            + "".join(f"<tr><td>{e(r['level'])}</td><td>{e(r['range'])}</td><td>{fmt_ns(r['latency'])}</td>"
-                                      f"<td>{gb(r['read_gbs'])}</td><td>{gb(r['write_gbs'])}</td></tr>" for r in summary)
+                            "<th>sizes used</th><th>random load</th><th>random store</th><th>seq read</th>"
+                            "<th>seq write</th><th>streaming write</th></tr>"
+                            + "".join(f"<tr><td>{e(r['level'])}</td><td>{e(r['range'])}</td><td>{ns(r['latency'])}</td>"
+                                      f"<td>{ns(r['store_ns'])}</td><td>{gb(r['read_gbs'])}</td>"
+                                      f"<td>{gb(r['write_gbs'])}</td><td>{gb(r['nt_gbs'])}</td></tr>" for r in summary)
                             + "</table></div>")
     else:
         mem_html.append("<p class='missing'>The memory sweep was not part of this run. Run "

@@ -26,6 +26,8 @@ Tiers:
 - [x] Thread create/join, mutex and condvar wake-up
 - [x] malloc/free by block size
 - [x] Cache and memory sweep (random-load latency, sequential bandwidth vs working set)
+- [x] Write cost per level: vector sequential writes, random-line stores (read for
+      ownership, overlapped misses), non-temporal streaming stores
 - [x] Container allocation strategies (new/delete, reserve, pmr monotonic, pmr pool)
 - [x] SPSC queues (mutex+condvar, mutex polling, spinlock, lock-free, cached indices) with CPU cost
 - [x] Core-to-core atomic latency heatmap

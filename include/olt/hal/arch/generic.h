@@ -42,6 +42,15 @@ static inline void olt_cpu_relax(void) { olt_compiler_barrier(); }
 static inline void olt_opaque_u64(uint64_t* v) { __asm__ __volatile__("" : "+r"(*v)); }
 static inline void olt_opaque_f64(double* v)   { __asm__ __volatile__("" : "+m"(*v)); }
 
+/* Generic: no cache-bypass hint, a plain store. */
+static inline void olt_stream_store_16(void* p, uint64_t lo, uint64_t hi)
+{
+    uint64_t* q = (uint64_t*)p;
+    q[0] = lo;
+    q[1] = hi;
+}
+static inline void olt_stream_fence(void) { olt_wmb(); }
+
 static inline void olt_cache_flush_line(const void* p) { (void)p; olt_mb(); }
 
 static inline size_t olt_cache_line_size(void) { return 64; }

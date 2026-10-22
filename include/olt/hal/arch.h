@@ -28,6 +28,12 @@
  *   void olt_opaque_f64(double*);       while keeping it in a register (no memory clobber), so
  *                                       benchmark loops cannot be folded, vectorised or reassociated
  *
+ *   void olt_stream_store_16(void*, uint64_t lo, uint64_t hi);
+ *                                       non-temporal store of 16 bytes to a 16-byte aligned
+ *                                       address: written towards memory without filling the caches
+ *                                       (a plain store where the CPU has no such hint)
+ *   void olt_stream_fence(void);        orders earlier streaming stores before later stores
+ *
  *   void   olt_cache_flush_line(const void*);  write back + invalidate the line holding the address
  *   size_t olt_cache_line_size(void);          data cache line size in bytes
  *
