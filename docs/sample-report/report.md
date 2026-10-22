@@ -17,6 +17,8 @@ Intel(R) Xeon(R) Processor @ 2.10GHz · x86_64 · Linux 6.18.44-fc-v140 [PREEMPT
 > [!WARNING]
 > Hot path only: the techniques these results justify (spinning instead of blocking, lock-free queues, pinning, cache-sized buffers, arenas, branchless code, intrinsics) trade readability, maintainability and portability for nanoseconds. Apply them only to the measured hot path of ultra-low-latency or high-performance code, after profiling shows it matters, and keep the rest simple and portable. The numbers are for this machine; re-measure on each target.
 
+Terms used below (cache line, TLB, AVX-512, read for ownership, p99, ...) are explained in the [glossary](https://github.com/ionutneicu/os-latency-tests/blob/main/docs/GLOSSARY.md).
+
 - [Design hints for this machine](#hints)
 - [Memory hierarchy](#memory)
 - [Instruction-level parallelism](#cpu)

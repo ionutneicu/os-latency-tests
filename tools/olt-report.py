@@ -711,6 +711,7 @@ HOT_PATH_WARNING = (
 
 
 GUIDE_URL = "https://github.com/ionutneicu/os-latency-tests/blob/main/docs/benchmarks/"
+GLOSSARY_URL = "https://github.com/ionutneicu/os-latency-tests/blob/main/docs/GLOSSARY.md"
 GUIDES = {"thread": ("threads.md", "threads: spawn or pool"), "sync": ("sync.md", "blocking wake-up")}
 
 
@@ -1105,6 +1106,8 @@ def build_report(doc, src_path, charts_dir):
         out.append("<div class='warn'><b>⚠ Pre-flight warnings: results may be noisy</b><ul>"
                    + "".join(f"<li>{e(w)}</li>" for w in doc["warnings"]) + "</ul></div>")
     out.append(f"<div class='caution'>{e(HOT_PATH_WARNING)}</div>")
+    out.append(f"<p class='guide'>Terms used below (cache line, TLB, AVX-512, read for ownership, p99, ...) are "
+               f"explained in the <a href='{GLOSSARY_URL}'>glossary</a>.</p>")
     out.append("<nav>" + "".join(f"<a href='#{a}'>{e(t)}</a>" for a, t, _ in sections) + "</nav>")
     for a, t, body in sections:
         out.append(f"<h2 id='{a}'>{e(t)}</h2>{body}")
@@ -1120,6 +1123,8 @@ def build_report(doc, src_path, charts_dir):
         md.append("> **⚠ Pre-flight warnings: results may be noisy**\n>\n"
                   + "".join(f"> - {w}\n" for w in doc["warnings"]))
     md.append(f"> [!WARNING]\n> {HOT_PATH_WARNING}\n")
+    md.append(f"Terms used below (cache line, TLB, AVX-512, read for ownership, p99, ...) are explained in the "
+              f"[glossary]({GLOSSARY_URL}).\n")
     md.append("".join(f"- [{t}](#{a})\n" for a, t, _ in sections))
     for a, t, body in sections:
         md.append(f'<a id="{a}"></a>\n\n## {t}\n\n{html_to_markdown(body)}')
