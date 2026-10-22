@@ -74,7 +74,21 @@ The six with the biggest x86 vs ARM differences and the clearest hints.
   vs another core
 - [ ] **AoS vs SoA**, **software prefetch distance**, **unaligned and split-line
   loads**
-- [ ] **Instruction cache and code size**: hot loop of growing size, L1i marked
+- [ ] **Instruction cache (L1i), uop cache and code size**: generated straight-line
+  code blocks (a JIT-free template: N copies of a cheap independent op, or a
+  chain of N small functions) executed in a loop, footprint swept from 1 KiB to
+  a few MiB with L1i, uop cache (DSB / MOP cache), L2 and iTLB reach marked.
+  Sub-tests:
+  - code footprint sweep: ns per instruction as the hot code outgrows each level
+  - taken-branch density: same footprint, jumps every 16/32/64 B (fetch
+    bandwidth, BTB capacity)
+  - call chain depth and indirect calls (virtual / function pointer) spread
+    over many targets vs one
+  - hot/cold splitting: the same loop with an error path inlined vs moved out
+    (`[[unlikely]]`, `__attribute__((cold))`), and `-O2` vs `-O3`/`-Os` code size
+  - optional (OLT_WITH_PERF): L1i misses, iTLB misses, frontend-bound cycles
+  Report: "keep the hot path under N KiB of code" and when inlining or
+  unrolling starts to cost more than it saves.
 - [ ] **Integer division**, **denormals and FTZ/DAZ**
 - [ ] **MPSC/MPMC queues** and **read-mostly patterns** (`shared_mutex`, seqlock,
   RCU-style pointer swap)
