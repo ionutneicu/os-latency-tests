@@ -252,7 +252,7 @@ void measure(olt::Context& ctx)
             uint64_t checksum = 0, consumer_cpu = 0;
             std::thread consumer([&] {
                 ctx.setup_worker_thread();
-                while (!go.load(std::memory_order_acquire)) olt_cpu_relax();
+                while (!go.load(std::memory_order_acquire)) std::this_thread::yield();
                 const uint64_t c0 = olt_os_thread_cpu_ns();
                 for (size_t i = 0; i < k_stream_items; ++i) checksum += q->pop();
                 consumer_cpu = olt_os_thread_cpu_ns() - c0;

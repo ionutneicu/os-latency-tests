@@ -28,6 +28,14 @@ struct alignas(64) Line {
     std::atomic<uint64_t> v{0};
 };
 
+// Waits for `ready` to reach `n` while yielding: a new thread starts on its
+// creator's CPU and only then pins itself, so under SCHED_FIFO a thread that
+// busy-waits before its peer has migrated would starve that peer forever.
+void wait_ready(const std::atomic<int>& ready, int n)
+{
+    while (ready.load(std::memory_order_acquire) < n) std::this_thread::yield();
+}
+
 // Returns per-sample one-way latencies, or an empty vector if pinning failed.
 std::vector<double> ping_pong(int cpu_a, int cpu_b, size_t samples)
 {
@@ -38,6 +46,7 @@ std::vector<double> ping_pong(int cpu_a, int cpu_b, size_t samples)
     std::thread responder([&] {
         if (olt_os_pin_current_thread(cpu_b) != 0) failed.store(true);
         ready.fetch_add(1);
+        wait_ready(ready, 2);  // both threads are on their own CPUs from here on
         uint64_t expect = 1;
         for (;;) {
             uint64_t v;
@@ -54,7 +63,7 @@ std::vector<double> ping_pong(int cpu_a, int cpu_b, size_t samples)
     std::thread initiator([&] {
         if (olt_os_pin_current_thread(cpu_a) != 0) failed.store(true);
         ready.fetch_add(1);
-        while (ready.load() < 2) olt_cpu_relax();
+        wait_ready(ready, 2);
         if (failed.load()) {
             line.v.store(k_stop, std::memory_order_release);
             return;

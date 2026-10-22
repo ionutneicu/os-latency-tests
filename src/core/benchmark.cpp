@@ -29,10 +29,15 @@ void Context::warm_cpus() const
         while (now_ns() < deadline)
             for (int i = 0; i < 1000; ++i) do_not_optimize(x += uint64_t(i));
     };
+    // The worker starts on the main thread's CPU; let it pin itself away before
+    // the main thread starts spinning, or under SCHED_FIFO it would never run.
+    std::atomic<bool> pinned{false};
     std::thread worker([&] {
         setup_worker_thread();
+        pinned.store(true, std::memory_order_release);
         spin();
     });
+    while (!pinned.load(std::memory_order_acquire)) std::this_thread::yield();
     spin();
     worker.join();
 }
