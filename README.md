@@ -26,6 +26,34 @@ python3 tools/olt-report.py olt-results/results.json   # -> olt-results/report.h
 
 Open `olt-results/report.html` in a browser for the graphs.
 
+### With conda
+
+If you prefer a conda environment for the tools (CMake, Ninja, Python and the
+analysis stack), use the bundled `environment.yml`. The compiler and C library
+still come from the system on purpose, because they are part of what is
+measured:
+
+```sh
+sudo apt install build-essential linux-libc-dev   # system compiler + headers
+conda env create -f environment.yml               # once
+conda activate olt
+cmake -S . -B build -G Ninja && cmake --build build
+sudo ./build/os-latency-tests -p 80 -m --no-idle  # results stay owned by you
+python tools/olt-report.py olt-results/results.json
+```
+
+The environment also has NumPy, pandas, Matplotlib and JupyterLab for going
+beyond the HTML report, for example:
+
+```python
+import json, pandas as pd
+res = json.load(open("olt-results/results.json"))
+mutex = pd.read_csv("olt-results/raw/sync.mutex_wakeup.csv")
+print(mutex["ns"].describe(percentiles=[.5, .9, .99, .999]))
+```
+
+Update it after `environment.yml` changes with `conda env update -f environment.yml --prune`.
+
 For trustworthy tail latencies run with real-time scheduling and locked memory:
 
 ```sh
@@ -155,11 +183,8 @@ Optional:
 
 There are no runtime dependencies beyond the C and C++ standard libraries.
 
-For analysis work there is a conda environment (Python, CMake, Ninja, NumPy,
-pandas, Matplotlib, JupyterLab): `conda env create -f environment.yml && conda
-activate olt`. Keep building the benchmark with the system compiler, since the
-toolchain and C library are part of what is measured; the HTML report needs no
-extra packages.
+Optional conda environment for the tools and analysis: see
+[Quick start, with conda](#with-conda).
 
 ## Build options
 
