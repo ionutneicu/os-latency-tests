@@ -49,6 +49,14 @@ static inline void olt_cpu_relax(void) { __asm__ __volatile__("yield" ::: "memor
 static inline void olt_opaque_u64(uint64_t* v) { __asm__ __volatile__("" : "+r"(*v)); }
 static inline void olt_opaque_f64(double* v)   { __asm__ __volatile__("" : "+w"(*v)); }
 
+/* stnp is a hint: some cores honour it (no cache allocation), others treat it
+ * as a normal store pair. */
+static inline void olt_stream_store_16(void* p, uint64_t lo, uint64_t hi)
+{
+    __asm__ __volatile__("stnp %1, %2, [%0]" :: "r"(p), "r"(lo), "r"(hi) : "memory");
+}
+static inline void olt_stream_fence(void) { __asm__ __volatile__("dmb ishst" ::: "memory"); }
+
 static inline void olt_cache_flush_line(const void* p)
 {
     __asm__ __volatile__("dc civac, %0\n\tdsb ish" :: "r"(p) : "memory");

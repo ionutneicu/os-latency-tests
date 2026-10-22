@@ -6,9 +6,22 @@
 //                      cache lines (pointer chase). Defeats hardware
 //                      prefetchers, so it shows raw load-to-use latency of
 //                      the level the working set fits in. Unit: ns/access.
-//  mem.read_seq        sequential read of the buffer (prefetch friendly,
-//                      vectorisable). Unit: ns per cache line; GB/s = line/ns.
+//  mem.read_seq        sequential read of the buffer. Unit: ns per cache line;
+//                      GB/s = line/ns.
 //  mem.write_seq       sequential write of the buffer. Unit: ns per cache line.
+//  mem.write_nt        sequential non-temporal (streaming) write: stores that
+//                      bypass the caches. Unit: ns per cache line.
+//  mem.write_random    one 8-byte store per cache line, lines in random order:
+//                      every store to a line not in cache must fetch it first
+//                      (read for ownership), and the prefetchers cannot guess
+//                      the next line. The stores are independent, so their
+//                      misses overlap: this is store throughput per level, not
+//                      latency. Unit: ns per store.
+//
+// Sequential read and write use 16-byte vectors (SSE2 / NEON, the baseline of
+// both architectures), two per loop iteration, so the loop itself is not the
+// bottleneck. Code built for AVX2/AVX-512 can move up to 2-4x more per cycle
+// in L1 and L2; from L3 outwards the memory, not the instruction width, limits.
 
 #include <algorithm>
 #include <cmath>
@@ -27,6 +40,11 @@ namespace {
 
 constexpr size_t k_chase_accesses = size_t(1) << 17;  // loads per latency sample
 constexpr size_t k_stream_bytes = size_t(32) << 20;   // bytes touched per bandwidth sample
+constexpr size_t k_random_stores = size_t(1) << 17;   // stores per random-write sample
+
+// 16-byte vector of two u64 (GCC/Clang vector extension: SSE2 on x86-64, NEON
+// on AArch64); may_alias because it is laid over a char buffer.
+typedef uint64_t v2u64 __attribute__((vector_size(16), may_alias));
 
 std::string size_label(size_t bytes)
 {
@@ -76,47 +94,86 @@ double chase_sample(void*& p)
 double read_sample(const char* buf, size_t size, size_t line)
 {
     const size_t passes = std::max<size_t>(1, k_stream_bytes / size);
-    const uint64_t* w = reinterpret_cast<const uint64_t*>(buf);
-    const size_t words = size / sizeof(uint64_t);
-    // independent accumulators so the loop is bound by load throughput, not by
-    // the latency of a single add chain (sizes are whole lines, lines >= 32 B)
-    uint64_t s0 = 0, s1 = 0, s2 = 0, s3 = 0;
+    const v2u64* v = reinterpret_cast<const v2u64*>(buf);
+    const size_t vecs = size / sizeof(v2u64);
+    // two accumulators so the loop is bound by load throughput, not by the
+    // latency of one add chain (sizes are whole lines, lines >= 32 B)
+    v2u64 s0 = {0, 0}, s1 = {0, 0};
     const uint64_t t0 = olt::now_ns();
     for (size_t p = 0; p < passes; ++p) {
-        for (size_t i = 0; i < words; i += 4) {
-            s0 += w[i];
-            s1 += w[i + 1];
-            s2 += w[i + 2];
-            s3 += w[i + 3];
+        for (size_t i = 0; i < vecs; i += 2) {
+            s0 += v[i];
+            s1 += v[i + 1];
         }
         olt_compiler_barrier();  // keep passes from being merged
     }
     const uint64_t t1 = olt::now_ns();
-    olt::do_not_optimize(s0 + s1 + s2 + s3);
+    const v2u64 s = s0 + s1;
+    olt::do_not_optimize(s[0] + s[1]);
     return double(t1 - t0) / (double(passes) * double(size) / double(line));
 }
 
 double write_sample(char* buf, size_t size, size_t line)
 {
     const size_t passes = std::max<size_t>(1, k_stream_bytes / size);
-    uint64_t* w = reinterpret_cast<uint64_t*>(buf);
-    const size_t words = size / sizeof(uint64_t);
+    v2u64* v = reinterpret_cast<v2u64*>(buf);
+    const size_t vecs = size / sizeof(v2u64);
     const uint64_t t0 = olt::now_ns();
     for (size_t p = 0; p < passes; ++p) {
-        // index-dependent value keeps the compiler from turning this into memset
-        for (size_t i = 0; i < words; ++i) w[i] = i ^ p;
+        // a value the compiler cannot see, so the loop cannot become memset
+        uint64_t x = p + 1;
+        olt_opaque_u64(&x);
+        const v2u64 val = {x, ~x};
+        for (size_t i = 0; i < vecs; i += 2) {
+            v[i] = val;
+            v[i + 1] = val;
+        }
         olt_compiler_barrier();
     }
     const uint64_t t1 = olt::now_ns();
     return double(t1 - t0) / (double(passes) * double(size) / double(line));
 }
 
+double write_nt_sample(char* buf, size_t size, size_t line)
+{
+    const size_t passes = std::max<size_t>(1, k_stream_bytes / size);
+    const uint64_t t0 = olt::now_ns();
+    for (size_t p = 0; p < passes; ++p) {
+        for (size_t off = 0; off < size; off += 32) {
+            olt_stream_store_16(buf + off, p, off);
+            olt_stream_store_16(buf + off + 16, p, off);
+        }
+        olt_stream_fence();  // the streaming stores are complete before the clock is read
+    }
+    const uint64_t t1 = olt::now_ns();
+    return double(t1 - t0) / (double(passes) * double(size) / double(line));
+}
+
+// Stores to the lines of `order` (a random permutation), continuing at `pos`
+// so successive samples keep reaching lines that are not cached yet.
+double write_random_sample(char* buf, const std::vector<uint32_t>& order, size_t line, size_t& pos)
+{
+    const uint32_t* o = order.data();
+    const size_t lines = order.size();
+    size_t k = pos;
+    const uint64_t t0 = olt::now_ns();
+    for (size_t i = 0; i < k_random_stores; ++i) {
+        *reinterpret_cast<uint64_t*>(buf + size_t(o[k]) * line) = i;
+        if (++k == lines) k = 0;
+    }
+    olt_compiler_barrier();
+    const uint64_t t1 = olt::now_ns();
+    pos = k;
+    return double(t1 - t0) / double(k_random_stores);
+}
+
 }  // namespace
 
 OLT_BENCHMARK("mem.cache_sweep",
               "Working-set sweep over one pre-faulted buffer: random pointer-chase latency "
-              "(mem.latency_random), sequential read and write cost per cache line (mem.read_seq, "
-              "mem.write_seq), for buffer sizes from --mem-min to --mem-max")
+              "(mem.latency_random), sequential read, write and streaming-write cost per cache line "
+              "(mem.read_seq, mem.write_seq, mem.write_nt) and random-order store throughput "
+              "(mem.write_random), for buffer sizes from --mem-min to --mem-max")
 {
     const olt::Config& cfg = ctx.config();
     const size_t line = std::max<size_t>(olt_cache_line_size(), sizeof(void*));
@@ -135,7 +192,7 @@ OLT_BENCHMARK("mem.cache_sweep",
     for (size_t size : sizes) {
         const olt::Params params{{"size", size_label(size)}, {"bytes", std::to_string(size)}, {"pages", pages}};
 
-        olt::build_chase(buf, size / line, line, rng);
+        const std::vector<uint32_t> order = olt::build_chase(buf, size / line, line, rng);
         void* p = buf;
         chase_sample(p);  // warm-up: bring the working set into cache
         std::vector<double> lat;
@@ -154,6 +211,19 @@ OLT_BENCHMARK("mem.cache_sweep",
         for (size_t s = 0; s < cfg.sweep_samples; ++s) wr.push_back(write_sample(buf, size, line));
         ctx.add_result("mem.write_seq", params, std::move(wr));
         ctx.results().back().unit = "ns/line";
+
+        write_nt_sample(buf, size, line);
+        std::vector<double> nt;
+        for (size_t s = 0; s < cfg.sweep_samples; ++s) nt.push_back(write_nt_sample(buf, size, line));
+        ctx.add_result("mem.write_nt", params, std::move(nt));
+        ctx.results().back().unit = "ns/line";
+
+        size_t pos = 0;
+        write_random_sample(buf, order, line, pos);  // warm-up
+        std::vector<double> wrr;
+        for (size_t s = 0; s < cfg.sweep_samples; ++s) wrr.push_back(write_random_sample(buf, order, line, pos));
+        ctx.add_result("mem.write_random", params, std::move(wrr));
+        ctx.results().back().unit = "ns/store";
     }
     olt_os_free_buffer(buf, sizes.back());
 }

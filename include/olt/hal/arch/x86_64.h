@@ -43,6 +43,14 @@ static inline void olt_cpu_relax(void) { _mm_pause(); }
 static inline void olt_opaque_u64(uint64_t* v) { __asm__ __volatile__("" : "+r"(*v)); }
 static inline void olt_opaque_f64(double* v)   { __asm__ __volatile__("" : "+x"(*v)); }
 
+/* movntdq: SSE2, so part of the x86-64 baseline. Streaming stores are weakly
+ * ordered even on x86, hence the sfence. */
+static inline void olt_stream_store_16(void* p, uint64_t lo, uint64_t hi)
+{
+    _mm_stream_si128((__m128i*)p, _mm_set_epi64x((long long)hi, (long long)lo));
+}
+static inline void olt_stream_fence(void) { _mm_sfence(); }
+
 static inline void olt_cache_flush_line(const void* p)
 {
     _mm_clflush(p);
