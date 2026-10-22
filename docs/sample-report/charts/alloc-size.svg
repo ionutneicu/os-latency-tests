@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 444" role="img" aria-label="malloc / free latency vs block size">
+<style>
+  .bg{fill:#fcfcfb} .ax{fill:#52514e;font:12px system-ui,sans-serif} .title{fill:#0b0b0b;font:600 15px system-ui,sans-serif}
+  .grid{stroke:#e4e3df} .zone-a{fill:#f3f2ef} .zone-b{fill:#fcfcfb} .marker{stroke:#8a8984}
+  .zlabel{fill:#8a8984;font:600 12px system-ui,sans-serif} .hit{fill:transparent}
+  .s1{stroke:#2a78d6} .s2{stroke:#eb6834} .s3{stroke:#1baf7a} .s4{stroke:#6250d6} .s5{stroke:#e87ba4}
+  .f1{fill:#2a78d6} .f2{fill:#eb6834} .f3{fill:#1baf7a} .f4{fill:#6250d6} .f5{fill:#e87ba4}
+</style>
+<rect class="bg" width="1000" height="444"/>
+<text class="title" x="72" y="18">malloc / free latency vs block size</text>
+<g transform="translate(0,24)">
+<line class="grid" x1="72" x2="980" y1="260.1" y2="260.1"/>
+<text class="ax" x="64" y="264.1" text-anchor="end">50 ns</text>
+<line class="grid" x1="72" x2="980" y1="179.2" y2="179.2"/>
+<text class="ax" x="64" y="183.2" text-anchor="end">100 ns</text>
+<line class="grid" x1="72" x2="980" y1="98.2" y2="98.2"/>
+<text class="ax" x="64" y="102.2" text-anchor="end">200 ns</text>
+<text class="ax" x="72.0" y="360" text-anchor="middle">16</text>
+<text class="ax" x="162.8" y="360" text-anchor="middle">64</text>
+<text class="ax" x="253.6" y="360" text-anchor="middle">256</text>
+<text class="ax" x="344.4" y="360" text-anchor="middle">1K</text>
+<text class="ax" x="435.2" y="360" text-anchor="middle">4K</text>
+<text class="ax" x="526.0" y="360" text-anchor="middle">16K</text>
+<text class="ax" x="616.8" y="360" text-anchor="middle">64K</text>
+<text class="ax" x="707.6" y="360" text-anchor="middle">256K</text>
+<text class="ax" x="798.4" y="360" text-anchor="middle">1M</text>
+<text class="ax" x="889.2" y="360" text-anchor="middle">4M</text>
+<text class="ax" x="980.0" y="360" text-anchor="middle">16M</text>
+<text class="ax" x="526.0" y="382" text-anchor="middle">block size</text>
+<text class="ax" x="16" y="186.0" transform="rotate(-90 16 186.0)" text-anchor="middle">latency (log)</text>
+<polyline class="s1" fill="none" stroke-width="2" stroke-linejoin="round" points="72.0,315.9 162.8,315.9 253.6,315.9 344.4,315.9 435.2,244.8 526.0,251.1 616.8,249.0 707.6,277.7 798.4,277.7 889.2,277.7 980.0,255.5"/>
+<circle class="f1" cx="72.0" cy="315.9" r="3"/>
+<circle class="f1" cx="162.8" cy="315.9" r="3"/>
+<circle class="f1" cx="253.6" cy="315.9" r="3"/>
+<circle class="f1" cx="344.4" cy="315.9" r="3"/>
+<circle class="f1" cx="435.2" cy="244.8" r="3"/>
+<circle class="f1" cx="526.0" cy="251.1" r="3"/>
+<circle class="f1" cx="616.8" cy="249.0" r="3"/>
+<circle class="f1" cx="707.6" cy="277.7" r="3"/>
+<circle class="f1" cx="798.4" cy="277.7" r="3"/>
+<circle class="f1" cx="889.2" cy="277.7" r="3"/>
+<circle class="f1" cx="980.0" cy="255.5" r="3"/>
+<polyline class="s1" fill="none" stroke-width="2" stroke-linejoin="round" stroke-dasharray="6 4" points="72.0,298.5 162.8,298.5 253.6,283.3 344.4,295.3 435.2,211.2 526.0,203.8 616.8,224.2 707.6,175.5 798.4,111.2 889.2,109.2 980.0,56.1"/>
+<circle class="f1" cx="72.0" cy="298.5" r="3"/>
+<circle class="f1" cx="162.8" cy="298.5" r="3"/>
+<circle class="f1" cx="253.6" cy="283.3" r="3"/>
+<circle class="f1" cx="344.4" cy="295.3" r="3"/>
+<circle class="f1" cx="435.2" cy="211.2" r="3"/>
+<circle class="f1" cx="526.0" cy="203.8" r="3"/>
+<circle class="f1" cx="616.8" cy="224.2" r="3"/>
+<circle class="f1" cx="707.6" cy="175.5" r="3"/>
+<circle class="f1" cx="798.4" cy="111.2" r="3"/>
+<circle class="f1" cx="889.2" cy="109.2" r="3"/>
+<circle class="f1" cx="980.0" cy="56.1" r="3"/>
+<polyline class="s2" fill="none" stroke-width="2" stroke-linejoin="round" points="72.0,308.6 162.8,308.6 253.6,315.9 344.4,315.9 435.2,272.4 526.0,272.4 616.8,272.4 707.6,277.7 798.4,277.7 889.2,277.7 980.0,260.1"/>
+<circle class="f2" cx="72.0" cy="308.6" r="3"/>
+<circle class="f2" cx="162.8" cy="308.6" r="3"/>
+<circle class="f2" cx="253.6" cy="315.9" r="3"/>
+<circle class="f2" cx="344.4" cy="315.9" r="3"/>
+<circle class="f2" cx="435.2" cy="272.4" r="3"/>
+<circle class="f2" cx="526.0" cy="272.4" r="3"/>
+<circle class="f2" cx="616.8" cy="272.4" r="3"/>
+<circle class="f2" cx="707.6" cy="277.7" r="3"/>
+<circle class="f2" cx="798.4" cy="277.7" r="3"/>
+<circle class="f2" cx="889.2" cy="277.7" r="3"/>
+<circle class="f2" cx="980.0" cy="260.1" r="3"/>
+<polyline class="s2" fill="none" stroke-width="2" stroke-linejoin="round" stroke-dasharray="6 4" points="72.0,267.3 162.8,272.4 253.6,275.0 344.4,286.2 435.2,235.0 526.0,233.1 616.8,235.0 707.6,244.8 798.4,269.9 889.2,249.0 980.0,214.3"/>
+<circle class="f2" cx="72.0" cy="267.3" r="3"/>
+<circle class="f2" cx="162.8" cy="272.4" r="3"/>
+<circle class="f2" cx="253.6" cy="275.0" r="3"/>
+<circle class="f2" cx="344.4" cy="286.2" r="3"/>
+<circle class="f2" cx="435.2" cy="235.0" r="3"/>
+<circle class="f2" cx="526.0" cy="233.1" r="3"/>
+<circle class="f2" cx="616.8" cy="235.0" r="3"/>
+<circle class="f2" cx="707.6" cy="244.8" r="3"/>
+<circle class="f2" cx="798.4" cy="269.9" r="3"/>
+<circle class="f2" cx="889.2" cy="249.0" r="3"/>
+<circle class="f2" cx="980.0" cy="214.3" r="3"/>
+<line class="s1" stroke-width="2" x1="72" x2="94" y1="404" y2="404"/>
+<text class="ax" x="100" y="408">malloc p50</text>
+<line class="s1" stroke-width="2" stroke-dasharray="6 4" x1="182" x2="204" y1="404" y2="404"/>
+<text class="ax" x="210" y="408">malloc p99</text>
+<line class="s2" stroke-width="2" x1="292" x2="314" y1="404" y2="404"/>
+<text class="ax" x="320" y="408">free p50</text>
+<line class="s2" stroke-width="2" stroke-dasharray="6 4" x1="388" x2="410" y1="404" y2="404"/>
+<text class="ax" x="416" y="408">free p99</text>
+</g>
+</svg>
