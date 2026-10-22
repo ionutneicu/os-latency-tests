@@ -1,0 +1,9 @@
+/build*/
+/olt-results/
+/obj-*/
+/debian/.debhelper/
+/debian/os-latency-tests/
+/debian/debhelper-build-stamp
+/debian/files
+/debian/*.substvars
+/debian/*.debhelper.log

@@ -1,91 +1,207 @@
 # os-latency-tests
-Command line application that measures the OS context switch latencies from the userspace.
-This application is used to compare latency and throughput of different kernels 
-(normal, low-latency, real-time) available in various distributions like Ubuntu and/or 
-the impact of CONFIG_PREEMPT_RT and other kernel configs on various embedded boards.
-The code in written in modern C++ so at least C++ 11 is required.
 
-More details:
-============
+Measures operating system and hardware latencies from user space and reports
+them as full distributions (p50, p90, p99, p99.9, p99.99, max), together with a
+description of the platform they were measured on.
 
-Calling kernel's I/O functions (syscalls) from user-space cause the scheduler to suspend the current
-task until the I/O event occurs. The time from I/O event happens and the task waiting for it is resumed is
-kernel task resume latency and has some impact in real-time and low-latency appliances. 
-It is recomended to be measured on each platform where the requirements are tight.
-For realtime applications, the distribution is important, the absolute maximumm ( for hard realtime ) has to be assesed,
-for soft-realtime applications, the 95% percentile or so is to be taken in account.
+The goal is to compare kernels (generic, low-latency, `PREEMPT_RT`) and boards,
+and to back low-latency / HPC design decisions with data for a given platform:
+reuse threads or spawn them, block or spin, allocate per operation or keep
+buffers, size working sets to fit a cache level, and so on.
 
-For example: 
+Supported today: **Linux on x86-64 and AArch64**. Everything platform specific
+sits behind a small hardware abstraction layer (see [Architecture](#architecture)),
+so other architectures and operating systems can be added without touching the
+benchmarks.
 
-read()        -> blocking read will suspend the current task until the device ( file, socket ) has something to return.
-mutex.lock()  -> will suspend the current thread until other thread will unlock it.
-thread.join() -> will suspend the current thread until the other thread finishes.
-sleep()       -> will suspend the current thread until the time passes.
+## Quick start
 
-The goal of this code is measure the thread resume latency from user space.
+```sh
+sudo apt install build-essential cmake        # see "Build dependencies"
+cmake -S . -B build
+cmake --build build -j
+./build/os-latency-tests                       # all benchmarks, 10000 samples each
+```
 
-Approach:
+For trustworthy tail latencies run with real-time scheduling and locked memory:
 
-Four time points are recorded in each loop:
+```sh
+sudo ./build/os-latency-tests --rt-prio 80 --mlock --samples 100000
+```
 
-1. Just before creating another thread, in the main thread.
-2. Right after the thread is entered, in the secondary thread.
-3. Just before the second thread is about to exit, in the secondary thread.
-4. Right after thread join, in the main thread.
+Example output (x86-64 VM, trimmed):
 
+```
+benchmark                                         n       min       p50       p90       p99     p99.9    p99.99       max
+-------------------------------------------------------------------------------------------------------------------------
+sync.mutex_wakeup                              2000   9.32 us   53.7 us    141 us    462 us  ~3.97 ms  ~6.10 ms   6.17 ms
+thread.create_to_start                         2000   4.56 us   7.64 us   11.4 us   66.5 us   ~396 us   ~466 us    476 us
+```
 
-Thread creation latency = duration from 1. to 2.
-Worker thread work load duration from 2. to 3. - depending on test, see below.
-Thread join latency = duration from 3. to 4.
+A `~` marks a percentile with fewer than ~10 samples beyond it. Such values are
+not statistically reliable; increase `--samples` (p99.9 needs 10 000 samples,
+p99.99 needs 100 000).
 
-For the thread creation / join latency, the workload is none, so there is nothing done between 2. and 3.
+## Command line
 
-For other tests, like various syscalls, the test is done like this:
+| Option | Description |
+|---|---|
+| `-l, --list` | list benchmarks and exit |
+| `-t, --test PATTERN` | run benchmarks matching a glob (`sync.*`) or substring; repeatable, default all |
+| `-n, --samples N` | measured samples per benchmark (default 10000) |
+| `-w, --warmup N` | discarded warm-up iterations (default 100) |
+| `-a, --affinity MODE` | `none`, `same` (both threads on one CPU) or `different` (two CPUs, default) |
+| `--cpus MAIN[,WORKER]` | pin to explicit CPUs instead of the automatic choice (highest-numbered allowed CPUs, away from CPU 0's interrupt load) |
+| `-p, --rt-prio N` | run benchmark threads as `SCHED_FIFO` priority N (root or `CAP_SYS_NICE`) |
+| `-m, --mlock` | `mlockall()` to avoid page-fault latency |
+| `--park-us N` | how long a signalling thread waits so its peer is really blocked in the kernel (default 200) |
+| `-o, --out DIR` | output directory (default `olt-results`) |
+| `--no-raw` | skip per-sample CSV files |
 
-Mutex Resume Latency:
-====================
+## Output
 
-mutex created in the main thread and locked once
-worke thread that unlocks the same mutex started
-mutex locked one more time in the main thread, waiting for the worker thread to unlock it.
+* **Console**: platform summary and one table row per result.
+* **`results.json`** (`schema: olt-results/1`): platform (CPU, board, kernel,
+  preemption model, governor, isolated CPUs, cache hierarchy, cycle counter
+  frequency, timer overhead, available perf counters), run configuration, and
+  summary statistics per result: count, min, max, mean, standard deviation,
+  median absolute deviation, percentiles, and which percentiles are unreliable.
+* **`raw/*.csv`**: every individual sample, for histograms, CDFs and your own
+  analysis.
 
-Mutex resume latency duration = time from time before unlock in the worker thread to time the second lock exits.
+Percentiles use linear interpolation between closest ranks (Hyndman & Fan
+type 7, the NumPy/R default).
 
+## Benchmarks
 
-Condition variable wait() resume latency
-========================================
+| Name | What is measured |
+|---|---|
+| `thread.create_to_start` | `std::thread` construction until the first instruction of the new thread |
+| `thread.exit_to_join` | last instruction of a thread until `join()` returns |
+| `sync.mutex_wakeup` | worker `unlock()` until the blocked main thread's `lock()` returns |
+| `sync.condvar_wakeup` | worker sets the predicate (then unlocks and `notify_one()`) until `wait()` returns |
+| `alloc.malloc`, `alloc.free` | `malloc()`/`free()` of one block, 16 B to 16 MiB, allocator best case (block reused, memory untouched) |
 
+Wake-up benchmarks use a persistent worker thread, so thread creation does not
+leak into them, and timestamps come from the monotonic clock shared by all CPUs.
+Measurements below ~100 ns include the clock read overhead reported in the
+platform section.
 
-Others
-======
+Planned (see the project plan): thread pool vs spawn vs single thread,
+spin/atomic hand-offs, cache-size sweeps that show the L1/L2/L3/DRAM steps,
+stack copy vs persistent heap buffers, false sharing, pipes/eventfd/loopback
+sockets, timer and sleep jitter, perf counters per benchmark, and an HTML report
+with graphs and design guidance.
 
+## Build dependencies
 
-Network latency ( lo interface ):
-- send UDP packet in one thread, receive in another  
-- same for TCP?
-- 
-Named pipe latency:
--
--
--
+Required:
 
-Other
------
+| Dependency | Version | Debian/Ubuntu package |
+|---|---|---|
+| C11 and C++17 compiler (GCC or Clang) | GCC >= 8, Clang >= 7 | `g++` or `clang` |
+| CMake | >= 3.16 | `cmake` |
+| POSIX threads | glibc or musl | part of the C library |
 
-Malloc latency:
+Optional:
 
-- measure malloc / free duration for various block size 
+| Dependency | Needed for | Debian/Ubuntu package |
+|---|---|---|
+| Linux UAPI headers (`<linux/perf_event.h>`) | perf counters (`OLT_WITH_PERF`) | `linux-libc-dev` |
+| AArch64 cross toolchain | cross-compiling for ARM boards | `g++-aarch64-linux-gnu` |
+| qemu user emulation | running cross-built tests on the build host | `qemu-user` |
+| debhelper, dpkg-dev | building `.deb` packages | `debhelper`, `dpkg-dev` |
 
-Memory latency after fragmentation:
-- same approach as before but after intensive allocs/free of bigger and smaller blocks to cause fragmentation
+There are no runtime dependencies beyond the C and C++ standard libraries.
 
+## Build options
 
-At the end of the day, you'll get a picture of sources of latency in real-time applications.
+Optional features follow one pattern, `OLT_WITH_<FEATURE>=AUTO|ON|OFF`: `AUTO`
+enables the feature when its dependencies are found, `ON` fails configuration
+if they are missing, and `OFF` builds a stub that reports the feature as
+unavailable at run time. This keeps the tool buildable on boards and toolchains
+with limited capabilities.
 
+| Option | Default | Description |
+|---|---|---|
+| `OLT_WITH_PERF` | `AUTO` | hardware/software counters through `perf_event_open()` |
+| `OLT_FORCE_GENERIC_ARCH` | `OFF` | use the portable compiler-builtin arch HAL (for bring-up on new CPUs) |
+| `OLT_BUILD_TESTS` | `ON` | unit tests and a smoke run, executed with `ctest` |
 
-Command line options:
---------------------
+Even when perf support is compiled in, which counters work depends on the CPU,
+the kernel, virtualisation and `/proc/sys/kernel/perf_event_paranoid`. The
+platform section shows which ones could be opened. Software counters (context
+switches, migrations, page faults) usually work even without a PMU.
 
--a [single|multiple] - sets the affinity of secondary thread on the same core ( single ) or on different cores ( if available, multiple )
--t [test name1] -t [test name2] ... -t[test_nameN]
-   - test_name1, ..., test_nameN - names of the tests to be executed, default is all
+## Cross-compiling for ARM
+
+```sh
+sudo apt install g++-aarch64-linux-gnu qemu-user
+cmake -S . -B build-arm64 -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/aarch64-linux-gnu.cmake
+cmake --build build-arm64 -j
+(cd build-arm64 && ctest)          # runs under qemu-aarch64 when installed
+scp build-arm64/os-latency-tests board:
+```
+
+For other toolchains (Linaro, Yocto/Buildroot SDKs) pass
+`-DOLT_CROSS_PREFIX=/path/to/bin/aarch64-none-linux-gnu-`. Numbers measured
+under qemu are meaningless; always benchmark on the real board.
+
+## Debian packages
+
+The `debian/` directory builds a native package with debhelper and CMake
+(build dependencies are listed in `debian/control`):
+
+```sh
+sudo apt install debhelper dpkg-dev cmake g++ linux-libc-dev
+dpkg-buildpackage -us -uc -b
+sudo apt install ../os-latency-tests_*.deb
+```
+
+Cross-building an arm64 package on an amd64 host needs multiarch:
+
+```sh
+sudo dpkg --add-architecture arm64 && sudo apt update
+sudo apt install crossbuild-essential-arm64 linux-libc-dev:arm64
+dpkg-buildpackage -us -uc -b -aarm64
+```
+
+## Architecture
+
+```
+include/olt/hal/arch.h        CPU primitives: cycle counter, prefetch (L1/L2/L3/NTA/write),
+  arch/x86_64.h               barriers, cpu_relax, cache-line flush, cache-line size
+  arch/aarch64.h
+  arch/generic.h              compiler-builtin fallback
+include/olt/hal/os.h          OS services (C API): monotonic clock, affinity, SCHED_FIFO,
+  src/hal/linux/os_linux.c    mlockall, cache topology, CPU/board/kernel/preempt info
+include/olt/hal/perf.h        optional counters
+  src/hal/linux/perf_linux.c  perf_event_open backend
+  src/hal/stub/perf_stub.c    no-counter stub
+include/olt/*.hpp, src/core/  C++17 harness: clock calibration, statistics, registry, reports
+src/benchmarks/               benchmarks, self-registered with OLT_BENCHMARK(...)
+```
+
+The HAL headers are plain C, so they can also be used from C code. To port:
+
+* **New CPU architecture**: add `include/olt/hal/arch/<arch>.h` implementing the
+  contract documented in `arch.h` and select it there.
+* **New OS**: implement `include/olt/hal/os.h` in `src/hal/<os>/` (and
+  optionally `perf.h`), then add it to the HAL selection in `CMakeLists.txt`.
+
+## Adding a benchmark
+
+```cpp
+#include "olt/benchmark.hpp"
+
+OLT_BENCHMARK("mem.example", "What is measured, precisely")
+{
+    ctx.add_result("mem.example", {{"size", "4K"}}, ctx.run_samples([&] {
+        const uint64_t t0 = olt::now_ns();
+        // ... operation under test ...
+        return static_cast<double>(olt::now_ns() - t0);
+    }));
+}
+```
+
+Add the file to the `os-latency-tests` target in `CMakeLists.txt`.

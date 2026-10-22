@@ -1,0 +1,13 @@
+#!/usr/bin/make -f
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
+%:
+	dh $@ --buildsystem=cmake
+
+override_dh_auto_configure:
+	dh_auto_configure -- -DOLT_WITH_PERF=ON -DOLT_BUILD_TESTS=ON
+
+# Only the unit tests: benchmark smoke runs are timing-sensitive and slow in
+# build chroots. dh_auto_test is skipped automatically when cross-building.
+override_dh_auto_test:
+	dh_auto_test -- ARGS="-R unit_tests --output-on-failure"

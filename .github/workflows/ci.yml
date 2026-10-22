@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  native:
+    name: x86-64 ${{ matrix.compiler }} ${{ matrix.variant }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { compiler: gcc,   cc: gcc,   cxx: g++,     variant: default, flags: "" }
+          - { compiler: clang, cc: clang, cxx: clang++, variant: default, flags: "" }
+          - { compiler: gcc,   cc: gcc,   cxx: g++,     variant: generic-no-perf, flags: "-DOLT_FORCE_GENERIC_ARCH=ON -DOLT_WITH_PERF=OFF" }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_C_COMPILER=${{ matrix.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} ${{ matrix.flags }}
+      - name: Build
+        run: cmake --build build -j
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+  aarch64-cross:
+    name: aarch64 cross-build (tests under qemu)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install cross toolchain
+        run: sudo apt-get update && sudo apt-get install -y g++-aarch64-linux-gnu qemu-user
+      - name: Configure
+        run: cmake -S . -B build-arm64 -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/aarch64-linux-gnu.cmake
+      - name: Build
+        run: cmake --build build-arm64 -j
+      - name: Test
+        run: ctest --test-dir build-arm64 --output-on-failure
+      - uses: actions/upload-artifact@v4
+        with:
+          name: os-latency-tests-aarch64
+          path: build-arm64/os-latency-tests
+
+  deb:
+    name: Debian package (amd64)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install packaging tools
+        run: sudo apt-get update && sudo apt-get install -y debhelper dpkg-dev cmake g++ linux-libc-dev
+      - name: Build package
+        run: dpkg-buildpackage -us -uc -b
+      - name: Collect
+        run: mkdir -p dist && mv ../*.deb dist/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: os-latency-tests-deb-amd64
+          path: dist/*.deb
