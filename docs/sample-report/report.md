@@ -14,6 +14,9 @@ Intel(R) Xeon(R) Processor @ 2.10GHz · x86_64 · Linux 6.18.44-fc-v140 [PREEMPT
 | Run | 10000 samples, affinity different (CPU 3/2), RT priority 80, mlock on |
 | Compiler | gcc 13.3.0 (RelWithDebInfo) |
 
+> [!WARNING]
+> Hot path only: the techniques these results justify (spinning instead of blocking, lock-free queues, pinning, cache-sized buffers, arenas, branchless code, intrinsics) trade readability, maintainability and portability for nanoseconds. Apply them only to the measured hot path of ultra-low-latency or high-performance code, after profiling shows it matters, and keep the rest simple and portable. The numbers are for this machine; re-measure on each target.
+
 - [Design hints for this machine](#hints)
 - [Memory hierarchy](#memory)
 - [Blocking wake-up latency](#sync)
