@@ -185,6 +185,70 @@ void* olt_os_alloc_buffer(size_t size, int huge)
     return p;
 }
 
+uint64_t olt_os_memory_available(void)
+{
+    FILE* f = fopen("/proc/meminfo", "r");
+    if (!f) return 0;
+    char line[256];
+    unsigned long long kb = 0;
+    while (fgets(line, sizeof(line), f))
+        if (sscanf(line, "MemAvailable: %llu kB", &kb) == 1) break;
+    fclose(f);
+    return (uint64_t)kb * 1024ull;
+}
+
+/* Reads busy/total jiffies for "cpu" (index -1) and "cpuN" lines. */
+static int read_cpu_times(unsigned long long* busy, unsigned long long* total, int max_cpus)
+{
+    FILE* f = fopen("/proc/stat", "r");
+    if (!f) return errno ? errno : ENOENT;
+    for (int i = 0; i <= max_cpus; ++i) busy[i] = total[i] = 0;
+    char line[512];
+    while (fgets(line, sizeof(line), f)) {
+        if (strncmp(line, "cpu", 3) != 0) break;
+        int idx = -1;
+        const char* p = line + 3;
+        if (isdigit((unsigned char)*p)) idx = atoi(p);
+        while (*p && !isspace((unsigned char)*p)) ++p;
+        unsigned long long v[10] = {0};
+        int n = sscanf(p, "%llu %llu %llu %llu %llu %llu %llu %llu %llu %llu",
+                       &v[0], &v[1], &v[2], &v[3], &v[4], &v[5], &v[6], &v[7], &v[8], &v[9]);
+        if (n < 4 || idx >= max_cpus) continue;
+        unsigned long long t = 0;
+        for (int k = 0; k < n && k < 8; ++k) t += v[k]; /* guest time is already in user */
+        const unsigned long long idle = v[3] + (n > 4 ? v[4] : 0); /* idle + iowait */
+        busy[idx + 1] = t - idle;
+        total[idx + 1] = t;
+    }
+    fclose(f);
+    return 0;
+}
+
+int olt_os_cpu_busy(unsigned sample_ms, double* overall, double* per_cpu, int max_cpus)
+{
+    if (max_cpus < 0) max_cpus = 0;
+    unsigned long long *b0 = calloc((size_t)max_cpus + 1, sizeof(*b0)), *t0 = calloc((size_t)max_cpus + 1, sizeof(*t0));
+    unsigned long long *b1 = calloc((size_t)max_cpus + 1, sizeof(*b1)), *t1 = calloc((size_t)max_cpus + 1, sizeof(*t1));
+    int rc = (b0 && t0 && b1 && t1) ? read_cpu_times(b0, t0, max_cpus) : ENOMEM;
+    if (rc == 0) {
+        struct timespec ts = {(time_t)(sample_ms / 1000), (long)(sample_ms % 1000) * 1000000L};
+        nanosleep(&ts, NULL);
+        rc = read_cpu_times(b1, t1, max_cpus);
+    }
+    if (rc == 0) {
+        for (int i = 0; i <= max_cpus; ++i) {
+            const unsigned long long dt = t1[i] - t0[i];
+            const double frac = dt ? (double)(b1[i] - b0[i]) / (double)dt : -1.0;
+            if (i == 0) { if (overall) *overall = frac; }
+            else if (per_cpu) per_cpu[i - 1] = frac;
+        }
+    }
+    free(b0); free(t0); free(b1); free(t1);
+    return rc;
+}
+
+int olt_os_stdin_is_terminal(void) { return isatty(STDIN_FILENO); }
+
 void olt_os_free_buffer(void* p, size_t size)
 {
     if (p) munmap(p, size);

@@ -148,6 +148,7 @@ p99.99 needs 100 000).
 | `--hugepages` | back the sweep buffer with transparent huge pages, removing most TLB misses |
 | `-o, --out DIR` | output directory (default `olt-results`) |
 | `--no-raw` | skip per-sample CSV files |
+| `-y, --yes` | run without asking when pre-flight checks warn |
 
 ## Output
 
@@ -272,6 +273,19 @@ sockets slowest. Use it to choose where producer/consumer pairs run, for
 example with `--cpus A,B` for the SPSC patterns.
 
 ## Measurement hygiene
+
+Before measuring, pre-flight checks look for conditions that make results
+noisy and print a warning for each:
+
+* the CPU frequency governor of the benchmark CPUs is not `performance`;
+* the benchmark CPUs (or the whole system) are already busy with other work,
+  sampled from `/proc/stat` for 300 ms;
+* little memory is available (less than 10% of RAM, or less than the memory
+  sweep needs).
+
+In an interactive terminal the tool then asks whether to continue anyway;
+`--yes` skips the question, and non-interactive runs (scripts, CI) continue.
+Warnings are stored in `results.json` and shown at the top of the report.
 
 Before each benchmark the main and worker CPUs are busy-spun for
 `--cpu-warmup-ms` (200 ms) so frequency scaling has left its idle clocks, and

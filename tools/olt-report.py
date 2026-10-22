@@ -565,6 +565,8 @@ th { color: var(--text-2); font-weight: 600; }
 td.unrel { color: var(--muted); }
 ul.tips li { margin: 4px 0; }
 .note { color: var(--text-2); font-size: 12px; }
+.warn { border: 1px solid var(--grid); border-left: 4px solid #eda100; border-radius: 6px; padding: 8px 12px; margin: 12px 0; }
+.warn ul { margin: 4px 0 0; padding-left: 20px; }
 .missing { color: var(--text-2); border: 1px dashed var(--grid); border-radius: 6px; padding: 8px 12px; }
 """
 
@@ -835,6 +837,9 @@ def build_report(doc, src_path, charts_dir):
         ("Compiler", f"{plat.get('compiler', '')} ({plat.get('build_type', '')})"),
     ]
     out.append("<dl class='plat'>" + "".join(f"<dt>{e(k)}</dt><dd>{e(str(v))}</dd>" for k, v in rows) + "</dl>")
+    if doc.get("warnings"):
+        out.append("<div class='warn'><b>⚠ Pre-flight warnings: results may be noisy</b><ul>"
+                   + "".join(f"<li>{e(w)}</li>" for w in doc["warnings"]) + "</ul></div>")
     out.append("<nav>" + "".join(f"<a href='#{a}'>{e(t)}</a>" for a, t, _ in sections) + "</nav>")
     for a, t, body in sections:
         out.append(f"<h2 id='{a}'>{e(t)}</h2>{body}")

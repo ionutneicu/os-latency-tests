@@ -182,7 +182,7 @@ void print_table_row(std::ostream& os, const SummarizedResult& r)
 }
 
 void write_json(const std::string& path, const PlatformInfo& p, const Config& cfg,
-                const std::vector<SummarizedResult>& results)
+                const std::vector<SummarizedResult>& results, const std::vector<std::string>& warnings)
 {
     std::ofstream f(path);
     if (!f) throw std::runtime_error("cannot write " + path);
@@ -232,6 +232,9 @@ void write_json(const std::string& path, const PlatformInfo& p, const Config& cf
       << ", \"cpu_warmup_ms\": " << cfg.cpu_warmup_ms << ", \"sweep_samples\": " << cfg.sweep_samples << ", \"hugepages\": " << (cfg.hugepages ? "true" : "false")
       << "},\n";
 
+    f << "  \"warnings\": [";
+    for (size_t i = 0; i < warnings.size(); ++i) f << (i ? ", " : "") << q(warnings[i]);
+    f << "],\n";
     f << "  \"results\": [";
     for (size_t i = 0; i < results.size(); ++i) {
         const Result& r = *results[i].result;

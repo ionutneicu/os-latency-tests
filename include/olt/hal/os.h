@@ -51,6 +51,14 @@ int olt_os_restore_owner(const char* path);
 
 /* Physical RAM in bytes, 0 if unknown. */
 uint64_t olt_os_physical_memory(void);
+/* Memory available for new allocations without swapping, 0 if unknown. */
+uint64_t olt_os_memory_available(void);
+/* Fraction of time CPUs were busy over a sample_ms window (0..1), system wide
+ * in *overall and per CPU index in per_cpu[0..max_cpus) (-1 where unknown).
+ * The caller sleeps during the window, so it measures other activity. */
+int olt_os_cpu_busy(unsigned sample_ms, double* overall, double* per_cpu, int max_cpus);
+/* Non-zero if standard input is an interactive terminal. */
+int olt_os_stdin_is_terminal(void);
 /* Page-aligned anonymous buffer, every page touched (no first-use faults later).
  * huge != 0 asks for transparent huge pages, huge == 0 forbids them so TLB
  * effects of base pages stay visible. Returns NULL on failure. */

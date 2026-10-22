@@ -14,6 +14,7 @@
 #include "olt/clock.hpp"
 #include "olt/hal/os.h"
 #include "olt/platform.hpp"
+#include "olt/preflight.hpp"
 #include "olt/report.hpp"
 #include "olt/stats.hpp"
 
@@ -26,6 +27,7 @@ struct Options {
     std::string out_dir = "olt-results";
     bool list = false;
     bool raw = true;
+    bool assume_yes = false;
 };
 
 void usage(const char* argv0)
@@ -57,6 +59,7 @@ void usage(const char* argv0)
         << "                             TLB misses; default uses base pages so TLB effects show)\n"
         << "  -o, --out DIR              output directory for results.json and raw/ (default olt-results)\n"
         << "      --no-raw               do not write raw per-sample CSV files\n"
+        << "  -y, --yes                  do not ask before running when pre-flight checks warn\n"
         << "  -h, --help                 show this help\n\n"
         << "Percentiles marked '~' have fewer than ~10 samples beyond them and are not statistically reliable;\n"
         << "increase --samples (p99.99 needs >= 100000).\n";
@@ -113,6 +116,7 @@ Options parse_args(int argc, char** argv)
         else if (a == "--hugepages") o.config.hugepages = true;
         else if (a == "-o" || a == "--out") o.out_dir = value();
         else if (a == "--no-raw") o.raw = false;
+        else if (a == "-y" || a == "--yes") o.assume_yes = true;
         else if (a == "-a" || a == "--affinity") {
             const std::string v = value();
             if (v == "none") o.config.affinity = olt::Affinity::None;
@@ -221,6 +225,22 @@ int main(int argc, char** argv)
     resolve_cpus(opt);
     apply_main_thread_settings(opt.config);
 
+    // pre-flight: warn about conditions that make results noisy, and ask
+    olt::PreflightInput pin;
+    for (const auto* b : todo)
+        if (b->name.rfind("mem.", 0) == 0) pin.memory_sweep_selected = true;
+    const std::vector<std::string> warnings = olt::preflight_checks(opt.config, pin);
+    for (const auto& w : warnings) std::cerr << "warning: " << w << "\n";
+    if (!warnings.empty() && !opt.assume_yes && olt_os_stdin_is_terminal()) {
+        std::cerr << "Results may not be accurate. Continue anyway? [y/N] " << std::flush;
+        std::string answer;
+        std::getline(std::cin, answer);
+        if (answer.empty() || (answer[0] != 'y' && answer[0] != 'Y')) {
+            std::cerr << "Aborted. Fix the warnings above, or run with --yes to ignore them.\n";
+            return 1;
+        }
+    }
+
     const olt::TickCalibration cal = olt::calibrate_ticks();
     const olt::TimerOverhead timer = olt::measure_timer_overhead(cal);
     const olt::PlatformInfo platform = olt::collect_platform_info(opt.config.main_cpu, cal, timer);
@@ -251,7 +271,7 @@ int main(int argc, char** argv)
     if (opt.raw)
         for (const auto& r : ctx.results()) olt::write_raw_csv((fs::path(opt.out_dir) / "raw").string(), r);
     const std::string json = (fs::path(opt.out_dir) / "results.json").string();
-    olt::write_json(json, platform, opt.config, summaries);
+    olt::write_json(json, platform, opt.config, summaries, warnings);
 
     // under sudo, hand the results back to the invoking user
     olt_os_restore_owner(opt.out_dir.c_str());

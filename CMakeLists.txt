@@ -57,6 +57,7 @@ add_library(olt_core STATIC
   src/core/benchmark.cpp
   src/core/clock.cpp
   src/core/platform.cpp
+  src/core/preflight.cpp
   src/core/report.cpp
   src/core/stats.cpp
 )
