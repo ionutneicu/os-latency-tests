@@ -16,6 +16,19 @@ benchmarks.
 
 ## Quick start
 
+One command builds, runs every benchmark and opens the report:
+
+```sh
+sudo apt install build-essential cmake linux-libc-dev python3
+./run-all.sh            # full run, asks for sudo (RT priority, mlock, deep idle blocked)
+./run-all.sh --quick    # ~20 s smoke run; --no-sudo for an unprivileged run
+```
+
+Results go to `results/<host>-<timestamp>/`: `report.html`, every chart as a
+standalone SVG in `charts/`, `results.json` and raw samples in `raw/`.
+
+Step by step:
+
 ```sh
 sudo apt install build-essential cmake        # see "Build dependencies"
 cmake -S . -B build
@@ -118,6 +131,10 @@ type 7, the NumPy/R default).
 `tools/olt-report.py` (Python 3 standard library only, so it also runs on the
 board) turns a `results.json` into one self-contained HTML file:
 
+* **latency distributions**: a percentile curve (min to p99.99+, from the raw
+  samples) per benchmark group, e.g. mutex vs condvar wake-up, thread start vs
+  join;
+* **malloc/free latency vs block size** (p50 and p99);
 * **random load latency vs working-set size** (log scale) and **sequential
   read/write bandwidth vs size**, with the cache sizes reported by the OS drawn
   as bands, so every drop in performance can be matched to the L1/L2/LLC
@@ -127,6 +144,9 @@ board) turns a `results.json` into one self-contained HTML file:
 * **design hints** derived from the measurements (e.g. the cost ratio of a
   DRAM miss to an L1 hit and the working-set sizes to aim for);
 * a percentile table for every other benchmark.
+
+Every chart is also written as a standalone SVG file to `charts/` next to the
+report, for slides and documents.
 
 ```sh
 python3 tools/olt-report.py olt-results/results.json -o report.html
