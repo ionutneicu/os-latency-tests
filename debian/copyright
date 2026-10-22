@@ -1,0 +1,9 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: os-latency-tests
+Source: https://github.com/ionutneicu/os-latency-tests
+
+Files: *
+Copyright: 2022-2026 Ionut Neicu
+License: TODO
+ The project license has not been chosen yet. Replace this stanza once a
+ LICENSE file is added to the repository.

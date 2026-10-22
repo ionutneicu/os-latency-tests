@@ -1,0 +1,785 @@
+<!doctype html><html lang='en'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'><title>Latency report</title><style>
+:root {
+  color-scheme: light;
+  --surface: #fcfcfb; --text: #0b0b0b; --text-2: #52514e; --muted: #8a8984;
+  --grid: #e4e3df; --zone-a: #f3f2ef; --zone-b: #fcfcfb;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #6250d6; --s5: #e87ba4;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --surface: #1a1a19; --text: #f0efec; --text-2: #c3c2b7; --muted: #8f8e88;
+    --grid: #33332f; --zone-a: #232322; --zone-b: #1a1a19;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #9085e9; --s5: #d55181;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --surface: #1a1a19; --text: #f0efec; --text-2: #c3c2b7; --muted: #8f8e88;
+  --grid: #33332f; --zone-a: #232322; --zone-b: #1a1a19;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #9085e9; --s5: #d55181;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--surface); color: var(--text);
+  font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 48px; }
+h1 { font-size: 22px; margin: 0 0 4px; }
+h2 { font-size: 17px; margin: 32px 0 4px; }
+nav { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 8px 0 16px; font-size: 13px; }
+nav a { color: var(--text-2); }
+p.sub { color: var(--text-2); margin: 0 0 12px; }
+dl.plat { display: grid; grid-template-columns: max-content 1fr; gap: 2px 16px; margin: 12px 0; }
+dl.plat dt { color: var(--text-2); }
+dl.plat dd { margin: 0; overflow-wrap: anywhere; }
+.chart { position: relative; margin: 8px 0 4px; }
+.chart svg { width: 100%; height: auto; display: block; }
+.chart .ax { fill: var(--text-2); font-size: 12px; }
+.chart .zlabel { fill: var(--muted); font-size: 12px; font-weight: 600; }
+.chart .grid { stroke: var(--grid); }
+.chart .zone-a { fill: var(--zone-a); } .chart .zone-b { fill: var(--zone-b); }
+.chart .marker { stroke: var(--muted); }
+.chart .cross { stroke: var(--text-2); }
+.chart .hit { fill: transparent; }
+.s1 { stroke: var(--s1); } .s2 { stroke: var(--s2); } .s3 { stroke: var(--s3); } .s4 { stroke: var(--s4); }
+.s5 { stroke: var(--s5); } .f5 { fill: var(--s5); background: var(--s5); }
+.f1 { fill: var(--s1); background: var(--s1); } .f2 { fill: var(--s2); background: var(--s2); }
+.f3 { fill: var(--s3); background: var(--s3); } .f4 { fill: var(--s4); background: var(--s4); }
+.chart circle { stroke: var(--surface); stroke-width: 1.5; }
+.dl { font-size: 12px; color: var(--text-2); }
+.dl a { color: var(--text-2); }
+.tip { position: absolute; pointer-events: none; background: var(--surface); color: var(--text);
+  border: 1px solid var(--grid); border-radius: 6px; padding: 6px 8px; font-size: 12px; top: 28px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.12); white-space: nowrap; display: none; z-index: 1; }
+.tip b { font-weight: 600; }
+.tip i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; font-size: 13px; }
+th, td { text-align: right; padding: 4px 8px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+th { color: var(--text-2); font-weight: 600; }
+td.unrel { color: var(--muted); }
+ul.tips li { margin: 4px 0; }
+.note { color: var(--text-2); font-size: 12px; }
+.warn { border: 1px solid var(--grid); border-left: 4px solid #eda100; border-radius: 6px; padding: 8px 12px; margin: 12px 0; }
+.warn ul { margin: 4px 0 0; padding-left: 20px; }
+.missing { color: var(--text-2); border: 1px dashed var(--grid); border-radius: 6px; padding: 8px 12px; }
+</style></head><body><main>
+<h1>Latency report</h1><p class='sub'>Intel(R) Xeon(R) Processor @ 2.10GHz · x86_64 · Linux 6.18.44-fc-v140 [PREEMPT_DYNAMIC]</p>
+<dl class='plat'><dt>CPUs</dt><dd>4 online</dd><dt>Data caches</dt><dd>L1 48 KiB, 12-way, per core; L2 2 MiB, 16-way, per core; L3 260 MiB, 20-way, shared by CPUs 0-3</dd><dt>Cache line</dt><dd>64 B</dd><dt>Memory</dt><dd>15.7 GiB</dd><dt>Huge pages</dt><dd>THP madvise; sweep used base pages</dd><dt>Power</dt><dd>governor n/a, cpuidle none, deep idle blocked during run</dd><dt>Perf counters</dt><dd>linux-perf_event: context_switches, cpu_migrations, page_faults</dd><dt>Run</dt><dd>10000 samples, affinity different (CPU 3/2), RT priority 80, mlock on</dd><dt>Compiler</dt><dd>gcc 13.3.0 (RelWithDebInfo)</dd></dl>
+<nav><a href='#hints'>Design hints for this machine</a><a href='#memory'>Memory hierarchy</a><a href='#sync'>Blocking wake-up latency</a><a href='#thread'>Thread lifecycle</a><a href='#alloc'>Heap allocator</a><a href='#multicore'>Multicore communication</a><a href='#patterns'>Design patterns</a><a href='#table'>All latency results</a></nav>
+<h2 id='hints'>Design hints for this machine</h2><ul class='tips'><li>A random access that misses all caches costs about 175x an L1 hit (292 ns vs 1.67 ns). Keep the data a hot loop touches under ~36 KiB per core where possible.</li><li>Working sets up to ~1.5 MiB still get L2 latency (6.14 ns): size per-thread buffers, lookup tables and queues to fit there.</li><li>Beyond the last cache, sequential reads cost 8.1 ns per 64-byte line vs 292 ns per random access: prefer contiguous arrays and streaming over pointer-heavy structures.</li><li>A blocking hand-off (mutex/condvar wake-up) costs 39.1 us typically and 215 us at p99: avoid blocking on the critical path below that budget.</li><li>Starting a thread costs 6.72 us typically but 79 us at p99 (max 5.06 ms): reuse threads from a pool instead of spawning per task.</li><li>Thread-to-thread hand-off: a blocking mutex+condvar queue takes 13.4 us (p99 38.2 us), a polling lock-free SPSC ring 387 ns (p99 632 ns): 35x faster, at the price of a core spinning while it waits. Give each polling thread its own core.</li><li>Streaming between two threads: lockfree_cached moves 29.7 M items/s, 12.1x more than spinlock.</li><li>Node-based containers: a std::pmr::monotonic_buffer_resource arena makes building a list 4.2x cheaper than new/delete (6.88 ns vs 29.1 ns per node). Use arenas for short-lived, per-request or per-frame data that is freed all at once.</li><li>std::vector: reserve() up front saves 27% of the build cost by avoiding regrowth copies.</li></ul>
+<h2 id='memory'>Memory hierarchy</h2><p class='sub'>Dependent loads in random order through a buffer of the given size, so hardware prefetchers cannot help. Each step up is the working set spilling out of a cache level; dashed lines are the cache sizes reported by the OS. Band: min to p90 across samples.</p>
+<!--md:![Random load latency vs working set](charts/mem-latency.svg)--><div class='chart'><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 420" role="img" aria-label="Random load latency vs working set">
+<rect class="zone-a" x="72.0" y="30" width="266.9" height="312"/>
+<text class="zlabel" x="205.5" y="20" text-anchor="middle">L1</text>
+<rect class="zone-b" x="338.9" y="30" width="258.8" height="312"/>
+<text class="zlabel" x="468.3" y="20" text-anchor="middle">L2</text>
+<rect class="zone-a" x="597.7" y="30" width="335.6" height="312"/>
+<text class="zlabel" x="765.5" y="20" text-anchor="middle">L3</text>
+<rect class="zone-b" x="933.3" y="30" width="46.7" height="312"/>
+<text class="zlabel" x="956.6" y="20" text-anchor="middle">DRAM</text>
+<line class="grid" x1="72" x2="980" y1="315.4" y2="315.4"/>
+<text class="ax" x="64" y="319.4" text-anchor="end">2 ns</text>
+<line class="grid" x1="72" x2="980" y1="266.8" y2="266.8"/>
+<text class="ax" x="64" y="270.8" text-anchor="end">5 ns</text>
+<line class="grid" x1="72" x2="980" y1="230.1" y2="230.1"/>
+<text class="ax" x="64" y="234.1" text-anchor="end">10 ns</text>
+<line class="grid" x1="72" x2="980" y1="193.3" y2="193.3"/>
+<text class="ax" x="64" y="197.3" text-anchor="end">20 ns</text>
+<line class="grid" x1="72" x2="980" y1="144.7" y2="144.7"/>
+<text class="ax" x="64" y="148.7" text-anchor="end">50 ns</text>
+<line class="grid" x1="72" x2="980" y1="108.0" y2="108.0"/>
+<text class="ax" x="64" y="112.0" text-anchor="end">100 ns</text>
+<line class="grid" x1="72" x2="980" y1="71.2" y2="71.2"/>
+<text class="ax" x="64" y="75.2" text-anchor="end">200 ns</text>
+<text class="ax" x="72.0" y="360" text-anchor="middle">1K</text>
+<text class="ax" x="167.6" y="360" text-anchor="middle">4K</text>
+<text class="ax" x="263.2" y="360" text-anchor="middle">16K</text>
+<text class="ax" x="358.7" y="360" text-anchor="middle">64K</text>
+<text class="ax" x="454.3" y="360" text-anchor="middle">256K</text>
+<text class="ax" x="549.9" y="360" text-anchor="middle">1M</text>
+<text class="ax" x="645.5" y="360" text-anchor="middle">4M</text>
+<text class="ax" x="741.1" y="360" text-anchor="middle">16M</text>
+<text class="ax" x="836.6" y="360" text-anchor="middle">64M</text>
+<text class="ax" x="932.2" y="360" text-anchor="middle">256M</text>
+<line class="marker" x1="338.9" x2="338.9" y1="30" y2="342" stroke-dasharray="4 3"/>
+<line class="marker" x1="597.7" x2="597.7" y1="30" y2="342" stroke-dasharray="4 3"/>
+<line class="marker" x1="933.3" x2="933.3" y1="30" y2="342" stroke-dasharray="4 3"/>
+<text class="ax" x="526.0" y="382" text-anchor="middle">working set (buffer size)</text>
+<text class="ax" x="16" y="186.0" transform="rotate(-90 16 186.0)" text-anchor="middle">ns per load (log)</text>
+<polygon class="f1" opacity="0.15" points="72.0,316.1 83.8,323.9 94.0,321.9 105.5,315.5 119.8,324.1 131.6,316.3 143.3,306.5 154.6,323.7 167.6,315.5 179.4,318.8 191.1,321.4 203.0,326.8 215.4,316.1 227.2,319.4 239.3,312.8 251.1,323.5 263.2,316.6 275.0,316.8 287.0,319.4 298.9,320.9 310.9,296.7 322.8,272.9 334.8,256.3 346.8,262.7 358.7,257.9 370.6,264.1 382.6,252.9 394.6,258.8 406.5,254.8 418.5,261.2 430.4,260.1 442.4,252.5 454.3,266.0 466.2,265.8 478.2,253.1 490.2,243.7 502.1,250.7 514.0,247.6 526.0,246.5 537.9,194.2 549.9,202.8 561.8,141.0 573.8,137.4 585.7,126.6 597.7,142.2 609.6,136.1 621.6,134.6 633.5,118.4 645.5,120.4 657.4,108.4 669.4,117.2 681.3,72.7 693.3,94.2 705.2,83.8 717.2,80.1 729.1,76.9 741.1,71.6 753.0,94.7 764.9,81.8 776.9,59.2 788.8,75.5 800.8,73.8 812.7,69.4 824.7,63.5 836.6,66.7 848.6,61.2 860.5,61.7 872.5,52.9 884.4,57.3 896.4,60.1 908.3,51.8 920.3,57.3 932.2,54.7 944.2,55.1 956.1,44.9 968.1,48.1 980.0,41.8 980.0,57.5 968.1,58.2 956.1,59.2 944.2,65.2 932.2,70.9 920.3,65.0 908.3,66.6 896.4,74.4 884.4,70.7 872.5,74.4 860.5,77.0 848.6,79.7 836.6,79.4 824.7,92.0 812.7,93.5 800.8,93.6 788.8,115.9 776.9,95.3 764.9,118.5 753.0,113.1 741.1,102.8 729.1,114.5 717.2,110.0 705.2,107.4 693.3,114.3 681.3,109.7 669.4,134.5 657.4,145.5 645.5,138.9 633.5,137.4 621.6,145.6 609.6,151.7 597.7,144.4 585.7,192.3 573.8,239.8 561.8,222.7 549.9,249.8 537.9,239.4 526.0,252.7 514.0,253.9 502.1,257.3 490.2,274.9 478.2,268.4 466.2,268.4 454.3,268.1 442.4,261.1 430.4,267.2 418.5,266.7 406.5,267.9 394.6,266.0 382.6,259.8 370.6,268.2 358.7,265.8 346.8,268.4 334.8,264.1 322.8,277.5 310.9,304.6 298.9,329.2 287.0,329.5 275.0,327.6 263.2,328.3 251.1,328.9 239.3,321.2 227.2,329.0 215.4,322.6 203.0,330.2 191.1,329.2 179.4,323.9 167.6,326.6 154.6,329.7 143.3,327.1 131.6,327.3 119.8,329.0 105.5,329.3 94.0,329.3 83.8,328.8 72.0,329.3"/>
+<polyline class="s1" fill="none" stroke-width="2" stroke-linejoin="round" points="72.0,324.5 83.8,327.7 94.0,327.6 105.5,324.1 119.8,327.3 131.6,323.8 143.3,325.0 154.6,328.5 167.6,321.7 179.4,322.9 191.1,328.4 203.0,329.2 215.4,320.7 227.2,327.6 239.3,319.2 251.1,327.7 263.2,319.6 275.0,322.7 287.0,328.1 298.9,328.7 310.9,300.1 322.8,275.4 334.8,260.6 346.8,266.7 358.7,260.2 370.6,267.0 382.6,255.9 394.6,261.3 406.5,264.0 418.5,263.5 430.4,263.2 442.4,256.0 454.3,267.4 466.2,267.1 478.2,260.3 490.2,249.8 502.1,253.7 514.0,251.5 526.0,249.0 537.9,223.6 549.9,238.0 561.8,153.6 573.8,154.0 585.7,132.1 597.7,143.1 609.6,142.1 621.6,136.9 633.5,129.2 645.5,124.3 657.4,128.2 669.4,123.6 681.3,78.3 693.3,97.3 705.2,101.9 717.2,82.4 729.1,84.6 741.1,89.1 753.0,98.7 764.9,99.7 776.9,73.9 788.8,77.8 800.8,77.8 812.7,72.9 824.7,67.4 836.6,72.7 848.6,70.9 860.5,70.8 872.5,64.0 884.4,67.0 896.4,66.8 908.3,55.7 920.3,61.6 932.2,59.6 944.2,59.6 956.1,50.1 968.1,50.8 980.0,51.3"/>
+<rect class="hit" x="72.0" y="30" width="5.9" height="312" data-x="72.0" data-tip="&lt;b&gt;1 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;1.69 ns&lt;/b&gt;"/>
+<rect class="hit" x="77.9" y="30" width="11.0" height="312" data-x="83.8" data-tip="&lt;b&gt;1.19 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;1.59 ns&lt;/b&gt;"/>
+<rect class="hit" x="88.9" y="30" width="10.8" height="312" data-x="94.0" data-tip="&lt;b&gt;1.38 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;1.59 ns&lt;/b&gt;"/>
+<rect class="hit" x="99.7" y="30" width="12.9" height="312" data-x="105.5" data-tip="&lt;b&gt;1.62 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;1.7 ns&lt;/b&gt;"/>
+<rect class="hit" x="112.6" y="30" width="13.1" height="312" data-x="119.8" data-tip="&lt;b&gt;2 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;1.6 ns&lt;/b&gt;"/>
+<rect class="hit" x="125.7" y="30" width="11.8" height="312" data-x="131.6" data-tip="&lt;b&gt;2.38 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;1.71 ns&lt;/b&gt;"/>
+<rect class="hit" x="137.5" y="30" width="11.5" height="312" data-x="143.3" data-tip="&lt;b&gt;2.81 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;1.67 ns&lt;/b&gt;"/>
+<rect class="hit" x="148.9" y="30" width="12.1" height="312" data-x="154.6" data-tip="&lt;b&gt;3.31 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;1.56 ns&lt;/b&gt;"/>
+<rect class="hit" x="161.1" y="30" width="12.4" height="312" data-x="167.6" data-tip="&lt;b&gt;4 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;1.78 ns&lt;/b&gt;"/>
+<rect class="hit" x="173.5" y="30" width="11.8" height="312" data-x="179.4" data-tip="&lt;b&gt;4.75 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;1.74 ns&lt;/b&gt;"/>
+<rect class="hit" x="185.3" y="30" width="11.8" height="312" data-x="191.1" data-tip="&lt;b&gt;5.62 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;1.57 ns&lt;/b&gt;"/>
+<rect class="hit" x="197.0" y="30" width="12.1" height="312" data-x="203.0" data-tip="&lt;b&gt;6.69 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;1.54 ns&lt;/b&gt;"/>
+<rect class="hit" x="209.2" y="30" width="12.1" height="312" data-x="215.4" data-tip="&lt;b&gt;8 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;1.81 ns&lt;/b&gt;"/>
+<rect class="hit" x="221.3" y="30" width="11.9" height="312" data-x="227.2" data-tip="&lt;b&gt;9.5 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;1.59 ns&lt;/b&gt;"/>
+<rect class="hit" x="233.2" y="30" width="12.0" height="312" data-x="239.3" data-tip="&lt;b&gt;11.3 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;1.86 ns&lt;/b&gt;"/>
+<rect class="hit" x="245.2" y="30" width="12.0" height="312" data-x="251.1" data-tip="&lt;b&gt;13.4 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;1.59 ns&lt;/b&gt;"/>
+<rect class="hit" x="257.1" y="30" width="11.9" height="312" data-x="263.2" data-tip="&lt;b&gt;16 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;1.85 ns&lt;/b&gt;"/>
+<rect class="hit" x="269.1" y="30" width="11.9" height="312" data-x="275.0" data-tip="&lt;b&gt;19 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;1.74 ns&lt;/b&gt;"/>
+<rect class="hit" x="281.0" y="30" width="12.0" height="312" data-x="287.0" data-tip="&lt;b&gt;22.6 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;1.57 ns&lt;/b&gt;"/>
+<rect class="hit" x="293.0" y="30" width="12.0" height="312" data-x="298.9" data-tip="&lt;b&gt;26.9 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;1.56 ns&lt;/b&gt;"/>
+<rect class="hit" x="304.9" y="30" width="11.9" height="312" data-x="310.9" data-tip="&lt;b&gt;32 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;2.67 ns&lt;/b&gt;"/>
+<rect class="hit" x="316.9" y="30" width="11.9" height="312" data-x="322.8" data-tip="&lt;b&gt;38 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;4.25 ns&lt;/b&gt;"/>
+<rect class="hit" x="328.8" y="30" width="12.0" height="312" data-x="334.8" data-tip="&lt;b&gt;45.2 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;5.63 ns&lt;/b&gt;"/>
+<rect class="hit" x="340.8" y="30" width="12.0" height="312" data-x="346.8" data-tip="&lt;b&gt;53.8 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;5.01 ns&lt;/b&gt;"/>
+<rect class="hit" x="352.8" y="30" width="11.9" height="312" data-x="358.7" data-tip="&lt;b&gt;64 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;5.66 ns&lt;/b&gt;"/>
+<rect class="hit" x="364.7" y="30" width="11.9" height="312" data-x="370.6" data-tip="&lt;b&gt;76.1 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;4.98 ns&lt;/b&gt;"/>
+<rect class="hit" x="376.6" y="30" width="12.0" height="312" data-x="382.6" data-tip="&lt;b&gt;90.5 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;6.14 ns&lt;/b&gt;"/>
+<rect class="hit" x="388.6" y="30" width="12.0" height="312" data-x="394.6" data-tip="&lt;b&gt;108 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;5.54 ns&lt;/b&gt;"/>
+<rect class="hit" x="400.5" y="30" width="11.9" height="312" data-x="406.5" data-tip="&lt;b&gt;128 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;5.28 ns&lt;/b&gt;"/>
+<rect class="hit" x="412.5" y="30" width="11.9" height="312" data-x="418.5" data-tip="&lt;b&gt;152 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;5.32 ns&lt;/b&gt;"/>
+<rect class="hit" x="424.4" y="30" width="12.0" height="312" data-x="430.4" data-tip="&lt;b&gt;181 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;5.35 ns&lt;/b&gt;"/>
+<rect class="hit" x="436.4" y="30" width="12.0" height="312" data-x="442.4" data-tip="&lt;b&gt;215 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;6.13 ns&lt;/b&gt;"/>
+<rect class="hit" x="448.3" y="30" width="11.9" height="312" data-x="454.3" data-tip="&lt;b&gt;256 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;4.95 ns&lt;/b&gt;"/>
+<rect class="hit" x="460.3" y="30" width="11.9" height="312" data-x="466.2" data-tip="&lt;b&gt;304 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;4.98 ns&lt;/b&gt;"/>
+<rect class="hit" x="472.2" y="30" width="12.0" height="312" data-x="478.2" data-tip="&lt;b&gt;362 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;5.65 ns&lt;/b&gt;"/>
+<rect class="hit" x="484.2" y="30" width="12.0" height="312" data-x="490.2" data-tip="&lt;b&gt;430 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;6.89 ns&lt;/b&gt;"/>
+<rect class="hit" x="496.1" y="30" width="11.9" height="312" data-x="502.1" data-tip="&lt;b&gt;512 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;6.41 ns&lt;/b&gt;"/>
+<rect class="hit" x="508.1" y="30" width="11.9" height="312" data-x="514.0" data-tip="&lt;b&gt;609 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;6.67 ns&lt;/b&gt;"/>
+<rect class="hit" x="520.0" y="30" width="12.0" height="312" data-x="526.0" data-tip="&lt;b&gt;724 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;7 ns&lt;/b&gt;"/>
+<rect class="hit" x="532.0" y="30" width="11.9" height="312" data-x="537.9" data-tip="&lt;b&gt;861 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;11.3 ns&lt;/b&gt;"/>
+<rect class="hit" x="543.9" y="30" width="11.9" height="312" data-x="549.9" data-tip="&lt;b&gt;1 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;8.6 ns&lt;/b&gt;"/>
+<rect class="hit" x="555.9" y="30" width="11.9" height="312" data-x="561.8" data-tip="&lt;b&gt;1.19 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;42.3 ns&lt;/b&gt;"/>
+<rect class="hit" x="567.8" y="30" width="11.9" height="312" data-x="573.8" data-tip="&lt;b&gt;1.41 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;41.9 ns&lt;/b&gt;"/>
+<rect class="hit" x="579.8" y="30" width="11.9" height="312" data-x="585.7" data-tip="&lt;b&gt;1.68 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;63.4 ns&lt;/b&gt;"/>
+<rect class="hit" x="591.7" y="30" width="11.9" height="312" data-x="597.7" data-tip="&lt;b&gt;2 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;51.5 ns&lt;/b&gt;"/>
+<rect class="hit" x="603.7" y="30" width="11.9" height="312" data-x="609.6" data-tip="&lt;b&gt;2.38 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;52.5 ns&lt;/b&gt;"/>
+<rect class="hit" x="615.6" y="30" width="11.9" height="312" data-x="621.6" data-tip="&lt;b&gt;2.83 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;57.9 ns&lt;/b&gt;"/>
+<rect class="hit" x="627.6" y="30" width="11.9" height="312" data-x="633.5" data-tip="&lt;b&gt;3.36 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;66.9 ns&lt;/b&gt;"/>
+<rect class="hit" x="639.5" y="30" width="11.9" height="312" data-x="645.5" data-tip="&lt;b&gt;4 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;73.5 ns&lt;/b&gt;"/>
+<rect class="hit" x="651.4" y="30" width="11.9" height="312" data-x="657.4" data-tip="&lt;b&gt;4.76 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;68.3 ns&lt;/b&gt;"/>
+<rect class="hit" x="663.4" y="30" width="11.9" height="312" data-x="669.4" data-tip="&lt;b&gt;5.66 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;74.5 ns&lt;/b&gt;"/>
+<rect class="hit" x="675.3" y="30" width="11.9" height="312" data-x="681.3" data-tip="&lt;b&gt;6.73 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;175 ns&lt;/b&gt;"/>
+<rect class="hit" x="687.3" y="30" width="11.9" height="312" data-x="693.3" data-tip="&lt;b&gt;8 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;122 ns&lt;/b&gt;"/>
+<rect class="hit" x="699.2" y="30" width="11.9" height="312" data-x="705.2" data-tip="&lt;b&gt;9.51 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;112 ns&lt;/b&gt;"/>
+<rect class="hit" x="711.2" y="30" width="11.9" height="312" data-x="717.2" data-tip="&lt;b&gt;11.3 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;162 ns&lt;/b&gt;"/>
+<rect class="hit" x="723.1" y="30" width="11.9" height="312" data-x="729.1" data-tip="&lt;b&gt;13.5 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;155 ns&lt;/b&gt;"/>
+<rect class="hit" x="735.1" y="30" width="11.9" height="312" data-x="741.1" data-tip="&lt;b&gt;16 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;143 ns&lt;/b&gt;"/>
+<rect class="hit" x="747.0" y="30" width="11.9" height="312" data-x="753.0" data-tip="&lt;b&gt;19 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;119 ns&lt;/b&gt;"/>
+<rect class="hit" x="759.0" y="30" width="11.9" height="312" data-x="764.9" data-tip="&lt;b&gt;22.6 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;117 ns&lt;/b&gt;"/>
+<rect class="hit" x="770.9" y="30" width="11.9" height="312" data-x="776.9" data-tip="&lt;b&gt;26.9 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;190 ns&lt;/b&gt;"/>
+<rect class="hit" x="782.9" y="30" width="11.9" height="312" data-x="788.8" data-tip="&lt;b&gt;32 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;177 ns&lt;/b&gt;"/>
+<rect class="hit" x="794.8" y="30" width="11.9" height="312" data-x="800.8" data-tip="&lt;b&gt;38.1 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;177 ns&lt;/b&gt;"/>
+<rect class="hit" x="806.8" y="30" width="11.9" height="312" data-x="812.7" data-tip="&lt;b&gt;45.3 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;194 ns&lt;/b&gt;"/>
+<rect class="hit" x="818.7" y="30" width="11.9" height="312" data-x="824.7" data-tip="&lt;b&gt;53.8 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;215 ns&lt;/b&gt;"/>
+<rect class="hit" x="830.7" y="30" width="11.9" height="312" data-x="836.6" data-tip="&lt;b&gt;64 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;195 ns&lt;/b&gt;"/>
+<rect class="hit" x="842.6" y="30" width="11.9" height="312" data-x="848.6" data-tip="&lt;b&gt;76.1 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;201 ns&lt;/b&gt;"/>
+<rect class="hit" x="854.6" y="30" width="11.9" height="312" data-x="860.5" data-tip="&lt;b&gt;90.5 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;201 ns&lt;/b&gt;"/>
+<rect class="hit" x="866.5" y="30" width="11.9" height="312" data-x="872.5" data-tip="&lt;b&gt;108 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;229 ns&lt;/b&gt;"/>
+<rect class="hit" x="878.4" y="30" width="11.9" height="312" data-x="884.4" data-tip="&lt;b&gt;128 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;216 ns&lt;/b&gt;"/>
+<rect class="hit" x="890.4" y="30" width="11.9" height="312" data-x="896.4" data-tip="&lt;b&gt;152 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;217 ns&lt;/b&gt;"/>
+<rect class="hit" x="902.3" y="30" width="11.9" height="312" data-x="908.3" data-tip="&lt;b&gt;181 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;268 ns&lt;/b&gt;"/>
+<rect class="hit" x="914.3" y="30" width="11.9" height="312" data-x="920.3" data-tip="&lt;b&gt;215 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;239 ns&lt;/b&gt;"/>
+<rect class="hit" x="926.2" y="30" width="11.9" height="312" data-x="932.2" data-tip="&lt;b&gt;256 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;249 ns&lt;/b&gt;"/>
+<rect class="hit" x="938.2" y="30" width="11.9" height="312" data-x="944.2" data-tip="&lt;b&gt;304 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits DRAM&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;249 ns&lt;/b&gt;"/>
+<rect class="hit" x="950.1" y="30" width="11.9" height="312" data-x="956.1" data-tip="&lt;b&gt;362 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits DRAM&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;298 ns&lt;/b&gt;"/>
+<rect class="hit" x="962.1" y="30" width="11.9" height="312" data-x="968.1" data-tip="&lt;b&gt;431 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits DRAM&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;294 ns&lt;/b&gt;"/>
+<rect class="hit" x="974.0" y="30" width="6.0" height="312" data-x="980.0" data-tip="&lt;b&gt;512 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits DRAM&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;random load latency (p50): &lt;b&gt;291 ns&lt;/b&gt;"/>
+<line class="cross" x1="0" x2="0" y1="30" y2="342" visibility="hidden"/>
+</svg></div><div class='dl'><a href='charts/mem-latency.svg'>mem-latency.svg</a></div><!--/md-->
+<p class='note'>Base pages were used, so latency past the TLB reach also includes page walks. Re-run with <code>--hugepages</code> to separate TLB misses from cache misses.</p>
+<p class='sub'>Streaming read and write over the same buffer: prefetchers are effective, so the drops are smaller than for random access and show each level's bandwidth.</p>
+<!--md:![Sequential bandwidth vs working set](charts/mem-bandwidth.svg)--><div class='chart'><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 420" role="img" aria-label="Sequential bandwidth vs working set">
+<rect class="zone-a" x="72.0" y="30" width="266.9" height="312"/>
+<text class="zlabel" x="205.5" y="20" text-anchor="middle">L1</text>
+<rect class="zone-b" x="338.9" y="30" width="258.8" height="312"/>
+<text class="zlabel" x="468.3" y="20" text-anchor="middle">L2</text>
+<rect class="zone-a" x="597.7" y="30" width="335.6" height="312"/>
+<text class="zlabel" x="765.5" y="20" text-anchor="middle">L3</text>
+<rect class="zone-b" x="933.3" y="30" width="46.7" height="312"/>
+<text class="zlabel" x="956.6" y="20" text-anchor="middle">DRAM</text>
+<line class="grid" x1="72" x2="980" y1="342.0" y2="342.0"/>
+<text class="ax" x="64" y="346.0" text-anchor="end">0</text>
+<line class="grid" x1="72" x2="980" y1="266.4" y2="266.4"/>
+<text class="ax" x="64" y="270.4" text-anchor="end">20</text>
+<line class="grid" x1="72" x2="980" y1="190.7" y2="190.7"/>
+<text class="ax" x="64" y="194.7" text-anchor="end">40</text>
+<line class="grid" x1="72" x2="980" y1="115.1" y2="115.1"/>
+<text class="ax" x="64" y="119.1" text-anchor="end">60</text>
+<line class="grid" x1="72" x2="980" y1="39.5" y2="39.5"/>
+<text class="ax" x="64" y="43.5" text-anchor="end">80</text>
+<text class="ax" x="72.0" y="360" text-anchor="middle">1K</text>
+<text class="ax" x="167.6" y="360" text-anchor="middle">4K</text>
+<text class="ax" x="263.2" y="360" text-anchor="middle">16K</text>
+<text class="ax" x="358.7" y="360" text-anchor="middle">64K</text>
+<text class="ax" x="454.3" y="360" text-anchor="middle">256K</text>
+<text class="ax" x="549.9" y="360" text-anchor="middle">1M</text>
+<text class="ax" x="645.5" y="360" text-anchor="middle">4M</text>
+<text class="ax" x="741.1" y="360" text-anchor="middle">16M</text>
+<text class="ax" x="836.6" y="360" text-anchor="middle">64M</text>
+<text class="ax" x="932.2" y="360" text-anchor="middle">256M</text>
+<line class="marker" x1="338.9" x2="338.9" y1="30" y2="342" stroke-dasharray="4 3"/>
+<line class="marker" x1="597.7" x2="597.7" y1="30" y2="342" stroke-dasharray="4 3"/>
+<line class="marker" x1="933.3" x2="933.3" y1="30" y2="342" stroke-dasharray="4 3"/>
+<text class="ax" x="526.0" y="382" text-anchor="middle">working set (buffer size)</text>
+<text class="ax" x="16" y="186.0" transform="rotate(-90 16 186.0)" text-anchor="middle">GB/s</text>
+<polyline class="s1" fill="none" stroke-width="2" stroke-linejoin="round" points="72.0,175.6 83.8,212.6 94.0,209.4 105.5,207.0 119.8,199.6 131.6,204.2 143.3,161.8 154.6,222.2 167.6,186.0 179.4,182.4 191.1,176.9 203.0,100.0 215.4,174.8 227.2,173.3 239.3,175.7 251.1,168.9 263.2,167.5 275.0,166.8 287.0,76.9 298.9,77.2 310.9,166.5 322.8,168.3 334.8,169.4 346.8,88.0 358.7,78.6 370.6,63.1 382.6,151.4 394.6,146.5 406.5,145.8 418.5,160.2 430.4,128.8 442.4,157.9 454.3,58.4 466.2,61.3 478.2,84.9 490.2,191.0 502.1,164.4 514.0,168.2 526.0,175.2 537.9,183.0 549.9,171.2 561.8,199.2 573.8,147.3 585.7,245.1 597.7,193.3 609.6,224.1 621.6,250.7 633.5,272.1 645.5,261.8 657.4,279.3 669.4,287.2 681.3,280.2 693.3,274.0 705.2,274.0 717.2,270.0 729.1,272.3 741.1,270.3 753.0,256.2 764.9,280.5 776.9,247.2 788.8,273.5 800.8,274.0 812.7,275.6 824.7,277.8 836.6,263.3 848.6,314.9 860.5,314.6 872.5,316.6 884.4,308.8 896.4,311.3 908.3,314.5 920.3,310.7 932.2,312.5 944.2,312.7 956.1,310.7 968.1,312.5 980.0,311.7"/>
+<polyline class="s2" fill="none" stroke-width="2" stroke-linejoin="round" points="72.0,282.0 83.8,277.6 94.0,277.7 105.5,277.9 119.8,274.6 131.6,269.7 143.3,258.0 154.6,269.5 167.6,269.7 179.4,266.9 191.1,265.3 203.0,265.8 215.4,265.1 227.2,266.0 239.3,264.6 251.1,263.5 263.2,264.1 275.0,272.2 287.0,225.8 298.9,249.5 310.9,265.3 322.8,267.8 334.8,267.7 346.8,222.6 358.7,212.0 370.6,214.5 382.6,259.9 394.6,259.5 406.5,264.3 418.5,257.3 430.4,262.7 442.4,219.1 454.3,219.2 466.2,221.2 478.2,224.0 490.2,265.4 502.1,273.6 514.0,273.1 526.0,270.1 537.9,284.6 549.9,271.2 561.8,275.7 573.8,247.3 585.7,279.3 597.7,249.5 609.6,281.4 621.6,288.2 633.5,292.6 645.5,258.8 657.4,295.1 669.4,305.6 681.3,299.6 693.3,298.1 705.2,290.3 717.2,293.9 729.1,291.4 741.1,277.0 753.0,274.4 764.9,299.1 776.9,267.9 788.8,288.4 800.8,288.0 812.7,285.5 824.7,289.1 836.6,281.9 848.6,321.9 860.5,317.0 872.5,319.5 884.4,320.3 896.4,319.7 908.3,319.9 920.3,318.7 932.2,319.6 944.2,320.3 956.1,320.4 968.1,320.2 980.0,318.6"/>
+<line class="s1" stroke-width="2" x1="72" x2="94" y1="404" y2="404"/>
+<text class="ax" x="100" y="408">read</text>
+<line class="s2" stroke-width="2" x1="140" x2="162" y1="404" y2="404"/>
+<text class="ax" x="168" y="408">write</text>
+<rect class="hit" x="72.0" y="30" width="5.9" height="312" data-x="72.0" data-tip="&lt;b&gt;1 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;44 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;15.9 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="77.9" y="30" width="11.0" height="312" data-x="83.8" data-tip="&lt;b&gt;1.19 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;34.2 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;17 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="88.9" y="30" width="10.8" height="312" data-x="94.0" data-tip="&lt;b&gt;1.38 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;35.1 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;17 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="99.7" y="30" width="12.9" height="312" data-x="105.5" data-tip="&lt;b&gt;1.62 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;35.7 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;16.9 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="112.6" y="30" width="13.1" height="312" data-x="119.8" data-tip="&lt;b&gt;2 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;37.7 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;17.8 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="125.7" y="30" width="11.8" height="312" data-x="131.6" data-tip="&lt;b&gt;2.38 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;36.5 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;19.1 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="137.5" y="30" width="11.5" height="312" data-x="143.3" data-tip="&lt;b&gt;2.81 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;47.6 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;22.2 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="148.9" y="30" width="12.1" height="312" data-x="154.6" data-tip="&lt;b&gt;3.31 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;31.7 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;19.2 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="161.1" y="30" width="12.4" height="312" data-x="167.6" data-tip="&lt;b&gt;4 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;41.3 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;19.1 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="173.5" y="30" width="11.8" height="312" data-x="179.4" data-tip="&lt;b&gt;4.75 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;42.2 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;19.9 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="185.3" y="30" width="11.8" height="312" data-x="191.1" data-tip="&lt;b&gt;5.62 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;43.6 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;20.3 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="197.0" y="30" width="12.1" height="312" data-x="203.0" data-tip="&lt;b&gt;6.69 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;64 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;20.2 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="209.2" y="30" width="12.1" height="312" data-x="215.4" data-tip="&lt;b&gt;8 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;44.2 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;20.3 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="221.3" y="30" width="11.9" height="312" data-x="227.2" data-tip="&lt;b&gt;9.5 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;44.6 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;20.1 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="233.2" y="30" width="12.0" height="312" data-x="239.3" data-tip="&lt;b&gt;11.3 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;44 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;20.5 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="245.2" y="30" width="12.0" height="312" data-x="251.1" data-tip="&lt;b&gt;13.4 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;45.8 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;20.8 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="257.1" y="30" width="11.9" height="312" data-x="263.2" data-tip="&lt;b&gt;16 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;46.1 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;20.6 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="269.1" y="30" width="11.9" height="312" data-x="275.0" data-tip="&lt;b&gt;19 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;46.3 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;18.5 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="281.0" y="30" width="12.0" height="312" data-x="287.0" data-tip="&lt;b&gt;22.6 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;70.1 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;30.7 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="293.0" y="30" width="12.0" height="312" data-x="298.9" data-tip="&lt;b&gt;26.9 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;70 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;24.5 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="304.9" y="30" width="11.9" height="312" data-x="310.9" data-tip="&lt;b&gt;32 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;46.4 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;20.3 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="316.9" y="30" width="11.9" height="312" data-x="322.8" data-tip="&lt;b&gt;38 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;45.9 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;19.6 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="328.8" y="30" width="12.0" height="312" data-x="334.8" data-tip="&lt;b&gt;45.2 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L1&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;45.7 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;19.6 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="340.8" y="30" width="12.0" height="312" data-x="346.8" data-tip="&lt;b&gt;53.8 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;67.2 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;31.6 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="352.8" y="30" width="11.9" height="312" data-x="358.7" data-tip="&lt;b&gt;64 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;69.6 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;34.4 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="364.7" y="30" width="11.9" height="312" data-x="370.6" data-tip="&lt;b&gt;76.1 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;73.8 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;33.7 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="376.6" y="30" width="12.0" height="312" data-x="382.6" data-tip="&lt;b&gt;90.5 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;50.4 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;21.7 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="388.6" y="30" width="12.0" height="312" data-x="394.6" data-tip="&lt;b&gt;108 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;51.7 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;21.8 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="400.5" y="30" width="11.9" height="312" data-x="406.5" data-tip="&lt;b&gt;128 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;51.9 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;20.6 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="412.5" y="30" width="11.9" height="312" data-x="418.5" data-tip="&lt;b&gt;152 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;48.1 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;22.4 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="424.4" y="30" width="12.0" height="312" data-x="430.4" data-tip="&lt;b&gt;181 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;56.4 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;21 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="436.4" y="30" width="12.0" height="312" data-x="442.4" data-tip="&lt;b&gt;215 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;48.7 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;32.5 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="448.3" y="30" width="11.9" height="312" data-x="454.3" data-tip="&lt;b&gt;256 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;75 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;32.5 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="460.3" y="30" width="11.9" height="312" data-x="466.2" data-tip="&lt;b&gt;304 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;74.2 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;31.9 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="472.2" y="30" width="12.0" height="312" data-x="478.2" data-tip="&lt;b&gt;362 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;68 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;31.2 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="484.2" y="30" width="12.0" height="312" data-x="490.2" data-tip="&lt;b&gt;430 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;39.9 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;20.3 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="496.1" y="30" width="11.9" height="312" data-x="502.1" data-tip="&lt;b&gt;512 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;47 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;18.1 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="508.1" y="30" width="11.9" height="312" data-x="514.0" data-tip="&lt;b&gt;609 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;46 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;18.2 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="520.0" y="30" width="12.0" height="312" data-x="526.0" data-tip="&lt;b&gt;724 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;44.1 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;19 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="532.0" y="30" width="11.9" height="312" data-x="537.9" data-tip="&lt;b&gt;861 KiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;42.1 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;15.2 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="543.9" y="30" width="11.9" height="312" data-x="549.9" data-tip="&lt;b&gt;1 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;45.2 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;18.7 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="555.9" y="30" width="11.9" height="312" data-x="561.8" data-tip="&lt;b&gt;1.19 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;37.8 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;17.5 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="567.8" y="30" width="11.9" height="312" data-x="573.8" data-tip="&lt;b&gt;1.41 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;51.5 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;25 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="579.8" y="30" width="11.9" height="312" data-x="585.7" data-tip="&lt;b&gt;1.68 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;25.6 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;16.6 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="591.7" y="30" width="11.9" height="312" data-x="597.7" data-tip="&lt;b&gt;2 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L2&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;39.3 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;24.5 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="603.7" y="30" width="11.9" height="312" data-x="609.6" data-tip="&lt;b&gt;2.38 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;31.2 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;16 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="615.6" y="30" width="11.9" height="312" data-x="621.6" data-tip="&lt;b&gt;2.83 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;24.1 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;14.2 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="627.6" y="30" width="11.9" height="312" data-x="633.5" data-tip="&lt;b&gt;3.36 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;18.5 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;13.1 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="639.5" y="30" width="11.9" height="312" data-x="645.5" data-tip="&lt;b&gt;4 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;21.2 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;22 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="651.4" y="30" width="11.9" height="312" data-x="657.4" data-tip="&lt;b&gt;4.76 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;16.6 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;12.4 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="663.4" y="30" width="11.9" height="312" data-x="669.4" data-tip="&lt;b&gt;5.66 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;14.5 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;9.64 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="675.3" y="30" width="11.9" height="312" data-x="681.3" data-tip="&lt;b&gt;6.73 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;16.4 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;11.2 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="687.3" y="30" width="11.9" height="312" data-x="693.3" data-tip="&lt;b&gt;8 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;18 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;11.6 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="699.2" y="30" width="11.9" height="312" data-x="705.2" data-tip="&lt;b&gt;9.51 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;18 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;13.7 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="711.2" y="30" width="11.9" height="312" data-x="717.2" data-tip="&lt;b&gt;11.3 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;19 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;12.7 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="723.1" y="30" width="11.9" height="312" data-x="729.1" data-tip="&lt;b&gt;13.5 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;18.4 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;13.4 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="735.1" y="30" width="11.9" height="312" data-x="741.1" data-tip="&lt;b&gt;16 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;19 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;17.2 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="747.0" y="30" width="11.9" height="312" data-x="753.0" data-tip="&lt;b&gt;19 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;22.7 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;17.9 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="759.0" y="30" width="11.9" height="312" data-x="764.9" data-tip="&lt;b&gt;22.6 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;16.3 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;11.3 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="770.9" y="30" width="11.9" height="312" data-x="776.9" data-tip="&lt;b&gt;26.9 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;25.1 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;19.6 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="782.9" y="30" width="11.9" height="312" data-x="788.8" data-tip="&lt;b&gt;32 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;18.1 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;14.2 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="794.8" y="30" width="11.9" height="312" data-x="800.8" data-tip="&lt;b&gt;38.1 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;18 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;14.3 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="806.8" y="30" width="11.9" height="312" data-x="812.7" data-tip="&lt;b&gt;45.3 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;17.6 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;14.9 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="818.7" y="30" width="11.9" height="312" data-x="824.7" data-tip="&lt;b&gt;53.8 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;17 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;14 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="830.7" y="30" width="11.9" height="312" data-x="836.6" data-tip="&lt;b&gt;64 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;20.8 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;15.9 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="842.6" y="30" width="11.9" height="312" data-x="848.6" data-tip="&lt;b&gt;76.1 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;7.16 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;5.3 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="854.6" y="30" width="11.9" height="312" data-x="860.5" data-tip="&lt;b&gt;90.5 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;7.25 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;6.61 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="866.5" y="30" width="11.9" height="312" data-x="872.5" data-tip="&lt;b&gt;108 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;6.73 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;5.96 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="878.4" y="30" width="11.9" height="312" data-x="884.4" data-tip="&lt;b&gt;128 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;8.78 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;5.75 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="890.4" y="30" width="11.9" height="312" data-x="896.4" data-tip="&lt;b&gt;152 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;8.11 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;5.9 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="902.3" y="30" width="11.9" height="312" data-x="908.3" data-tip="&lt;b&gt;181 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;7.28 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;5.85 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="914.3" y="30" width="11.9" height="312" data-x="920.3" data-tip="&lt;b&gt;215 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;8.27 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;6.16 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="926.2" y="30" width="11.9" height="312" data-x="932.2" data-tip="&lt;b&gt;256 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits L3&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;7.79 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;5.94 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="938.2" y="30" width="11.9" height="312" data-x="944.2" data-tip="&lt;b&gt;304 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits DRAM&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;7.75 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;5.73 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="950.1" y="30" width="11.9" height="312" data-x="956.1" data-tip="&lt;b&gt;362 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits DRAM&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;8.28 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;5.71 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="962.1" y="30" width="11.9" height="312" data-x="968.1" data-tip="&lt;b&gt;431 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits DRAM&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;7.8 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;5.76 GB/s&lt;/b&gt;"/>
+<rect class="hit" x="974.0" y="30" width="6.0" height="312" data-x="980.0" data-tip="&lt;b&gt;512 MiB&lt;/b&gt; &lt;span class=&quot;note&quot;&gt;fits DRAM&lt;/span&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;read: &lt;b&gt;8 GB/s&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;write: &lt;b&gt;6.18 GB/s&lt;/b&gt;"/>
+<line class="cross" x1="0" x2="0" y1="30" y2="342" visibility="hidden"/>
+</svg></div><div class='dl'><a href='charts/mem-bandwidth.svg'>mem-bandwidth.svg</a></div><!--/md-->
+<h3>Per-level summary</h3><div class='table-wrap'><table><tr><th>data fits in</th><th>sizes used</th><th>random load</th><th>seq read</th><th>seq write</th></tr><tr><td>L1</td><td>up to 36 KiB</td><td>1.67 ns</td><td>44 GB/s</td><td>20.1 GB/s</td></tr><tr><td>L2</td><td>72 KiB – 1.5 MiB</td><td>6.14 ns</td><td>49.6 GB/s</td><td>21.3 GB/s</td></tr><tr><td>L3</td><td>3 MiB – 195 MiB</td><td>176 ns</td><td>17.8 GB/s</td><td>12.9 GB/s</td></tr><tr><td>DRAM</td><td>&gt; 390 MiB</td><td>292 ns</td><td>7.9 GB/s</td><td>5.97 GB/s</td></tr></table></div>
+<h2 id='sync'>Blocking wake-up latency</h2><p class='sub'>Time from one thread releasing a mutex / signalling a condition variable to the blocked thread running again. The curve reads left to right from the fastest sample to the tail: the further right it rises, the rarer but costlier the outliers. Percentiles with fewer than ~10 samples beyond them are not drawn.</p><!--md:![Blocking wake-up latency: latency by percentile](charts/sync-percentiles.svg)--><div class='chart'><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 420" role="img" aria-label="Blocking wake-up latency: latency by percentile">
+<line class="grid" x1="72" x2="980" y1="305.9" y2="305.9"/>
+<text class="ax" x="64" y="309.9" text-anchor="end">20 us</text>
+<line class="grid" x1="72" x2="980" y1="251.4" y2="251.4"/>
+<text class="ax" x="64" y="255.4" text-anchor="end">50 us</text>
+<line class="grid" x1="72" x2="980" y1="210.1" y2="210.1"/>
+<text class="ax" x="64" y="214.1" text-anchor="end">100 us</text>
+<line class="grid" x1="72" x2="980" y1="168.9" y2="168.9"/>
+<text class="ax" x="64" y="172.9" text-anchor="end">200 us</text>
+<line class="grid" x1="72" x2="980" y1="114.4" y2="114.4"/>
+<text class="ax" x="64" y="118.4" text-anchor="end">500 us</text>
+<line class="grid" x1="72" x2="980" y1="73.2" y2="73.2"/>
+<text class="ax" x="64" y="77.2" text-anchor="end">1 ms</text>
+<line class="grid" x1="72" x2="980" y1="31.9" y2="31.9"/>
+<text class="ax" x="64" y="35.9" text-anchor="end">2 ms</text>
+<text class="ax" x="72.0" y="360" text-anchor="middle">min</text>
+<text class="ax" x="163.1" y="360" text-anchor="middle">p50</text>
+<text class="ax" x="374.7" y="360" text-anchor="middle">p90</text>
+<text class="ax" x="677.3" y="360" text-anchor="middle">p99</text>
+<text class="ax" x="980.0" y="360" text-anchor="middle">p99.9</text>
+<text class="ax" x="526.0" y="382" text-anchor="middle">percentile (log scale of nines)</text>
+<text class="ax" x="16" y="186.0" transform="rotate(-90 16 186.0)" text-anchor="middle">latency (log)</text>
+<polyline class="s1" fill="none" stroke-width="2" stroke-linejoin="round" points="72.0,328.7 109.8,277.7 163.1,266.0 254.2,236.8 374.7,209.3 465.8,196.6 677.3,164.6 768.4,143.7 980.0,59.7"/>
+<circle class="f1" cx="72.0" cy="328.7" r="3"/>
+<circle class="f1" cx="109.8" cy="277.7" r="3"/>
+<circle class="f1" cx="163.1" cy="266.0" r="3"/>
+<circle class="f1" cx="254.2" cy="236.8" r="3"/>
+<circle class="f1" cx="374.7" cy="209.3" r="3"/>
+<circle class="f1" cx="465.8" cy="196.6" r="3"/>
+<circle class="f1" cx="677.3" cy="164.6" r="3"/>
+<circle class="f1" cx="768.4" cy="143.7" r="3"/>
+<circle class="f1" cx="980.0" cy="59.7" r="3"/>
+<polyline class="s2" fill="none" stroke-width="2" stroke-linejoin="round" points="72.0,326.5 109.8,275.5 163.1,265.1 254.2,238.7 374.7,207.6 465.8,192.7 677.3,158.5 768.4,137.3 980.0,43.3"/>
+<circle class="f2" cx="72.0" cy="326.5" r="3"/>
+<circle class="f2" cx="109.8" cy="275.5" r="3"/>
+<circle class="f2" cx="163.1" cy="265.1" r="3"/>
+<circle class="f2" cx="254.2" cy="238.7" r="3"/>
+<circle class="f2" cx="374.7" cy="207.6" r="3"/>
+<circle class="f2" cx="465.8" cy="192.7" r="3"/>
+<circle class="f2" cx="677.3" cy="158.5" r="3"/>
+<circle class="f2" cx="768.4" cy="137.3" r="3"/>
+<circle class="f2" cx="980.0" cy="43.3" r="3"/>
+<line class="s1" stroke-width="2" x1="72" x2="94" y1="404" y2="404"/>
+<text class="ax" x="100" y="408">mutex_wakeup (max 2.62 ms)</text>
+<line class="s2" stroke-width="2" x1="294" x2="316" y1="404" y2="404"/>
+<text class="ax" x="322" y="408">condvar_wakeup (max 7.55 ms)</text>
+<rect class="hit" x="72.0" y="30" width="18.9" height="312" data-x="72.0" data-tip="&lt;b&gt;min&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;mutex_wakeup (max 2.62 ms): &lt;b&gt;13.6 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;condvar_wakeup (max 7.55 ms): &lt;b&gt;14.1 us&lt;/b&gt;"/>
+<rect class="hit" x="90.9" y="30" width="45.6" height="312" data-x="109.8" data-tip="&lt;b&gt;p25&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;mutex_wakeup (max 2.62 ms): &lt;b&gt;32.1 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;condvar_wakeup (max 7.55 ms): &lt;b&gt;33.3 us&lt;/b&gt;"/>
+<rect class="hit" x="136.5" y="30" width="72.2" height="312" data-x="163.1" data-tip="&lt;b&gt;p50&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;mutex_wakeup (max 2.62 ms): &lt;b&gt;39.1 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;condvar_wakeup (max 7.55 ms): &lt;b&gt;39.7 us&lt;/b&gt;"/>
+<rect class="hit" x="208.7" y="30" width="105.8" height="312" data-x="254.2" data-tip="&lt;b&gt;p75&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;mutex_wakeup (max 2.62 ms): &lt;b&gt;63.9 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;condvar_wakeup (max 7.55 ms): &lt;b&gt;61.9 us&lt;/b&gt;"/>
+<rect class="hit" x="314.4" y="30" width="105.8" height="312" data-x="374.7" data-tip="&lt;b&gt;p90&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;mutex_wakeup (max 2.62 ms): &lt;b&gt;101 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;condvar_wakeup (max 7.55 ms): &lt;b&gt;104 us&lt;/b&gt;"/>
+<rect class="hit" x="420.2" y="30" width="151.3" height="312" data-x="465.8" data-tip="&lt;b&gt;p95&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;mutex_wakeup (max 2.62 ms): &lt;b&gt;126 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;condvar_wakeup (max 7.55 ms): &lt;b&gt;134 us&lt;/b&gt;"/>
+<rect class="hit" x="571.6" y="30" width="151.3" height="312" data-x="677.3" data-tip="&lt;b&gt;p99&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;mutex_wakeup (max 2.62 ms): &lt;b&gt;215 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;condvar_wakeup (max 7.55 ms): &lt;b&gt;238 us&lt;/b&gt;"/>
+<rect class="hit" x="722.9" y="30" width="151.3" height="312" data-x="768.4" data-tip="&lt;b&gt;p99.5&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;mutex_wakeup (max 2.62 ms): &lt;b&gt;306 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;condvar_wakeup (max 7.55 ms): &lt;b&gt;340 us&lt;/b&gt;"/>
+<rect class="hit" x="874.2" y="30" width="105.8" height="312" data-x="980.0" data-tip="&lt;b&gt;p99.9&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;mutex_wakeup (max 2.62 ms): &lt;b&gt;1.25 ms&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;condvar_wakeup (max 7.55 ms): &lt;b&gt;1.65 ms&lt;/b&gt;"/>
+<line class="cross" x1="0" x2="0" y1="30" y2="342" visibility="hidden"/>
+</svg></div><div class='dl'><a href='charts/sync-percentiles.svg'>sync-percentiles.svg</a></div><!--/md-->
+<h2 id='thread'>Thread lifecycle</h2><p class='sub'>Cost of starting a new thread and of joining a finished one. The curve reads left to right from the fastest sample to the tail: the further right it rises, the rarer but costlier the outliers. Percentiles with fewer than ~10 samples beyond them are not drawn.</p><!--md:![Thread lifecycle: latency by percentile](charts/thread-percentiles.svg)--><div class='chart'><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 420" role="img" aria-label="Thread lifecycle: latency by percentile">
+<line class="grid" x1="72" x2="980" y1="297.4" y2="297.4"/>
+<text class="ax" x="64" y="301.4" text-anchor="end">5 us</text>
+<line class="grid" x1="72" x2="980" y1="259.5" y2="259.5"/>
+<text class="ax" x="64" y="263.5" text-anchor="end">10 us</text>
+<line class="grid" x1="72" x2="980" y1="221.5" y2="221.5"/>
+<text class="ax" x="64" y="225.5" text-anchor="end">20 us</text>
+<line class="grid" x1="72" x2="980" y1="171.3" y2="171.3"/>
+<text class="ax" x="64" y="175.3" text-anchor="end">50 us</text>
+<line class="grid" x1="72" x2="980" y1="133.3" y2="133.3"/>
+<text class="ax" x="64" y="137.3" text-anchor="end">100 us</text>
+<line class="grid" x1="72" x2="980" y1="95.3" y2="95.3"/>
+<text class="ax" x="64" y="99.3" text-anchor="end">200 us</text>
+<line class="grid" x1="72" x2="980" y1="45.1" y2="45.1"/>
+<text class="ax" x="64" y="49.1" text-anchor="end">500 us</text>
+<text class="ax" x="72.0" y="360" text-anchor="middle">min</text>
+<text class="ax" x="163.1" y="360" text-anchor="middle">p50</text>
+<text class="ax" x="374.7" y="360" text-anchor="middle">p90</text>
+<text class="ax" x="677.3" y="360" text-anchor="middle">p99</text>
+<text class="ax" x="980.0" y="360" text-anchor="middle">p99.9</text>
+<text class="ax" x="526.0" y="382" text-anchor="middle">percentile (log scale of nines)</text>
+<text class="ax" x="16" y="186.0" transform="rotate(-90 16 186.0)" text-anchor="middle">latency (log)</text>
+<polyline class="s1" fill="none" stroke-width="2" stroke-linejoin="round" points="72.0,308.9 109.8,287.4 163.1,281.2 254.2,270.8 374.7,247.4 465.8,220.1 677.3,146.2 768.4,112.1 980.0,42.2"/>
+<circle class="f1" cx="72.0" cy="308.9" r="3"/>
+<circle class="f1" cx="109.8" cy="287.4" r="3"/>
+<circle class="f1" cx="163.1" cy="281.2" r="3"/>
+<circle class="f1" cx="254.2" cy="270.8" r="3"/>
+<circle class="f1" cx="374.7" cy="247.4" r="3"/>
+<circle class="f1" cx="465.8" cy="220.1" r="3"/>
+<circle class="f1" cx="677.3" cy="146.2" r="3"/>
+<circle class="f1" cx="768.4" cy="112.1" r="3"/>
+<circle class="f1" cx="980.0" cy="42.2" r="3"/>
+<polyline class="s2" fill="none" stroke-width="2" stroke-linejoin="round" points="72.0,329.8 109.8,314.8 163.1,309.7 254.2,306.4 374.7,296.9 465.8,274.5 677.3,237.5 768.4,201.8 980.0,122.9"/>
+<circle class="f2" cx="72.0" cy="329.8" r="3"/>
+<circle class="f2" cx="109.8" cy="314.8" r="3"/>
+<circle class="f2" cx="163.1" cy="309.7" r="3"/>
+<circle class="f2" cx="254.2" cy="306.4" r="3"/>
+<circle class="f2" cx="374.7" cy="296.9" r="3"/>
+<circle class="f2" cx="465.8" cy="274.5" r="3"/>
+<circle class="f2" cx="677.3" cy="237.5" r="3"/>
+<circle class="f2" cx="768.4" cy="201.8" r="3"/>
+<circle class="f2" cx="980.0" cy="122.9" r="3"/>
+<line class="s1" stroke-width="2" x1="72" x2="94" y1="404" y2="404"/>
+<text class="ax" x="100" y="408">create_to_start (max 5.06 ms)</text>
+<line class="s2" stroke-width="2" x1="315" x2="337" y1="404" y2="404"/>
+<text class="ax" x="343" y="408">exit_to_join (max 845 us)</text>
+<rect class="hit" x="72.0" y="30" width="18.9" height="312" data-x="72.0" data-tip="&lt;b&gt;min&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;create_to_start (max 5.06 ms): &lt;b&gt;4.06 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;exit_to_join (max 845 us): &lt;b&gt;2.77 us&lt;/b&gt;"/>
+<rect class="hit" x="90.9" y="30" width="45.6" height="312" data-x="109.8" data-tip="&lt;b&gt;p25&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;create_to_start (max 5.06 ms): &lt;b&gt;6 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;exit_to_join (max 845 us): &lt;b&gt;3.64 us&lt;/b&gt;"/>
+<rect class="hit" x="136.5" y="30" width="72.2" height="312" data-x="163.1" data-tip="&lt;b&gt;p50&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;create_to_start (max 5.06 ms): &lt;b&gt;6.72 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;exit_to_join (max 845 us): &lt;b&gt;4 us&lt;/b&gt;"/>
+<rect class="hit" x="208.7" y="30" width="105.8" height="312" data-x="254.2" data-tip="&lt;b&gt;p75&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;create_to_start (max 5.06 ms): &lt;b&gt;8.13 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;exit_to_join (max 845 us): &lt;b&gt;4.25 us&lt;/b&gt;"/>
+<rect class="hit" x="314.4" y="30" width="105.8" height="312" data-x="374.7" data-tip="&lt;b&gt;p90&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;create_to_start (max 5.06 ms): &lt;b&gt;12.5 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;exit_to_join (max 845 us): &lt;b&gt;5.05 us&lt;/b&gt;"/>
+<rect class="hit" x="420.2" y="30" width="151.3" height="312" data-x="465.8" data-tip="&lt;b&gt;p95&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;create_to_start (max 5.06 ms): &lt;b&gt;20.5 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;exit_to_join (max 845 us): &lt;b&gt;7.6 us&lt;/b&gt;"/>
+<rect class="hit" x="571.6" y="30" width="151.3" height="312" data-x="677.3" data-tip="&lt;b&gt;p99&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;create_to_start (max 5.06 ms): &lt;b&gt;79 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;exit_to_join (max 845 us): &lt;b&gt;14.9 us&lt;/b&gt;"/>
+<rect class="hit" x="722.9" y="30" width="151.3" height="312" data-x="768.4" data-tip="&lt;b&gt;p99.5&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;create_to_start (max 5.06 ms): &lt;b&gt;147 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;exit_to_join (max 845 us): &lt;b&gt;28.6 us&lt;/b&gt;"/>
+<rect class="hit" x="874.2" y="30" width="105.8" height="312" data-x="980.0" data-tip="&lt;b&gt;p99.9&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;create_to_start (max 5.06 ms): &lt;b&gt;527 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;exit_to_join (max 845 us): &lt;b&gt;121 us&lt;/b&gt;"/>
+<line class="cross" x1="0" x2="0" y1="30" y2="342" visibility="hidden"/>
+</svg></div><div class='dl'><a href='charts/thread-percentiles.svg'>thread-percentiles.svg</a></div><!--/md-->
+<h2 id='alloc'>Heap allocator</h2><p class='sub'>Cost of one <code>malloc()</code> and one <code>free()</code> per block size, in the allocator's best case (the block is reused every iteration and never touched). Solid: p50, dashed: p99.</p><!--md:![malloc / free latency vs block size](charts/alloc-size.svg)--><div class='chart'><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 420" role="img" aria-label="malloc / free latency vs block size">
+<line class="grid" x1="72" x2="980" y1="260.1" y2="260.1"/>
+<text class="ax" x="64" y="264.1" text-anchor="end">50 ns</text>
+<line class="grid" x1="72" x2="980" y1="179.2" y2="179.2"/>
+<text class="ax" x="64" y="183.2" text-anchor="end">100 ns</text>
+<line class="grid" x1="72" x2="980" y1="98.2" y2="98.2"/>
+<text class="ax" x="64" y="102.2" text-anchor="end">200 ns</text>
+<text class="ax" x="72.0" y="360" text-anchor="middle">16</text>
+<text class="ax" x="162.8" y="360" text-anchor="middle">64</text>
+<text class="ax" x="253.6" y="360" text-anchor="middle">256</text>
+<text class="ax" x="344.4" y="360" text-anchor="middle">1K</text>
+<text class="ax" x="435.2" y="360" text-anchor="middle">4K</text>
+<text class="ax" x="526.0" y="360" text-anchor="middle">16K</text>
+<text class="ax" x="616.8" y="360" text-anchor="middle">64K</text>
+<text class="ax" x="707.6" y="360" text-anchor="middle">256K</text>
+<text class="ax" x="798.4" y="360" text-anchor="middle">1M</text>
+<text class="ax" x="889.2" y="360" text-anchor="middle">4M</text>
+<text class="ax" x="980.0" y="360" text-anchor="middle">16M</text>
+<text class="ax" x="526.0" y="382" text-anchor="middle">block size</text>
+<text class="ax" x="16" y="186.0" transform="rotate(-90 16 186.0)" text-anchor="middle">latency (log)</text>
+<polyline class="s1" fill="none" stroke-width="2" stroke-linejoin="round" points="72.0,315.9 162.8,315.9 253.6,315.9 344.4,315.9 435.2,244.8 526.0,251.1 616.8,249.0 707.6,277.7 798.4,277.7 889.2,277.7 980.0,255.5"/>
+<circle class="f1" cx="72.0" cy="315.9" r="3"/>
+<circle class="f1" cx="162.8" cy="315.9" r="3"/>
+<circle class="f1" cx="253.6" cy="315.9" r="3"/>
+<circle class="f1" cx="344.4" cy="315.9" r="3"/>
+<circle class="f1" cx="435.2" cy="244.8" r="3"/>
+<circle class="f1" cx="526.0" cy="251.1" r="3"/>
+<circle class="f1" cx="616.8" cy="249.0" r="3"/>
+<circle class="f1" cx="707.6" cy="277.7" r="3"/>
+<circle class="f1" cx="798.4" cy="277.7" r="3"/>
+<circle class="f1" cx="889.2" cy="277.7" r="3"/>
+<circle class="f1" cx="980.0" cy="255.5" r="3"/>
+<polyline class="s1" fill="none" stroke-width="2" stroke-linejoin="round" stroke-dasharray="6 4" points="72.0,298.5 162.8,298.5 253.6,283.3 344.4,295.3 435.2,211.2 526.0,203.8 616.8,224.2 707.6,175.5 798.4,111.2 889.2,109.2 980.0,56.1"/>
+<circle class="f1" cx="72.0" cy="298.5" r="3"/>
+<circle class="f1" cx="162.8" cy="298.5" r="3"/>
+<circle class="f1" cx="253.6" cy="283.3" r="3"/>
+<circle class="f1" cx="344.4" cy="295.3" r="3"/>
+<circle class="f1" cx="435.2" cy="211.2" r="3"/>
+<circle class="f1" cx="526.0" cy="203.8" r="3"/>
+<circle class="f1" cx="616.8" cy="224.2" r="3"/>
+<circle class="f1" cx="707.6" cy="175.5" r="3"/>
+<circle class="f1" cx="798.4" cy="111.2" r="3"/>
+<circle class="f1" cx="889.2" cy="109.2" r="3"/>
+<circle class="f1" cx="980.0" cy="56.1" r="3"/>
+<polyline class="s2" fill="none" stroke-width="2" stroke-linejoin="round" points="72.0,308.6 162.8,308.6 253.6,315.9 344.4,315.9 435.2,272.4 526.0,272.4 616.8,272.4 707.6,277.7 798.4,277.7 889.2,277.7 980.0,260.1"/>
+<circle class="f2" cx="72.0" cy="308.6" r="3"/>
+<circle class="f2" cx="162.8" cy="308.6" r="3"/>
+<circle class="f2" cx="253.6" cy="315.9" r="3"/>
+<circle class="f2" cx="344.4" cy="315.9" r="3"/>
+<circle class="f2" cx="435.2" cy="272.4" r="3"/>
+<circle class="f2" cx="526.0" cy="272.4" r="3"/>
+<circle class="f2" cx="616.8" cy="272.4" r="3"/>
+<circle class="f2" cx="707.6" cy="277.7" r="3"/>
+<circle class="f2" cx="798.4" cy="277.7" r="3"/>
+<circle class="f2" cx="889.2" cy="277.7" r="3"/>
+<circle class="f2" cx="980.0" cy="260.1" r="3"/>
+<polyline class="s2" fill="none" stroke-width="2" stroke-linejoin="round" stroke-dasharray="6 4" points="72.0,267.3 162.8,272.4 253.6,275.0 344.4,286.2 435.2,235.0 526.0,233.1 616.8,235.0 707.6,244.8 798.4,269.9 889.2,249.0 980.0,214.3"/>
+<circle class="f2" cx="72.0" cy="267.3" r="3"/>
+<circle class="f2" cx="162.8" cy="272.4" r="3"/>
+<circle class="f2" cx="253.6" cy="275.0" r="3"/>
+<circle class="f2" cx="344.4" cy="286.2" r="3"/>
+<circle class="f2" cx="435.2" cy="235.0" r="3"/>
+<circle class="f2" cx="526.0" cy="233.1" r="3"/>
+<circle class="f2" cx="616.8" cy="235.0" r="3"/>
+<circle class="f2" cx="707.6" cy="244.8" r="3"/>
+<circle class="f2" cx="798.4" cy="269.9" r="3"/>
+<circle class="f2" cx="889.2" cy="249.0" r="3"/>
+<circle class="f2" cx="980.0" cy="214.3" r="3"/>
+<line class="s1" stroke-width="2" x1="72" x2="94" y1="404" y2="404"/>
+<text class="ax" x="100" y="408">malloc p50</text>
+<line class="s1" stroke-width="2" stroke-dasharray="6 4" x1="182" x2="204" y1="404" y2="404"/>
+<text class="ax" x="210" y="408">malloc p99</text>
+<line class="s2" stroke-width="2" x1="292" x2="314" y1="404" y2="404"/>
+<text class="ax" x="320" y="408">free p50</text>
+<line class="s2" stroke-width="2" stroke-dasharray="6 4" x1="388" x2="410" y1="404" y2="404"/>
+<text class="ax" x="416" y="408">free p99</text>
+<rect class="hit" x="72.0" y="30" width="45.4" height="312" data-x="72.0" data-tip="&lt;b&gt;16 B&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;malloc p50: &lt;b&gt;31 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;malloc p99: &lt;b&gt;36 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;free p50: &lt;b&gt;33 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;free p99: &lt;b&gt;47 ns&lt;/b&gt;"/>
+<rect class="hit" x="117.4" y="30" width="90.8" height="312" data-x="162.8" data-tip="&lt;b&gt;64 B&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;malloc p50: &lt;b&gt;31 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;malloc p99: &lt;b&gt;36 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;free p50: &lt;b&gt;33 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;free p99: &lt;b&gt;45 ns&lt;/b&gt;"/>
+<rect class="hit" x="208.2" y="30" width="90.8" height="312" data-x="253.6" data-tip="&lt;b&gt;256 B&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;malloc p50: &lt;b&gt;31 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;malloc p99: &lt;b&gt;41 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;free p50: &lt;b&gt;31 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;free p99: &lt;b&gt;44 ns&lt;/b&gt;"/>
+<rect class="hit" x="299.0" y="30" width="90.8" height="312" data-x="344.4" data-tip="&lt;b&gt;1 KiB&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;malloc p50: &lt;b&gt;31 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;malloc p99: &lt;b&gt;37 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;free p50: &lt;b&gt;31 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;free p99: &lt;b&gt;40 ns&lt;/b&gt;"/>
+<rect class="hit" x="389.8" y="30" width="90.8" height="312" data-x="435.2" data-tip="&lt;b&gt;4 KiB&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;malloc p50: &lt;b&gt;57 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;malloc p99: &lt;b&gt;76 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;free p50: &lt;b&gt;45 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;free p99: &lt;b&gt;62 ns&lt;/b&gt;"/>
+<rect class="hit" x="480.6" y="30" width="90.8" height="312" data-x="526.0" data-tip="&lt;b&gt;16 KiB&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;malloc p50: &lt;b&gt;54 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;malloc p99: &lt;b&gt;81 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;free p50: &lt;b&gt;45 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;free p99: &lt;b&gt;63 ns&lt;/b&gt;"/>
+<rect class="hit" x="571.4" y="30" width="90.8" height="312" data-x="616.8" data-tip="&lt;b&gt;64 KiB&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;malloc p50: &lt;b&gt;55 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;malloc p99: &lt;b&gt;68 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;free p50: &lt;b&gt;45 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;free p99: &lt;b&gt;62 ns&lt;/b&gt;"/>
+<rect class="hit" x="662.2" y="30" width="90.8" height="312" data-x="707.6" data-tip="&lt;b&gt;256 KiB&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;malloc p50: &lt;b&gt;43 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;malloc p99: &lt;b&gt;103 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;free p50: &lt;b&gt;43 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;free p99: &lt;b&gt;57 ns&lt;/b&gt;"/>
+<rect class="hit" x="753.0" y="30" width="90.8" height="312" data-x="798.4" data-tip="&lt;b&gt;1 MiB&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;malloc p50: &lt;b&gt;43 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;malloc p99: &lt;b&gt;179 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;free p50: &lt;b&gt;43 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;free p99: &lt;b&gt;46 ns&lt;/b&gt;"/>
+<rect class="hit" x="843.8" y="30" width="90.8" height="312" data-x="889.2" data-tip="&lt;b&gt;4 MiB&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;malloc p50: &lt;b&gt;43 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;malloc p99: &lt;b&gt;182 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;free p50: &lt;b&gt;43 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;free p99: &lt;b&gt;55 ns&lt;/b&gt;"/>
+<rect class="hit" x="934.6" y="30" width="45.4" height="312" data-x="980.0" data-tip="&lt;b&gt;16 MiB&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;malloc p50: &lt;b&gt;52 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;malloc p99: &lt;b&gt;287 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;free p50: &lt;b&gt;50 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;free p99: &lt;b&gt;74 ns&lt;/b&gt;"/>
+<line class="cross" x1="0" x2="0" y1="30" y2="342" visibility="hidden"/>
+</svg></div><div class='dl'><a href='charts/alloc-size.svg'>alloc-size.svg</a></div><!--/md-->
+<h2 id='multicore'>Multicore communication</h2><p class='sub'>Two threads pinned to a pair of CPUs ping-pong one value through a <code>std::atomic</code> on its own cache line; each cell is the one-way hand-off latency (half a round trip, p50). This is the floor for any inter-thread communication between those CPUs: SMT siblings share L1/L2 and are fastest, other cores on the same die or cluster come next, other clusters, CCXs or sockets are slowest.</p><!--md:![Core-to-core latency (one-way, p50)](charts/multicore-c2c.svg)--><div class='chart'><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 304" role="img" aria-label="Core-to-core latency (one-way, p50)">
+<text class="ax" x="52" y="66.0" text-anchor="end">0</text>
+<text class="ax" x="88.0" y="26" text-anchor="middle">0</text>
+<rect class="grid" fill="none" x="61" y="35" width="54" height="54"/>
+<rect x="117" y="35" width="54" height="54" rx="3" fill="#dbe8f8"/>
+<text x="144.0" y="66.0" text-anchor="middle" style="font:11px system-ui,sans-serif" fill="#0b0b0b">83</text>
+<rect class="hit" x="116" y="34" width="56" height="56" data-x="-10" data-tip="&lt;b&gt;CPU 0 ↔ CPU 1&lt;/b&gt;&lt;br&gt;one-way hand-off p50: &lt;b&gt;82.6 ns&lt;/b&gt;"/>
+<rect x="173" y="35" width="54" height="54" rx="3" fill="#0d3d78"/>
+<text x="200.0" y="66.0" text-anchor="middle" style="font:11px system-ui,sans-serif" fill="#ffffff">96</text>
+<rect class="hit" x="172" y="34" width="56" height="56" data-x="-10" data-tip="&lt;b&gt;CPU 0 ↔ CPU 2&lt;/b&gt;&lt;br&gt;one-way hand-off p50: &lt;b&gt;95.9 ns&lt;/b&gt;"/>
+<rect x="229" y="35" width="54" height="54" rx="3" fill="#d0dff1"/>
+<text x="256.0" y="66.0" text-anchor="middle" style="font:11px system-ui,sans-serif" fill="#0b0b0b">83</text>
+<rect class="hit" x="228" y="34" width="56" height="56" data-x="-10" data-tip="&lt;b&gt;CPU 0 ↔ CPU 3&lt;/b&gt;&lt;br&gt;one-way hand-off p50: &lt;b&gt;83.2 ns&lt;/b&gt;"/>
+<text class="ax" x="52" y="122.0" text-anchor="end">1</text>
+<text class="ax" x="144.0" y="26" text-anchor="middle">1</text>
+<rect x="61" y="91" width="54" height="54" rx="3" fill="#dbe8f8"/>
+<text x="88.0" y="122.0" text-anchor="middle" style="font:11px system-ui,sans-serif" fill="#0b0b0b">83</text>
+<rect class="hit" x="60" y="90" width="56" height="56" data-x="-10" data-tip="&lt;b&gt;CPU 1 ↔ CPU 0&lt;/b&gt;&lt;br&gt;one-way hand-off p50: &lt;b&gt;82.6 ns&lt;/b&gt;"/>
+<rect class="grid" fill="none" x="117" y="91" width="54" height="54"/>
+<rect x="173" y="91" width="54" height="54" rx="3" fill="#95aecd"/>
+<text x="200.0" y="122.0" text-anchor="middle" style="font:11px system-ui,sans-serif" fill="#0b0b0b">87</text>
+<rect class="hit" x="172" y="90" width="56" height="56" data-x="-10" data-tip="&lt;b&gt;CPU 1 ↔ CPU 2&lt;/b&gt;&lt;br&gt;one-way hand-off p50: &lt;b&gt;86.9 ns&lt;/b&gt;"/>
+<rect x="229" y="91" width="54" height="54" rx="3" fill="#d0dff1"/>
+<text x="256.0" y="122.0" text-anchor="middle" style="font:11px system-ui,sans-serif" fill="#0b0b0b">83</text>
+<rect class="hit" x="228" y="90" width="56" height="56" data-x="-10" data-tip="&lt;b&gt;CPU 1 ↔ CPU 3&lt;/b&gt;&lt;br&gt;one-way hand-off p50: &lt;b&gt;83.2 ns&lt;/b&gt;"/>
+<text class="ax" x="52" y="178.0" text-anchor="end">2</text>
+<text class="ax" x="200.0" y="26" text-anchor="middle">2</text>
+<rect x="61" y="147" width="54" height="54" rx="3" fill="#0d3d78"/>
+<text x="88.0" y="178.0" text-anchor="middle" style="font:11px system-ui,sans-serif" fill="#ffffff">96</text>
+<rect class="hit" x="60" y="146" width="56" height="56" data-x="-10" data-tip="&lt;b&gt;CPU 2 ↔ CPU 0&lt;/b&gt;&lt;br&gt;one-way hand-off p50: &lt;b&gt;95.9 ns&lt;/b&gt;"/>
+<rect x="117" y="147" width="54" height="54" rx="3" fill="#95aecd"/>
+<text x="144.0" y="178.0" text-anchor="middle" style="font:11px system-ui,sans-serif" fill="#0b0b0b">87</text>
+<rect class="hit" x="116" y="146" width="56" height="56" data-x="-10" data-tip="&lt;b&gt;CPU 2 ↔ CPU 1&lt;/b&gt;&lt;br&gt;one-way hand-off p50: &lt;b&gt;86.9 ns&lt;/b&gt;"/>
+<rect class="grid" fill="none" x="173" y="147" width="54" height="54"/>
+<rect x="229" y="147" width="54" height="54" rx="3" fill="#8ca6c7"/>
+<text x="256.0" y="178.0" text-anchor="middle" style="font:11px system-ui,sans-serif" fill="#0b0b0b">87</text>
+<rect class="hit" x="228" y="146" width="56" height="56" data-x="-10" data-tip="&lt;b&gt;CPU 2 ↔ CPU 3&lt;/b&gt;&lt;br&gt;one-way hand-off p50: &lt;b&gt;87.4 ns&lt;/b&gt;"/>
+<text class="ax" x="52" y="234.0" text-anchor="end">3</text>
+<text class="ax" x="256.0" y="26" text-anchor="middle">3</text>
+<rect x="61" y="203" width="54" height="54" rx="3" fill="#d0dff1"/>
+<text x="88.0" y="234.0" text-anchor="middle" style="font:11px system-ui,sans-serif" fill="#0b0b0b">83</text>
+<rect class="hit" x="60" y="202" width="56" height="56" data-x="-10" data-tip="&lt;b&gt;CPU 3 ↔ CPU 0&lt;/b&gt;&lt;br&gt;one-way hand-off p50: &lt;b&gt;83.2 ns&lt;/b&gt;"/>
+<rect x="117" y="203" width="54" height="54" rx="3" fill="#d0dff1"/>
+<text x="144.0" y="234.0" text-anchor="middle" style="font:11px system-ui,sans-serif" fill="#0b0b0b">83</text>
+<rect class="hit" x="116" y="202" width="56" height="56" data-x="-10" data-tip="&lt;b&gt;CPU 3 ↔ CPU 1&lt;/b&gt;&lt;br&gt;one-way hand-off p50: &lt;b&gt;83.2 ns&lt;/b&gt;"/>
+<rect x="173" y="203" width="54" height="54" rx="3" fill="#8ca6c7"/>
+<text x="200.0" y="234.0" text-anchor="middle" style="font:11px system-ui,sans-serif" fill="#0b0b0b">87</text>
+<rect class="hit" x="172" y="202" width="56" height="56" data-x="-10" data-tip="&lt;b&gt;CPU 3 ↔ CPU 2&lt;/b&gt;&lt;br&gt;one-way hand-off p50: &lt;b&gt;87.4 ns&lt;/b&gt;"/>
+<rect class="grid" fill="none" x="229" y="203" width="54" height="54"/>
+<rect x="314" y="34" width="18" height="20" fill="#dbe8f8"/>
+<text class="ax" x="340" y="48">82.6 ns</text>
+<rect x="314" y="56" width="18" height="20" fill="#b2c6de"/>
+<text class="ax" x="340" y="70">85.1 ns</text>
+<rect x="314" y="78" width="18" height="20" fill="#89a4c5"/>
+<text class="ax" x="340" y="92">87.7 ns</text>
+<rect x="314" y="100" width="18" height="20" fill="#5f81ab"/>
+<text class="ax" x="340" y="114">90.3 ns</text>
+<rect x="314" y="122" width="18" height="20" fill="#365f92"/>
+<text class="ax" x="340" y="136">93.1 ns</text>
+<rect x="314" y="144" width="18" height="20" fill="#0d3d78"/>
+<text class="ax" x="340" y="158">95.9 ns</text>
+<text class="ax" x="60" y="284">one-way latency between CPUs, p50 (ns in cells; darker = slower)</text>
+<line class="cross" x1="0" x2="0" y1="0" y2="0" visibility="hidden"/>
+</svg></div><div class='dl'><a href='charts/multicore-c2c.svg'>multicore-c2c.svg</a></div><!--/md--><p class='note'>Fastest pair: CPU 0 ↔ 1 (82.6 ns); slowest: CPU 0 ↔ 2 (95.9 ns); median 85.1 ns. Pin threads that talk a lot (producer/consumer pairs) to a fast pair with <code>--cpus A,B</code> or in your application.</p>
+<h2 id='patterns'>Design patterns</h2><h3>Container memory: heap vs reserve vs pmr arenas</h3><p class='sub'>Build and destroy a 256-element container; cost per element (p50, shorter is better, compared with the fastest in brackets). Node containers allocate once per element, so the allocator matters far more there.</p>
+<!--md:![std::vector&lt;int&gt;, 256 push_back: ns per element](charts/pattern-alloc-vector.svg)--><div class='chart'><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 172" role="img" aria-label="std::vector&lt;int&gt;, 256 push_back: ns per element">
+<text class="ax" x="160" y="25.0" text-anchor="end">new_delete</text>
+<rect class="f1" x="170" y="10" width="352.2" height="22" rx="4"/>
+<text class="ax" x="530.2" y="25.0">p50 1.39 ns, p99 3.55 ns  (1.4x slower)</text>
+<rect class="hit" x="0" y="5.0" width="1000" height="32" data-x="-10" data-tip="&lt;b&gt;new_delete&lt;/b&gt;&lt;br&gt;p50 1.39 ns · p90 1.93 ns · p99 3.55 ns · max 1.14 us"/>
+<text class="ax" x="160" y="57.0" text-anchor="end">reserve</text>
+<rect class="f1" x="170" y="42" width="256.9" height="22" rx="4"/>
+<text class="ax" x="434.9" y="57.0">p50 1.01 ns, p99 1.71 ns  (fastest)</text>
+<rect class="hit" x="0" y="37.0" width="1000" height="32" data-x="-10" data-tip="&lt;b&gt;reserve&lt;/b&gt;&lt;br&gt;p50 1.01 ns · p90 1.02 ns · p99 1.71 ns · max 126 ns"/>
+<text class="ax" x="160" y="89.0" text-anchor="end">pmr_monotonic</text>
+<rect class="f1" x="170" y="74" width="373.0" height="22" rx="4"/>
+<text class="ax" x="551.0" y="89.0">p50 1.47 ns, p99 3.04 ns  (1.5x slower)</text>
+<rect class="hit" x="0" y="69.0" width="1000" height="32" data-x="-10" data-tip="&lt;b&gt;pmr_monotonic&lt;/b&gt;&lt;br&gt;p50 1.47 ns · p90 1.72 ns · p99 3.04 ns · max 77.4 ns"/>
+<text class="ax" x="160" y="121.0" text-anchor="end">pmr_pool</text>
+<rect class="f1" x="170" y="106" width="500.0" height="22" rx="4"/>
+<text class="ax" x="678.0" y="121.0">p50 1.97 ns, p99 3.63 ns  (1.9x slower)</text>
+<rect class="hit" x="0" y="101.0" width="1000" height="32" data-x="-10" data-tip="&lt;b&gt;pmr_pool&lt;/b&gt;&lt;br&gt;p50 1.97 ns · p90 2.26 ns · p99 3.63 ns · max 2.15 us"/>
+<text class="ax" x="170" y="164">ns per element (p50)</text>
+<line class="cross" x1="0" x2="0" y1="0" y2="0" visibility="hidden"/>
+</svg></div><div class='dl'><a href='charts/pattern-alloc-vector.svg'>pattern-alloc-vector.svg</a></div><!--/md-->
+<!--md:![std::list&lt;int&gt;, 256 push_back: ns per element](charts/pattern-alloc-list.svg)--><div class='chart'><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 140" role="img" aria-label="std::list&lt;int&gt;, 256 push_back: ns per element">
+<text class="ax" x="160" y="25.0" text-anchor="end">new_delete</text>
+<rect class="f1" x="170" y="10" width="472.7" height="22" rx="4"/>
+<text class="ax" x="650.7" y="25.0">p50 29.1 ns, p99 85.2 ns  (4.2x slower)</text>
+<rect class="hit" x="0" y="5.0" width="1000" height="32" data-x="-10" data-tip="&lt;b&gt;new_delete&lt;/b&gt;&lt;br&gt;p50 29.1 ns · p90 37.7 ns · p99 85.2 ns · max 963 ns"/>
+<text class="ax" x="160" y="57.0" text-anchor="end">pmr_monotonic</text>
+<rect class="f1" x="170" y="42" width="111.6" height="22" rx="4"/>
+<text class="ax" x="289.6" y="57.0">p50 6.88 ns, p99 8.84 ns  (fastest)</text>
+<rect class="hit" x="0" y="37.0" width="1000" height="32" data-x="-10" data-tip="&lt;b&gt;pmr_monotonic&lt;/b&gt;&lt;br&gt;p50 6.88 ns · p90 8.17 ns · p99 8.84 ns · max 299 ns"/>
+<text class="ax" x="160" y="89.0" text-anchor="end">pmr_pool</text>
+<rect class="f1" x="170" y="74" width="500.0" height="22" rx="4"/>
+<text class="ax" x="678.0" y="89.0">p50 30.8 ns, p99 92.1 ns  (4.5x slower)</text>
+<rect class="hit" x="0" y="69.0" width="1000" height="32" data-x="-10" data-tip="&lt;b&gt;pmr_pool&lt;/b&gt;&lt;br&gt;p50 30.8 ns · p90 40.2 ns · p99 92.1 ns · max 575 ns"/>
+<text class="ax" x="170" y="132">ns per element (p50)</text>
+<line class="cross" x1="0" x2="0" y1="0" y2="0" visibility="hidden"/>
+</svg></div><div class='dl'><a href='charts/pattern-alloc-list.svg'>pattern-alloc-list.svg</a></div><!--/md-->
+<h3>Single producer / single consumer: mutex vs spinlock vs lock-free</h3><p class='sub'>The same bounded ring hand-off synchronised five ways. Latency is half a ping-pong round trip; throughput streams 256 Ki items through one queue.</p>
+<!--md:![SPSC hand-off latency by percentile](charts/pattern-spsc-latency.svg)--><div class='chart'><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 440" role="img" aria-label="SPSC hand-off latency by percentile">
+<line class="grid" x1="72" x2="980" y1="338.4" y2="338.4"/>
+<text class="ax" x="64" y="342.4" text-anchor="end">200 ns</text>
+<line class="grid" x1="72" x2="980" y1="296.8" y2="296.8"/>
+<text class="ax" x="64" y="300.8" text-anchor="end">500 ns</text>
+<line class="grid" x1="72" x2="980" y1="265.4" y2="265.4"/>
+<text class="ax" x="64" y="269.4" text-anchor="end">1 us</text>
+<line class="grid" x1="72" x2="980" y1="233.9" y2="233.9"/>
+<text class="ax" x="64" y="237.9" text-anchor="end">2 us</text>
+<line class="grid" x1="72" x2="980" y1="192.3" y2="192.3"/>
+<text class="ax" x="64" y="196.3" text-anchor="end">5 us</text>
+<line class="grid" x1="72" x2="980" y1="160.8" y2="160.8"/>
+<text class="ax" x="64" y="164.8" text-anchor="end">10 us</text>
+<line class="grid" x1="72" x2="980" y1="129.4" y2="129.4"/>
+<text class="ax" x="64" y="133.4" text-anchor="end">20 us</text>
+<line class="grid" x1="72" x2="980" y1="87.8" y2="87.8"/>
+<text class="ax" x="64" y="91.8" text-anchor="end">50 us</text>
+<line class="grid" x1="72" x2="980" y1="56.3" y2="56.3"/>
+<text class="ax" x="64" y="60.3" text-anchor="end">100 us</text>
+<text class="ax" x="72.0" y="360" text-anchor="middle">min</text>
+<text class="ax" x="163.1" y="360" text-anchor="middle">p50</text>
+<text class="ax" x="374.7" y="360" text-anchor="middle">p90</text>
+<text class="ax" x="677.3" y="360" text-anchor="middle">p99</text>
+<text class="ax" x="980.0" y="360" text-anchor="middle">p99.9</text>
+<text class="ax" x="526.0" y="382" text-anchor="middle">percentile (log scale of nines)</text>
+<text class="ax" x="16" y="186.0" transform="rotate(-90 16 186.0)" text-anchor="middle">one-way latency (log)</text>
+<polyline class="s1" fill="none" stroke-width="2" stroke-linejoin="round" points="72.0,180.0 109.8,150.0 163.1,147.6 254.2,142.9 374.7,134.5 465.8,129.6 677.3,100.0 768.4,81.1 980.0,40.1"/>
+<circle class="f1" cx="72.0" cy="180.0" r="3"/>
+<circle class="f1" cx="109.8" cy="150.0" r="3"/>
+<circle class="f1" cx="163.1" cy="147.6" r="3"/>
+<circle class="f1" cx="254.2" cy="142.9" r="3"/>
+<circle class="f1" cx="374.7" cy="134.5" r="3"/>
+<circle class="f1" cx="465.8" cy="129.6" r="3"/>
+<circle class="f1" cx="677.3" cy="100.0" r="3"/>
+<circle class="f1" cx="768.4" cy="81.1" r="3"/>
+<circle class="f1" cx="980.0" cy="40.1" r="3"/>
+<polyline class="s2" fill="none" stroke-width="2" stroke-linejoin="round" points="72.0,305.5 109.8,261.5 163.1,252.5 254.2,222.8 374.7,166.2 465.8,157.6 677.3,133.5 768.4,111.8 980.0,71.0"/>
+<circle class="f2" cx="72.0" cy="305.5" r="3"/>
+<circle class="f2" cx="109.8" cy="261.5" r="3"/>
+<circle class="f2" cx="163.1" cy="252.5" r="3"/>
+<circle class="f2" cx="254.2" cy="222.8" r="3"/>
+<circle class="f2" cx="374.7" cy="166.2" r="3"/>
+<circle class="f2" cx="465.8" cy="157.6" r="3"/>
+<circle class="f2" cx="677.3" cy="133.5" r="3"/>
+<circle class="f2" cx="768.4" cy="111.8" r="3"/>
+<circle class="f2" cx="980.0" cy="71.0" r="3"/>
+<polyline class="s3" fill="none" stroke-width="2" stroke-linejoin="round" points="72.0,309.8 109.8,278.8 163.1,274.1 254.2,270.1 374.7,266.2 465.8,263.5 677.3,253.6 768.4,216.8 980.0,160.3"/>
+<circle class="f3" cx="72.0" cy="309.8" r="3"/>
+<circle class="f3" cx="109.8" cy="278.8" r="3"/>
+<circle class="f3" cx="163.1" cy="274.1" r="3"/>
+<circle class="f3" cx="254.2" cy="270.1" r="3"/>
+<circle class="f3" cx="374.7" cy="266.2" r="3"/>
+<circle class="f3" cx="465.8" cy="263.5" r="3"/>
+<circle class="f3" cx="677.3" cy="253.6" r="3"/>
+<circle class="f3" cx="768.4" cy="216.8" r="3"/>
+<circle class="f3" cx="980.0" cy="160.3" r="3"/>
+<polyline class="s4" fill="none" stroke-width="2" stroke-linejoin="round" points="72.0,331.9 109.8,320.4 163.1,313.9 254.2,303.5 374.7,295.0 465.8,293.4 677.3,291.4 768.4,289.3 980.0,179.3"/>
+<circle class="f4" cx="72.0" cy="331.9" r="3"/>
+<circle class="f4" cx="109.8" cy="320.4" r="3"/>
+<circle class="f4" cx="163.1" cy="313.9" r="3"/>
+<circle class="f4" cx="254.2" cy="303.5" r="3"/>
+<circle class="f4" cx="374.7" cy="295.0" r="3"/>
+<circle class="f4" cx="465.8" cy="293.4" r="3"/>
+<circle class="f4" cx="677.3" cy="291.4" r="3"/>
+<circle class="f4" cx="768.4" cy="289.3" r="3"/>
+<circle class="f4" cx="980.0" cy="179.3" r="3"/>
+<polyline class="s5" fill="none" stroke-width="2" stroke-linejoin="round" points="72.0,327.2 109.8,314.0 163.1,308.4 254.2,302.5 374.7,299.6 465.8,295.0 677.3,286.2 768.4,239.5 980.0,193.0"/>
+<circle class="f5" cx="72.0" cy="327.2" r="3"/>
+<circle class="f5" cx="109.8" cy="314.0" r="3"/>
+<circle class="f5" cx="163.1" cy="308.4" r="3"/>
+<circle class="f5" cx="254.2" cy="302.5" r="3"/>
+<circle class="f5" cx="374.7" cy="299.6" r="3"/>
+<circle class="f5" cx="465.8" cy="295.0" r="3"/>
+<circle class="f5" cx="677.3" cy="286.2" r="3"/>
+<circle class="f5" cx="768.4" cy="239.5" r="3"/>
+<circle class="f5" cx="980.0" cy="193.0" r="3"/>
+<line class="s1" stroke-width="2" x1="72" x2="94" y1="404" y2="404"/>
+<text class="ax" x="100" y="408">mutex_condvar (max 651 us)</text>
+<line class="s2" stroke-width="2" x1="294" x2="316" y1="404" y2="404"/>
+<text class="ax" x="322" y="408">mutex_poll (max 511 us)</text>
+<line class="s3" stroke-width="2" x1="495" x2="517" y1="404" y2="404"/>
+<text class="ax" x="523" y="408">spinlock (max 547 us)</text>
+<line class="s4" stroke-width="2" x1="682" x2="704" y1="404" y2="404"/>
+<text class="ax" x="710" y="408">lockfree (max 24 us)</text>
+<line class="s5" stroke-width="2" x1="72" x2="94" y1="424" y2="424"/>
+<text class="ax" x="100" y="428">lockfree_cached (max 35.9 us)</text>
+<rect class="hit" x="72.0" y="30" width="18.9" height="312" data-x="72.0" data-tip="&lt;b&gt;min&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;mutex_condvar (max 651 us): &lt;b&gt;6.56 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;mutex_poll (max 511 us): &lt;b&gt;412 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f3&quot;&gt;&lt;/i&gt;spinlock (max 547 us): &lt;b&gt;376 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f4&quot;&gt;&lt;/i&gt;lockfree (max 24 us): &lt;b&gt;231 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f5&quot;&gt;&lt;/i&gt;lockfree_cached (max 35.9 us): &lt;b&gt;256 ns&lt;/b&gt;"/>
+<rect class="hit" x="90.9" y="30" width="45.6" height="312" data-x="109.8" data-tip="&lt;b&gt;p25&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;mutex_condvar (max 651 us): &lt;b&gt;12.7 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;mutex_poll (max 511 us): &lt;b&gt;1.09 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f3&quot;&gt;&lt;/i&gt;spinlock (max 547 us): &lt;b&gt;743 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f4&quot;&gt;&lt;/i&gt;lockfree (max 24 us): &lt;b&gt;298 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f5&quot;&gt;&lt;/i&gt;lockfree_cached (max 35.9 us): &lt;b&gt;342 ns&lt;/b&gt;"/>
+<rect class="hit" x="136.5" y="30" width="72.2" height="312" data-x="163.1" data-tip="&lt;b&gt;p50&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;mutex_condvar (max 651 us): &lt;b&gt;13.4 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;mutex_poll (max 511 us): &lt;b&gt;1.33 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f3&quot;&gt;&lt;/i&gt;spinlock (max 547 us): &lt;b&gt;824 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f4&quot;&gt;&lt;/i&gt;lockfree (max 24 us): &lt;b&gt;344 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f5&quot;&gt;&lt;/i&gt;lockfree_cached (max 35.9 us): &lt;b&gt;387 ns&lt;/b&gt;"/>
+<rect class="hit" x="208.7" y="30" width="105.8" height="312" data-x="254.2" data-tip="&lt;b&gt;p75&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;mutex_condvar (max 651 us): &lt;b&gt;14.8 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;mutex_poll (max 511 us): &lt;b&gt;2.55 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f3&quot;&gt;&lt;/i&gt;spinlock (max 547 us): &lt;b&gt;902 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f4&quot;&gt;&lt;/i&gt;lockfree (max 24 us): &lt;b&gt;432 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f5&quot;&gt;&lt;/i&gt;lockfree_cached (max 35.9 us): &lt;b&gt;441 ns&lt;/b&gt;"/>
+<rect class="hit" x="314.4" y="30" width="105.8" height="312" data-x="374.7" data-tip="&lt;b&gt;p90&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;mutex_condvar (max 651 us): &lt;b&gt;17.8 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;mutex_poll (max 511 us): &lt;b&gt;8.89 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f3&quot;&gt;&lt;/i&gt;spinlock (max 547 us): &lt;b&gt;982 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f4&quot;&gt;&lt;/i&gt;lockfree (max 24 us): &lt;b&gt;520 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f5&quot;&gt;&lt;/i&gt;lockfree_cached (max 35.9 us): &lt;b&gt;470 ns&lt;/b&gt;"/>
+<rect class="hit" x="420.2" y="30" width="151.3" height="312" data-x="465.8" data-tip="&lt;b&gt;p95&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;mutex_condvar (max 651 us): &lt;b&gt;19.9 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;mutex_poll (max 511 us): &lt;b&gt;10.7 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f3&quot;&gt;&lt;/i&gt;spinlock (max 547 us): &lt;b&gt;1.04 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f4&quot;&gt;&lt;/i&gt;lockfree (max 24 us): &lt;b&gt;540 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f5&quot;&gt;&lt;/i&gt;lockfree_cached (max 35.9 us): &lt;b&gt;520 ns&lt;/b&gt;"/>
+<rect class="hit" x="571.6" y="30" width="151.3" height="312" data-x="677.3" data-tip="&lt;b&gt;p99&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;mutex_condvar (max 651 us): &lt;b&gt;38.2 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;mutex_poll (max 511 us): &lt;b&gt;18.3 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f3&quot;&gt;&lt;/i&gt;spinlock (max 547 us): &lt;b&gt;1.3 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f4&quot;&gt;&lt;/i&gt;lockfree (max 24 us): &lt;b&gt;563 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f5&quot;&gt;&lt;/i&gt;lockfree_cached (max 35.9 us): &lt;b&gt;632 ns&lt;/b&gt;"/>
+<rect class="hit" x="722.9" y="30" width="151.3" height="312" data-x="768.4" data-tip="&lt;b&gt;p99.5&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;mutex_condvar (max 651 us): &lt;b&gt;57.9 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;mutex_poll (max 511 us): &lt;b&gt;29.5 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f3&quot;&gt;&lt;/i&gt;spinlock (max 547 us): &lt;b&gt;2.91 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f4&quot;&gt;&lt;/i&gt;lockfree (max 24 us): &lt;b&gt;590 ns&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f5&quot;&gt;&lt;/i&gt;lockfree_cached (max 35.9 us): &lt;b&gt;1.77 us&lt;/b&gt;"/>
+<rect class="hit" x="874.2" y="30" width="105.8" height="312" data-x="980.0" data-tip="&lt;b&gt;p99.9&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f1&quot;&gt;&lt;/i&gt;mutex_condvar (max 651 us): &lt;b&gt;143 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f2&quot;&gt;&lt;/i&gt;mutex_poll (max 511 us): &lt;b&gt;72.4 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f3&quot;&gt;&lt;/i&gt;spinlock (max 547 us): &lt;b&gt;10.1 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f4&quot;&gt;&lt;/i&gt;lockfree (max 24 us): &lt;b&gt;6.65 us&lt;/b&gt;&lt;br&gt;&lt;i class=&quot;f5&quot;&gt;&lt;/i&gt;lockfree_cached (max 35.9 us): &lt;b&gt;4.93 us&lt;/b&gt;"/>
+<line class="cross" x1="0" x2="0" y1="30" y2="342" visibility="hidden"/>
+</svg></div><div class='dl'><a href='charts/pattern-spsc-latency.svg'>pattern-spsc-latency.svg</a></div><!--/md-->
+<!--md:![SPSC streaming throughput](charts/pattern-spsc-throughput.svg)--><div class='chart'><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 204" role="img" aria-label="SPSC streaming throughput">
+<text class="ax" x="160" y="25.0" text-anchor="end">mutex_condvar</text>
+<rect class="f1" x="170" y="10" width="73.4" height="22" rx="4"/>
+<text class="ax" x="251.4" y="25.0">4.36 M items/s (229 ns/item)  (6.8x slower)</text>
+<rect class="hit" x="0" y="5.0" width="1000" height="32" data-x="-10" data-tip="&lt;b&gt;mutex_condvar&lt;/b&gt;&lt;br&gt;p50 229 ns · p90 249 ns · p99 253 ns · max 253 ns"/>
+<text class="ax" x="160" y="57.0" text-anchor="end">mutex_poll</text>
+<rect class="f1" x="170" y="42" width="91.3" height="22" rx="4"/>
+<text class="ax" x="269.3" y="57.0">5.42 M items/s (185 ns/item)  (5.5x slower)</text>
+<rect class="hit" x="0" y="37.0" width="1000" height="32" data-x="-10" data-tip="&lt;b&gt;mutex_poll&lt;/b&gt;&lt;br&gt;p50 185 ns · p90 193 ns · p99 241 ns · max 248 ns"/>
+<text class="ax" x="160" y="89.0" text-anchor="end">spinlock</text>
+<rect class="f1" x="170" y="74" width="41.2" height="22" rx="4"/>
+<text class="ax" x="219.2" y="89.0">2.44 M items/s (409 ns/item)  (12.1x slower)</text>
+<rect class="hit" x="0" y="69.0" width="1000" height="32" data-x="-10" data-tip="&lt;b&gt;spinlock&lt;/b&gt;&lt;br&gt;p50 409 ns · p90 548 ns · p99 580 ns · max 583 ns"/>
+<text class="ax" x="160" y="121.0" text-anchor="end">lockfree</text>
+<rect class="f1" x="170" y="106" width="274.6" height="22" rx="4"/>
+<text class="ax" x="452.6" y="121.0">16.3 M items/s (61.3 ns/item)  (1.8x slower)</text>
+<rect class="hit" x="0" y="101.0" width="1000" height="32" data-x="-10" data-tip="&lt;b&gt;lockfree&lt;/b&gt;&lt;br&gt;p50 61.3 ns · p90 92.5 ns · p99 230 ns · max 251 ns"/>
+<text class="ax" x="160" y="153.0" text-anchor="end">lockfree_cached</text>
+<rect class="f1" x="170" y="138" width="500.0" height="22" rx="4"/>
+<text class="ax" x="678.0" y="153.0">29.7 M items/s (33.7 ns/item)  (fastest)</text>
+<rect class="hit" x="0" y="133.0" width="1000" height="32" data-x="-10" data-tip="&lt;b&gt;lockfree_cached&lt;/b&gt;&lt;br&gt;p50 33.7 ns · p90 44.5 ns · p99 47.5 ns · max 47.8 ns"/>
+<text class="ax" x="170" y="196">million items per second (p50 run)</text>
+<line class="cross" x1="0" x2="0" y1="0" y2="0" visibility="hidden"/>
+</svg></div><div class='dl'><a href='charts/pattern-spsc-throughput.svg'>pattern-spsc-throughput.svg</a></div><!--/md-->
+<p class='sub'>What it costs: CPU time burnt by producer plus consumer during the latency test, divided by wall time. 2.0 means both threads kept a core fully busy (polling); low values mean they slept while waiting.</p>
+<!--md:![SPSC CPU usage while handing off](charts/pattern-spsc-cpu.svg)--><div class='chart'><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 204" role="img" aria-label="SPSC CPU usage while handing off">
+<text class="ax" x="160" y="25.0" text-anchor="end">mutex_condvar</text>
+<rect class="f1" x="170" y="10" width="205.2" height="22" rx="4"/>
+<text class="ax" x="383.2" y="25.0">0.81 cores busy  (least CPU)</text>
+<rect class="hit" x="0" y="5.0" width="1000" height="32" data-x="-10" data-tip="&lt;b&gt;mutex_condvar&lt;/b&gt;&lt;br&gt;CPU time of producer + consumer / wall time during the latency test: 0.81"/>
+<text class="ax" x="160" y="57.0" text-anchor="end">mutex_poll</text>
+<rect class="f1" x="170" y="42" width="376.2" height="22" rx="4"/>
+<text class="ax" x="554.2" y="57.0">1.49 cores busy  (1.8x more CPU)</text>
+<rect class="hit" x="0" y="37.0" width="1000" height="32" data-x="-10" data-tip="&lt;b&gt;mutex_poll&lt;/b&gt;&lt;br&gt;CPU time of producer + consumer / wall time during the latency test: 1.49"/>
+<text class="ax" x="160" y="89.0" text-anchor="end">spinlock</text>
+<rect class="f1" x="170" y="74" width="480.8" height="22" rx="4"/>
+<text class="ax" x="658.8" y="89.0">1.90 cores busy  (2.3x more CPU)</text>
+<rect class="hit" x="0" y="69.0" width="1000" height="32" data-x="-10" data-tip="&lt;b&gt;spinlock&lt;/b&gt;&lt;br&gt;CPU time of producer + consumer / wall time during the latency test: 1.90"/>
+<text class="ax" x="160" y="121.0" text-anchor="end">lockfree</text>
+<rect class="f1" x="170" y="106" width="497.1" height="22" rx="4"/>
+<text class="ax" x="675.1" y="121.0">1.96 cores busy  (2.4x more CPU)</text>
+<rect class="hit" x="0" y="101.0" width="1000" height="32" data-x="-10" data-tip="&lt;b&gt;lockfree&lt;/b&gt;&lt;br&gt;CPU time of producer + consumer / wall time during the latency test: 1.96"/>
+<text class="ax" x="160" y="153.0" text-anchor="end">lockfree_cached</text>
+<rect class="f1" x="170" y="138" width="500.0" height="22" rx="4"/>
+<text class="ax" x="678.0" y="153.0">1.98 cores busy  (2.4x more CPU)</text>
+<rect class="hit" x="0" y="133.0" width="1000" height="32" data-x="-10" data-tip="&lt;b&gt;lockfree_cached&lt;/b&gt;&lt;br&gt;CPU time of producer + consumer / wall time during the latency test: 1.98"/>
+<text class="ax" x="170" y="196">CPU cores busy (producer + consumer)</text>
+<line class="cross" x1="0" x2="0" y1="0" y2="0" visibility="hidden"/>
+</svg></div><div class='dl'><a href='charts/pattern-spsc-cpu.svg'>pattern-spsc-cpu.svg</a></div><!--/md-->
+<h2 id='table'>All latency results</h2><p class='sub'>Grey values have fewer than ~10 samples beyond the percentile and are not statistically reliable.</p><div class='table-wrap'><table><tr><th>benchmark</th><th>n</th><th>min</th><th>p50</th><th>p90</th><th>p99</th><th>p99.9</th><th>p99.99</th><th>max</th></tr><tr><td>alloc.malloc [size=16]</td><td>10000</td><td>29 ns</td><td class=''>31 ns</td><td class=''>32 ns</td><td class=''>36 ns</td><td class=''>44 ns</td><td class='unrel'>298 ns</td><td>18.2 us</td></tr><tr><td>alloc.free [size=16]</td><td>10000</td><td>30 ns</td><td class=''>33 ns</td><td class=''>34 ns</td><td class=''>47 ns</td><td class=''>220 ns</td><td class='unrel'>294 ns</td><td>3.46 us</td></tr><tr><td>alloc.malloc [size=64]</td><td>10000</td><td>28 ns</td><td class=''>31 ns</td><td class=''>32 ns</td><td class=''>36 ns</td><td class=''>56 ns</td><td class='unrel'>109 ns</td><td>3.55 us</td></tr><tr><td>alloc.free [size=64]</td><td>10000</td><td>30 ns</td><td class=''>33 ns</td><td class=''>34 ns</td><td class=''>45 ns</td><td class=''>171 ns</td><td class='unrel'>16.9 us</td><td>41.6 us</td></tr><tr><td>alloc.malloc [size=256]</td><td>10000</td><td>29 ns</td><td class=''>31 ns</td><td class=''>32 ns</td><td class=''>41 ns</td><td class=''>74 ns</td><td class='unrel'>9 us</td><td>11.7 us</td></tr><tr><td>alloc.free [size=256]</td><td>10000</td><td>28 ns</td><td class=''>31 ns</td><td class=''>33 ns</td><td class=''>44 ns</td><td class=''>80 ns</td><td class='unrel'>145 ns</td><td>212 ns</td></tr><tr><td>alloc.malloc [size=1K]</td><td>10000</td><td>29 ns</td><td class=''>31 ns</td><td class=''>32 ns</td><td class=''>37 ns</td><td class=''>58 ns</td><td class='unrel'>88 ns</td><td>119 ns</td></tr><tr><td>alloc.free [size=1K]</td><td>10000</td><td>28 ns</td><td class=''>31 ns</td><td class=''>32 ns</td><td class=''>40 ns</td><td class=''>69 ns</td><td class='unrel'>11.3 us</td><td>16.9 us</td></tr><tr><td>alloc.malloc [size=4K]</td><td>10000</td><td>54 ns</td><td class=''>57 ns</td><td class=''>58 ns</td><td class=''>76 ns</td><td class=''>110 ns</td><td class='unrel'>3.08 us</td><td>10.7 us</td></tr><tr><td>alloc.free [size=4K]</td><td>10000</td><td>42 ns</td><td class=''>45 ns</td><td class=''>46 ns</td><td class=''>62 ns</td><td class=''>105 ns</td><td class='unrel'>260 ns</td><td>262 ns</td></tr><tr><td>alloc.malloc [size=16K]</td><td>10000</td><td>51 ns</td><td class=''>54 ns</td><td class=''>56 ns</td><td class=''>81 ns</td><td class=''>253 ns</td><td class='unrel'>411 ns</td><td>4.45 us</td></tr><tr><td>alloc.free [size=16K]</td><td>10000</td><td>43 ns</td><td class=''>45 ns</td><td class=''>48 ns</td><td class=''>63 ns</td><td class=''>115 ns</td><td class='unrel'>6.66 us</td><td>27.7 us</td></tr><tr><td>alloc.malloc [size=64K]</td><td>10000</td><td>52 ns</td><td class=''>55 ns</td><td class=''>56 ns</td><td class=''>68 ns</td><td class=''>106 ns</td><td class='unrel'>11.3 us</td><td>18.1 us</td></tr><tr><td>alloc.free [size=64K]</td><td>10000</td><td>42 ns</td><td class=''>45 ns</td><td class=''>46 ns</td><td class=''>62 ns</td><td class=''>70 ns</td><td class='unrel'>235 ns</td><td>289 ns</td></tr><tr><td>alloc.malloc [size=256K]</td><td>10000</td><td>40 ns</td><td class=''>43 ns</td><td class=''>44 ns</td><td class=''>103 ns</td><td class=''>249 ns</td><td class='unrel'>359 ns</td><td>15.8 us</td></tr><tr><td>alloc.free [size=256K]</td><td>10000</td><td>40 ns</td><td class=''>43 ns</td><td class=''>44 ns</td><td class=''>57 ns</td><td class=''>91 ns</td><td class='unrel'>220 ns</td><td>36.7 us</td></tr><tr><td>alloc.malloc [size=1M]</td><td>10000</td><td>41 ns</td><td class=''>43 ns</td><td class=''>44 ns</td><td class=''>179 ns</td><td class=''>268 ns</td><td class='unrel'>423 ns</td><td>26.1 us</td></tr><tr><td>alloc.free [size=1M]</td><td>10000</td><td>40 ns</td><td class=''>43 ns</td><td class=''>44 ns</td><td class=''>46 ns</td><td class=''>74 ns</td><td class='unrel'>7.98 us</td><td>14.2 us</td></tr><tr><td>alloc.malloc [size=4M]</td><td>10000</td><td>41 ns</td><td class=''>43 ns</td><td class=''>44 ns</td><td class=''>182 ns</td><td class=''>345 ns</td><td class='unrel'>783 ns</td><td>1.18 us</td></tr><tr><td>alloc.free [size=4M]</td><td>10000</td><td>40 ns</td><td class=''>43 ns</td><td class=''>44 ns</td><td class=''>55 ns</td><td class=''>70 ns</td><td class='unrel'>4.2 us</td><td>26.9 us</td></tr><tr><td>alloc.malloc [size=16M]</td><td>10000</td><td>43 ns</td><td class=''>52 ns</td><td class=''>133 ns</td><td class=''>287 ns</td><td class=''>453 ns</td><td class='unrel'>27 us</td><td>72.6 us</td></tr><tr><td>alloc.free [size=16M]</td><td>10000</td><td>42 ns</td><td class=''>50 ns</td><td class=''>66 ns</td><td class=''>74 ns</td><td class=''>193 ns</td><td class='unrel'>684 ns</td><td>16 us</td></tr><tr><td>multicore.c2c_latency [cpu_a=0, cpu_b=1]</td><td>15</td><td>78.9 ns</td><td class=''>82.6 ns</td><td class='unrel'>99.5 ns</td><td class='unrel'>104 ns</td><td class='unrel'>105 ns</td><td class='unrel'>105 ns</td><td>105 ns</td></tr><tr><td>multicore.c2c_latency [cpu_a=0, cpu_b=2]</td><td>15</td><td>84.5 ns</td><td class=''>95.9 ns</td><td class='unrel'>115 ns</td><td class='unrel'>134 ns</td><td class='unrel'>136 ns</td><td class='unrel'>136 ns</td><td>136 ns</td></tr><tr><td>multicore.c2c_latency [cpu_a=0, cpu_b=3]</td><td>15</td><td>80.8 ns</td><td class=''>83.2 ns</td><td class='unrel'>93.1 ns</td><td class='unrel'>101 ns</td><td class='unrel'>101 ns</td><td class='unrel'>101 ns</td><td>101 ns</td></tr><tr><td>multicore.c2c_latency [cpu_a=1, cpu_b=2]</td><td>15</td><td>82 ns</td><td class=''>86.9 ns</td><td class='unrel'>107 ns</td><td class='unrel'>117 ns</td><td class='unrel'>118 ns</td><td class='unrel'>118 ns</td><td>118 ns</td></tr><tr><td>multicore.c2c_latency [cpu_a=1, cpu_b=3]</td><td>15</td><td>80.8 ns</td><td class=''>83.2 ns</td><td class='unrel'>88.2 ns</td><td class='unrel'>112 ns</td><td class='unrel'>116 ns</td><td class='unrel'>116 ns</td><td>116 ns</td></tr><tr><td>multicore.c2c_latency [cpu_a=2, cpu_b=3]</td><td>15</td><td>85.9 ns</td><td class=''>87.4 ns</td><td class='unrel'>102 ns</td><td class='unrel'>108 ns</td><td class='unrel'>108 ns</td><td class='unrel'>108 ns</td><td>108 ns</td></tr><tr><td>pattern.alloc_vector [allocator=new_delete]</td><td>10000</td><td>1.36 ns</td><td class=''>1.39 ns</td><td class=''>1.93 ns</td><td class=''>3.55 ns</td><td class=''>20.4 ns</td><td class='unrel'>293 ns</td><td>1.14 us</td></tr><tr><td>pattern.alloc_vector [allocator=reserve]</td><td>10000</td><td>0.996 ns</td><td class=''>1.01 ns</td><td class=''>1.02 ns</td><td class=''>1.71 ns</td><td class=''>12.1 ns</td><td class='unrel'>68.5 ns</td><td>126 ns</td></tr><tr><td>pattern.alloc_vector [allocator=pmr_monotonic]</td><td>10000</td><td>1.37 ns</td><td class=''>1.47 ns</td><td class=''>1.72 ns</td><td class=''>3.04 ns</td><td class=''>17 ns</td><td class='unrel'>61.1 ns</td><td>77.4 ns</td></tr><tr><td>pattern.alloc_vector [allocator=pmr_pool]</td><td>10000</td><td>1.9 ns</td><td class=''>1.97 ns</td><td class=''>2.26 ns</td><td class=''>3.63 ns</td><td class=''>55.8 ns</td><td class='unrel'>984 ns</td><td>2.15 us</td></tr><tr><td>pattern.alloc_list [allocator=new_delete]</td><td>10000</td><td>27.4 ns</td><td class=''>29.1 ns</td><td class=''>37.7 ns</td><td class=''>85.2 ns</td><td class=''>184 ns</td><td class='unrel'>833 ns</td><td>963 ns</td></tr><tr><td>pattern.alloc_list [allocator=pmr_monotonic]</td><td>10000</td><td>4.98 ns</td><td class=''>6.88 ns</td><td class=''>8.17 ns</td><td class=''>8.84 ns</td><td class=''>102 ns</td><td class='unrel'>281 ns</td><td>299 ns</td></tr><tr><td>pattern.alloc_list [allocator=pmr_pool]</td><td>10000</td><td>21.8 ns</td><td class=''>30.8 ns</td><td class=''>40.2 ns</td><td class=''>92.1 ns</td><td class=''>299 ns</td><td class='unrel'>476 ns</td><td>575 ns</td></tr><tr><td>pattern.spsc_latency [queue=mutex_condvar]</td><td>10000</td><td>6.56 us</td><td class=''>13.4 us</td><td class=''>17.8 us</td><td class=''>38.2 us</td><td class=''>143 us</td><td class='unrel'>518 us</td><td>651 us</td></tr><tr><td>pattern.spsc_throughput [queue=mutex_condvar]</td><td>15</td><td>202 ns</td><td class=''>229 ns</td><td class='unrel'>249 ns</td><td class='unrel'>253 ns</td><td class='unrel'>253 ns</td><td class='unrel'>253 ns</td><td>253 ns</td></tr><tr><td>pattern.spsc_latency [queue=mutex_poll]</td><td>10000</td><td>412 ns</td><td class=''>1.33 us</td><td class=''>8.89 us</td><td class=''>18.3 us</td><td class=''>72.4 us</td><td class='unrel'>171 us</td><td>511 us</td></tr><tr><td>pattern.spsc_throughput [queue=mutex_poll]</td><td>15</td><td>164 ns</td><td class=''>185 ns</td><td class='unrel'>193 ns</td><td class='unrel'>241 ns</td><td class='unrel'>248 ns</td><td class='unrel'>248 ns</td><td>248 ns</td></tr><tr><td>pattern.spsc_latency [queue=spinlock]</td><td>10000</td><td>376 ns</td><td class=''>824 ns</td><td class=''>982 ns</td><td class=''>1.3 us</td><td class=''>10.1 us</td><td class='unrel'>164 us</td><td>547 us</td></tr><tr><td>pattern.spsc_throughput [queue=spinlock]</td><td>15</td><td>274 ns</td><td class=''>409 ns</td><td class='unrel'>548 ns</td><td class='unrel'>580 ns</td><td class='unrel'>583 ns</td><td class='unrel'>583 ns</td><td>583 ns</td></tr><tr><td>pattern.spsc_latency [queue=lockfree]</td><td>10000</td><td>231 ns</td><td class=''>344 ns</td><td class=''>520 ns</td><td class=''>563 ns</td><td class=''>6.65 us</td><td class='unrel'>17.9 us</td><td>24 us</td></tr><tr><td>pattern.spsc_throughput [queue=lockfree]</td><td>15</td><td>50.4 ns</td><td class=''>61.3 ns</td><td class='unrel'>92.5 ns</td><td class='unrel'>230 ns</td><td class='unrel'>249 ns</td><td class='unrel'>251 ns</td><td>251 ns</td></tr><tr><td>pattern.spsc_latency [queue=lockfree_cached]</td><td>10000</td><td>256 ns</td><td class=''>387 ns</td><td class=''>470 ns</td><td class=''>632 ns</td><td class=''>4.93 us</td><td class='unrel'>34 us</td><td>35.9 us</td></tr><tr><td>pattern.spsc_throughput [queue=lockfree_cached]</td><td>15</td><td>24.5 ns</td><td class=''>33.7 ns</td><td class='unrel'>44.5 ns</td><td class='unrel'>47.5 ns</td><td class='unrel'>47.8 ns</td><td class='unrel'>47.8 ns</td><td>47.8 ns</td></tr><tr><td>sync.mutex_wakeup</td><td>10000</td><td>13.6 us</td><td class=''>39.1 us</td><td class=''>101 us</td><td class=''>215 us</td><td class=''>1.25 ms</td><td class='unrel'>2.11 ms</td><td>2.62 ms</td></tr><tr><td>sync.condvar_wakeup</td><td>10000</td><td>14.1 us</td><td class=''>39.7 us</td><td class=''>104 us</td><td class=''>238 us</td><td class=''>1.65 ms</td><td class='unrel'>5.76 ms</td><td>7.55 ms</td></tr><tr><td>thread.create_to_start</td><td>10000</td><td>4.06 us</td><td class=''>6.72 us</td><td class=''>12.5 us</td><td class=''>79 us</td><td class=''>527 us</td><td class='unrel'>3.23 ms</td><td>5.06 ms</td></tr><tr><td>thread.exit_to_join</td><td>10000</td><td>2.77 us</td><td class=''>4 us</td><td class=''>5.05 us</td><td class=''>14.9 us</td><td class=''>121 us</td><td class='unrel'>481 us</td><td>845 us</td></tr></table></div>
+<p class='note'>Generated from results.json by tools/olt-report.py. Charts are also saved as standalone SVG files in charts/.</p>
+<script>
+document.querySelectorAll('.chart').forEach(chart => {
+  const svg = chart.querySelector('svg'); if (!svg) return;
+  const cross = svg.querySelector('.cross');
+  const tip = document.createElement('div'); tip.className = 'tip'; chart.appendChild(tip);
+  const W = svg.viewBox.baseVal.width;
+  svg.querySelectorAll('.hit').forEach(h => {
+    h.addEventListener('pointerenter', () => {
+      const x = +h.dataset.x;
+      if (x >= 0) { cross.setAttribute('x1', x); cross.setAttribute('x2', x); cross.setAttribute('visibility', 'visible'); }
+      tip.innerHTML = h.dataset.tip; tip.style.display = 'block';
+      const r = svg.getBoundingClientRect(), px = x / W * r.width;
+      if (x < 0) { tip.style.left = r.width * 0.55 + 'px'; tip.style.top = (h.getBBox().y / svg.viewBox.baseVal.height * r.height) + 'px'; return; }
+      tip.style.top = '28px';
+      tip.style.left = (px > r.width * 0.6 ? px - tip.offsetWidth - 12 : px + 12) + 'px';
+    });
+  });
+  svg.addEventListener('pointerleave', () => { tip.style.display = 'none'; cross.setAttribute('visibility', 'hidden'); });
+});
+</script></main></body></html>

@@ -1,0 +1,29 @@
+Source: os-latency-tests
+Section: utils
+Priority: optional
+Maintainer: Ionut Neicu <ionutneicu@gmail.com>
+Build-Depends: debhelper-compat (= 13),
+               cmake (>= 3.16),
+               g++ (>= 8),
+               linux-libc-dev
+Standards-Version: 4.6.2
+Homepage: https://github.com/ionutneicu/os-latency-tests
+Vcs-Git: https://github.com/ionutneicu/os-latency-tests.git
+Vcs-Browser: https://github.com/ionutneicu/os-latency-tests
+Rules-Requires-Root: no
+
+Package: os-latency-tests
+Architecture: linux-any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Recommends: python3
+Description: measure OS and hardware latencies from user space
+ os-latency-tests runs micro-benchmarks for thread creation, blocking
+ synchronisation wake-up and memory allocation, and reports full latency
+ distributions (p50 to p99.99 and max) together with a description of the
+ platform: CPU, cache hierarchy, kernel preemption model and available
+ performance counters.
+ .
+ It is meant for comparing kernels (generic, low-latency, PREEMPT_RT) and
+ boards, and for deriving low-latency design decisions from measured data.
+ Results are written as JSON plus raw per-sample CSV, and olt-report turns
+ them into a self-contained HTML report with memory hierarchy graphs.

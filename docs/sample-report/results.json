@@ -1,0 +1,2569 @@
+{
+  "schema": "olt-results/1",
+  "platform": {
+    "arch": "x86_64",
+    "os": "linux",
+    "cpu_model": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+    "board": "",
+    "cpu_count": 4,
+    "kernel_release": "6.18.44-fc-v140",
+    "kernel_version": "#1 SMP PREEMPT_DYNAMIC @0",
+    "preempt_model": "PREEMPT_DYNAMIC",
+    "governor": "",
+    "cpuidle_driver": "none",
+    "isolated_cpus": "",
+    "thp_mode": "madvise",
+    "physical_memory": 16872808448,
+    "cache_line_size": 64,
+    "caches": [
+      {"level": 1, "type": "Data", "size_bytes": 49152, "line_size": 64, "ways": 12, "shared_cpus": "3"}, 
+      {"level": 1, "type": "Instruction", "size_bytes": 32768, "line_size": 64, "ways": 8, "shared_cpus": "3"}, 
+      {"level": 2, "type": "Unified", "size_bytes": 2097152, "line_size": 64, "ways": 16, "shared_cpus": "3"}, 
+      {"level": 3, "type": "Unified", "size_bytes": 272629760, "line_size": 64, "ways": 20, "shared_cpus": "0-3"}
+    ],
+    "perf": {"backend": "linux-perf_event", "events": ["context_switches", "cpu_migrations", "page_faults"]},
+    "compiler": "gcc 13.3.0",
+    "build_type": "RelWithDebInfo",
+    "cycle_counter": {"ticks_per_ns": 2.100001716, "from_hardware": false},
+    "timer": {"now_ns_min": 21, "now_ns_median": 30, "cycles_ns_min": 19.04760348, "cycles_ns_median": 25.7142647, "os_resolution_ns": 1}
+  },
+  "config": {"samples": 10000, "warmup": 100, "affinity": "different", "main_cpu": 3, "worker_cpu": 2, "rt_priority": 80, "lock_memory": true, "block_deep_idle": true, "park_us": 200, "cpu_warmup_ms": 200, "sweep_samples": 15, "hugepages": false},
+  "warnings": [],
+  "results": [
+    {
+      "name": "alloc.malloc",
+      "params": {"size": "16"},
+      "unit": "ns",
+      "note": "best case: same block reused every iteration, memory never touched",
+      "raw_csv": "raw/alloc.malloc_size_16.csv",
+      "count": 10000, "min": 29, "max": 18204, "mean": 32.9921, "stddev": 181.764407, "mad": 1,
+      "percentiles": {"p50": 31, "p90": 32, "p99": 36, "p99_9": 44.001, "p99_99": 297.7908},
+      "unreliable_percentiles": ["p99_99"]
+    },
+    {
+      "name": "alloc.free",
+      "params": {"size": "16"},
+      "unit": "ns",
+      "raw_csv": "raw/alloc.free_size_16.csv",
+      "count": 10000, "min": 30, "max": 3465, "mean": 33.8696, "stddev": 35.52217868, "mad": 1,
+      "percentiles": {"p50": 33, "p90": 34, "p99": 47, "p99_9": 220, "p99_99": 294.3171},
+      "unreliable_percentiles": ["p99_99"]
+    },
+    {
+      "name": "alloc.malloc",
+      "params": {"size": "64"},
+      "unit": "ns",
+      "raw_csv": "raw/alloc.malloc_size_64.csv",
+      "count": 10000, "min": 28, "max": 3550, "mean": 31.4637, "stddev": 35.23604178, "mad": 0,
+      "percentiles": {"p50": 31, "p90": 32, "p99": 36, "p99_9": 56.002, "p99_99": 109.3441},
+      "unreliable_percentiles": ["p99_99"]
+    },
+    {
+      "name": "alloc.free",
+      "params": {"size": "64"},
+      "unit": "ns",
+      "raw_csv": "raw/alloc.free_size_64.csv",
+      "count": 10000, "min": 30, "max": 41617, "mean": 41.974, "stddev": 484.0823714, "mad": 1,
+      "percentiles": {"p50": 33, "p90": 34, "p99": 45.01, "p99_9": 171.011, "p99_99": 16856.4763},
+      "unreliable_percentiles": ["p99_99"]
+    },
+    {
+      "name": "alloc.malloc",
+      "params": {"size": "256"},
+      "unit": "ns",
+      "raw_csv": "raw/alloc.malloc_size_256.csv",
+      "count": 10000, "min": 29, "max": 11712, "mean": 34.0101, "stddev": 150.9773772, "mad": 1,
+      "percentiles": {"p50": 31, "p90": 32, "p99": 41, "p99_9": 74.017, "p99_99": 9001.2711},
+      "unreliable_percentiles": ["p99_99"]
+    },
+    {
+      "name": "alloc.free",
+      "params": {"size": "256"},
+      "unit": "ns",
+      "raw_csv": "raw/alloc.free_size_256.csv",
+      "count": 10000, "min": 28, "max": 212, "mean": 31.829, "stddev": 4.160034806, "mad": 1,
+      "percentiles": {"p50": 31, "p90": 33, "p99": 44, "p99_9": 80.005, "p99_99": 145.0067},
+      "unreliable_percentiles": ["p99_99"]
+    },
+    {
+      "name": "alloc.malloc",
+      "params": {"size": "1K"},
+      "unit": "ns",
+      "raw_csv": "raw/alloc.malloc_size_1K.csv",
+      "count": 10000, "min": 29, "max": 119, "mean": 31.0651, "stddev": 1.958786786, "mad": 1,
+      "percentiles": {"p50": 31, "p90": 32, "p99": 37, "p99_9": 58.001, "p99_99": 88.0031},
+      "unreliable_percentiles": ["p99_99"]
+    },
+    {
+      "name": "alloc.free",
+      "params": {"size": "1K"},
+      "unit": "ns",
+      "raw_csv": "raw/alloc.free_size_1K.csv",
+      "count": 10000, "min": 28, "max": 16903, "mean": 34.7927, "stddev": 211.015892, "mad": 1,
+      "percentiles": {"p50": 31, "p90": 32, "p99": 40, "p99_9": 69.016, "p99_99": 11302.5601},
+      "unreliable_percentiles": ["p99_99"]
+    },
+    {
+      "name": "alloc.malloc",
+      "params": {"size": "4K"},
+      "unit": "ns",
+      "raw_csv": "raw/alloc.malloc_size_4K.csv",
+      "count": 10000, "min": 54, "max": 10668, "mean": 58.5445, "stddev": 110.4249364, "mad": 1,
+      "percentiles": {"p50": 57, "p90": 58, "p99": 76, "p99_9": 110.004, "p99_99": 3078.759},
+      "unreliable_percentiles": ["p99_99"]
+    },
+    {
+      "name": "alloc.free",
+      "params": {"size": "4K"},
+      "unit": "ns",
+      "raw_csv": "raw/alloc.free_size_4K.csv",
+      "count": 10000, "min": 42, "max": 262, "mean": 45.8387, "stddev": 5.809755385, "mad": 0,
+      "percentiles": {"p50": 45, "p90": 46, "p99": 62, "p99_9": 105.002, "p99_99": 260.0002},
+      "unreliable_percentiles": ["p99_99"]
+    },
+    {
+      "name": "alloc.malloc",
+      "params": {"size": "16K"},
+      "unit": "ns",
+      "raw_csv": "raw/alloc.malloc_size_16K.csv",
+      "count": 10000, "min": 51, "max": 4451, "mean": 56.2751, "stddev": 45.46827417, "mad": 1,
+      "percentiles": {"p50": 54, "p90": 56, "p99": 81, "p99_9": 253, "p99_99": 411.404},
+      "unreliable_percentiles": ["p99_99"]
+    },
+    {
+      "name": "alloc.free",
+      "params": {"size": "16K"},
+      "unit": "ns",
+      "raw_csv": "raw/alloc.free_size_16K.csv",
+      "count": 10000, "min": 43, "max": 27668, "mean": 49.6764, "stddev": 284.0966659, "mad": 0,
+      "percentiles": {"p50": 45, "p90": 48, "p99": 63, "p99_9": 115.004, "p99_99": 6663.1007},
+      "unreliable_percentiles": ["p99_99"]
+    },
+    {
+      "name": "alloc.malloc",
+      "params": {"size": "64K"},
+      "unit": "ns",
+      "raw_csv": "raw/alloc.malloc_size_64K.csv",
+      "count": 10000, "min": 52, "max": 18103, "mean": 58.3946, "stddev": 212.5523266, "mad": 1,
+      "percentiles": {"p50": 55, "p90": 56, "p99": 68, "p99_9": 106, "p99_99": 11277.6826},
+      "unreliable_percentiles": ["p99_99"]
+    },
+    {
+      "name": "alloc.free",
+      "params": {"size": "64K"},
+      "unit": "ns",
+      "raw_csv": "raw/alloc.free_size_64K.csv",
+      "count": 10000, "min": 42, "max": 289, "mean": 45.4072, "stddev": 4.534296433, "mad": 0,
+      "percentiles": {"p50": 45, "p90": 46, "p99": 62, "p99_9": 70.003, "p99_99": 235.0054},
+      "unreliable_percentiles": ["p99_99"]
+    },
+    {
+      "name": "alloc.malloc",
+      "params": {"size": "256K"},
+      "unit": "ns",
+      "raw_csv": "raw/alloc.malloc_size_256K.csv",
+      "count": 10000, "min": 40, "max": 15759, "mean": 46.6984, "stddev": 157.9163912, "mad": 0,
+      "percentiles": {"p50": 43, "p90": 44, "p99": 103.21, "p99_9": 249.002, "p99_99": 358.5402},
+      "unreliable_percentiles": ["p99_99"]
+    },
+    {
+      "name": "alloc.free",
+      "params": {"size": "256K"},
+      "unit": "ns",
+      "raw_csv": "raw/alloc.free_size_256K.csv",
+      "count": 10000, "min": 40, "max": 36739, "mean": 46.9297, "stddev": 366.9816915, "mad": 0,
+      "percentiles": {"p50": 43, "p90": 44, "p99": 57, "p99_9": 91.008, "p99_99": 219.6523},
+      "unreliable_percentiles": ["p99_99"]
+    },
+    {
+      "name": "alloc.malloc",
+      "params": {"size": "1M"},
+      "unit": "ns",
+      "raw_csv": "raw/alloc.malloc_size_1M.csv",
+      "count": 10000, "min": 41, "max": 26147, "mean": 48.6224, "stddev": 261.854298, "mad": 0,
+      "percentiles": {"p50": 43, "p90": 44, "p99": 179, "p99_9": 268.011, "p99_99": 422.5727},
+      "unreliable_percentiles": ["p99_99"]
+    },
+    {
+      "name": "alloc.free",
+      "params": {"size": "1M"},
+      "unit": "ns",
+      "raw_csv": "raw/alloc.free_size_1M.csv",
+      "count": 10000, "min": 40, "max": 14249, "mean": 45.5432, "stddev": 168.4255932, "mad": 0,
+      "percentiles": {"p50": 43, "p90": 44, "p99": 46, "p99_9": 74.002, "p99_99": 7982.6267},
+      "unreliable_percentiles": ["p99_99"]
+    },
+    {
+      "name": "alloc.malloc",
+      "params": {"size": "4M"},
+      "unit": "ns",
+      "raw_csv": "raw/alloc.malloc_size_4M.csv",
+      "count": 10000, "min": 41, "max": 1178, "mean": 46.6146, "stddev": 26.53690049, "mad": 0,
+      "percentiles": {"p50": 43, "p90": 44, "p99": 182, "p99_9": 345.004, "p99_99": 783.0395},
+      "unreliable_percentiles": ["p99_99"]
+    },
+    {
+      "name": "alloc.free",
+      "params": {"size": "4M"},
+      "unit": "ns",
+      "raw_csv": "raw/alloc.free_size_4M.csv",
+      "count": 10000, "min": 40, "max": 26944, "mean": 46.265, "stddev": 272.3448816, "mad": 0,
+      "percentiles": {"p50": 43, "p90": 44, "p99": 55, "p99_9": 70.001, "p99_99": 4200.2746},
+      "unreliable_percentiles": ["p99_99"]
+    },
+    {
+      "name": "alloc.malloc",
+      "params": {"size": "16M"},
+      "unit": "ns",
+      "raw_csv": "raw/alloc.malloc_size_16M.csv",
+      "count": 10000, "min": 43, "max": 72596, "mean": 82.6569, "stddev": 781.8976279, "mad": 7,
+      "percentiles": {"p50": 52, "p90": 133.1, "p99": 287.01, "p99_9": 453.001, "p99_99": 27016.5584},
+      "unreliable_percentiles": ["p99_99"]
+    },
+    {
+      "name": "alloc.free",
+      "params": {"size": "16M"},
+      "unit": "ns",
+      "raw_csv": "raw/alloc.free_size_16M.csv",
+      "count": 10000, "min": 42, "max": 15988, "mean": 54.8556, "stddev": 159.8753851, "mad": 5,
+      "percentiles": {"p50": 50, "p90": 66, "p99": 74, "p99_9": 193.027, "p99_99": 683.5306},
+      "unreliable_percentiles": ["p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "1K", "bytes": "1024", "pages": "base"},
+      "unit": "ns/access",
+      "note": "latency includes TLB misses once the buffer exceeds TLB reach (try --hugepages)",
+      "raw_csv": "raw/mem.latency_random_size_1K_bytes_1024_pages_base.csv",
+      "count": 15, "min": 1.539588928, "max": 2.068740845, "mean": 1.711360677, "stddev": 0.1666134081, "mad": 0.108543396,
+      "percentiles": {"p50": 1.686485291, "p90": 1.974894714, "p99": 2.062072601, "p99_9": 2.06807402, "p99_99": 2.068674162},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "1K", "bytes": "1024", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_1K_bytes_1024_pages_base.csv",
+      "count": 15, "min": 1.413661957, "max": 1.531036377, "mean": 1.458269501, "stddev": 0.03397995176, "mad": 0.02027511597,
+      "percentiles": {"p50": 1.45416069, "p90": 1.504616165, "p99": 1.527715874, "p99_9": 1.530704327, "p99_99": 1.531003172},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "1K", "bytes": "1024", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_1K_bytes_1024_pages_base.csv",
+      "count": 15, "min": 3.628793716, "max": 4.12021637, "mean": 3.999175771, "stddev": 0.1263836191, "mad": 0.03840065002,
+      "percentiles": {"p50": 4.030735016, "p90": 4.11558075, "p99": 4.120093002, "p99_9": 4.120204033, "p99_99": 4.120215136},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "1.19K", "bytes": "1216", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_1.19K_bytes_1216_pages_base.csv",
+      "count": 15, "min": 1.553077698, "max": 1.733451843, "mean": 1.614030457, "stddev": 0.05797447912, "mad": 0.01347351074,
+      "percentiles": {"p50": 1.588249207, "p90": 1.704148865, "p99": 1.730644836, "p99_9": 1.733171143, "p99_99": 1.733423773},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "1.19K", "bytes": "1216", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_1.19K_bytes_1216_pages_base.csv",
+      "count": 15, "min": 1.766787593, "max": 2.067085522, "mean": 1.876456362, "stddev": 0.08408676167, "mad": 0.05347844497,
+      "percentiles": {"p50": 1.869822959, "p90": 1.989654502, "p99": 2.061727836, "p99_9": 2.066549753, "p99_99": 2.067031945},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "1.19K", "bytes": "1216", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_1.19K_bytes_1216_pages_base.csv",
+      "count": 15, "min": 3.542804881, "max": 4.154883022, "mean": 3.784645785, "stddev": 0.1546376785, "mad": 0.1188530687,
+      "percentiles": {"p50": 3.76063637, "p90": 3.935738891, "p99": 4.125072613, "p99_9": 4.151901981, "p99_99": 4.154584918},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "1.38K", "bytes": "1408", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_1.38K_bytes_1408_pages_base.csv",
+      "count": 15, "min": 1.540382385, "max": 2.339599609, "mean": 1.674398804, "stddev": 0.1998622398, "mad": 0.04933929443,
+      "percentiles": {"p50": 1.58972168, "p90": 1.768910217, "p99": 2.26191452, "p99_9": 2.3318311, "p99_99": 2.338822758},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "1.38K", "bytes": "1408", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_1.38K_bytes_1408_pages_base.csv",
+      "count": 15, "min": 1.717951408, "max": 2.008590797, "mean": 1.836573574, "stddev": 0.07669481058, "mad": 0.06192659676,
+      "percentiles": {"p50": 1.825725468, "p90": 1.896216921, "p99": 1.992937389, "p99_9": 2.007025456, "p99_99": 2.008434262},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "1.38K", "bytes": "1408", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_1.38K_bytes_1408_pages_base.csv",
+      "count": 15, "min": 3.4592929, "max": 3.982795518, "mean": 3.754826982, "stddev": 0.1319065016, "mad": 0.05446114877,
+      "percentiles": {"p50": 3.766394803, "p90": 3.908439351, "p99": 3.976555518, "p99_9": 3.982171518, "p99_99": 3.982733118},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "1.62K", "bytes": "1664", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_1.62K_bytes_1664_pages_base.csv",
+      "count": 15, "min": 1.540023804, "max": 2.519264221, "mean": 1.77808075, "stddev": 0.243842525, "mad": 0.04975128174,
+      "percentiles": {"p50": 1.69871521, "p90": 1.998248291, "p99": 2.454748993, "p99_9": 2.512812698, "p99_99": 2.518619069},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "1.62K", "bytes": "1664", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_1.62K_bytes_1664_pages_base.csv",
+      "count": 15, "min": 1.55330139, "max": 1.862252606, "mean": 1.780436065, "stddev": 0.07561067924, "mad": 0.0350891917,
+      "percentiles": {"p50": 1.793006958, "p90": 1.846581112, "p99": 1.860278104, "p99_9": 1.862055155, "p99_99": 1.862232861},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "1.62K", "bytes": "1664", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_1.62K_bytes_1664_pages_base.csv",
+      "count": 15, "min": 3.524691758, "max": 4.696626127, "mean": 4.005332937, "stddev": 0.4520905655, "mad": 0.1813113241,
+      "percentiles": {"p50": 3.777299223, "p90": 4.649401065, "p99": 4.691955046, "p99_9": 4.696159019, "p99_99": 4.696579416},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "2K", "bytes": "2048", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_2K_bytes_2048_pages_base.csv",
+      "count": 15, "min": 1.547019958, "max": 2.041923523, "mean": 1.637880452, "stddev": 0.1213512864, "mad": 0.03503417969,
+      "percentiles": {"p50": 1.598747253, "p90": 1.69883728, "p99": 1.994765167, "p99_9": 2.037207687, "p99_99": 2.041451939},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "2K", "bytes": "2048", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_2K_bytes_2048_pages_base.csv",
+      "count": 15, "min": 1.449306488, "max": 1.918014526, "mean": 1.69642868, "stddev": 0.09983842373, "mad": 0.03933143616,
+      "percentiles": {"p50": 1.699077606, "p90": 1.754352188, "p99": 1.895117607, "p99_9": 1.915724834, "p99_99": 1.917785557},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "2K", "bytes": "2048", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_2K_bytes_2048_pages_base.csv",
+      "count": 15, "min": 3.380872726, "max": 4.232902527, "mean": 3.681127294, "stddev": 0.2428472447, "mad": 0.07989883423,
+      "percentiles": {"p50": 3.592195511, "p90": 4.042791748, "p99": 4.220074463, "p99_9": 4.23161972, "p99_99": 4.232774246},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "2.38K", "bytes": "2432", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_2.38K_bytes_2432_pages_base.csv",
+      "count": 15, "min": 1.598136902, "max": 4.197380066, "mean": 1.8981191, "stddev": 0.6458340977, "mad": 0.0580291748,
+      "percentiles": {"p50": 1.707733154, "p90": 1.965808105, "p99": 3.896078644, "p99_9": 4.167249924, "p99_99": 4.194367052},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "2.38K", "bytes": "2432", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_2.38K_bytes_2432_pages_base.csv",
+      "count": 15, "min": 1.594395044, "max": 2.359626235, "mean": 1.828475806, "stddev": 0.2238104098, "mad": 0.08854136864,
+      "percentiles": {"p50": 1.755799316, "p90": 2.156278062, "p99": 2.352948086, "p99_9": 2.35895842, "p99_99": 2.359559453},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "2.38K", "bytes": "2432", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_2.38K_bytes_2432_pages_base.csv",
+      "count": 15, "min": 2.515991272, "max": 6.658527979, "mean": 3.58849928, "stddev": 1.135788951, "mad": 0.6008018524,
+      "percentiles": {"p50": 3.345534689, "p90": 4.8249753, "p99": 6.405603201, "p99_9": 6.633235501, "p99_99": 6.655998731},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "2.81K", "bytes": "2880", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_2.81K_bytes_2880_pages_base.csv",
+      "count": 15, "min": 1.603782654, "max": 4.489425659, "mean": 1.949819438, "stddev": 0.7519731261, "mad": 0.0485534668,
+      "percentiles": {"p50": 1.669013977, "p90": 2.364535522, "p99": 4.235934143, "p99_9": 4.464076508, "p99_99": 4.486890744},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "2.81K", "bytes": "2880", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_2.81K_bytes_2880_pages_base.csv",
+      "count": 15, "min": 1.188190749, "max": 1.803692895, "mean": 1.408154888, "stddev": 0.1952753524, "mad": 0.1149642346,
+      "percentiles": {"p50": 1.343389604, "p90": 1.695384645, "p99": 1.802143748, "p99_9": 1.80353798, "p99_99": 1.803677403},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "2.81K", "bytes": "2880", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_2.81K_bytes_2880_pages_base.csv",
+      "count": 15, "min": 2.374306152, "max": 3.443919886, "mean": 2.869272675, "stddev": 0.2660745908, "mad": 0.09999618503,
+      "percentiles": {"p50": 2.881642346, "p90": 3.196362041, "p99": 3.418426133, "p99_9": 3.44137051, "p99_99": 3.443664948},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "3.31K", "bytes": "3392", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_3.31K_bytes_3392_pages_base.csv",
+      "count": 15, "min": 1.52696991, "max": 2.011756897, "mean": 1.617106628, "stddev": 0.132051579, "mad": 0.0341796875,
+      "percentiles": {"p50": 1.562149048, "p90": 1.712060547, "p99": 1.970426178, "p99_9": 2.007623825, "p99_99": 2.01134359},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "3.31K", "bytes": "3392", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_3.31K_bytes_3392_pages_base.csv",
+      "count": 15, "min": 1.927622092, "max": 2.495283019, "mean": 2.082478694, "stddev": 0.1790601123, "mad": 0.06253957839,
+      "percentiles": {"p50": 2.019947509, "p90": 2.372804401, "p99": 2.488948149, "p99_9": 2.494649532, "p99_99": 2.49521967},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "3.31K", "bytes": "3392", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_3.31K_bytes_3392_pages_base.csv",
+      "count": 15, "min": 2.967591498, "max": 3.775604834, "mean": 3.34674815, "stddev": 0.2434027538, "mad": 0.150212865,
+      "percentiles": {"p50": 3.340114749, "p90": 3.669074686, "p99": 3.761694985, "p99_9": 3.774213849, "p99_99": 3.775465736},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "4K", "bytes": "4096", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_4K_bytes_4096_pages_base.csv",
+      "count": 15, "min": 1.619277954, "max": 2.770439148, "mean": 1.841711426, "stddev": 0.2818348912, "mad": 0.08899688721,
+      "percentiles": {"p50": 1.77596283, "p90": 1.996211243, "p99": 2.666767883, "p99_9": 2.760072021, "p99_99": 2.769402435},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "4K", "bytes": "4096", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_4K_bytes_4096_pages_base.csv",
+      "count": 15, "min": 1.496965408, "max": 1.712711334, "mean": 1.564962006, "stddev": 0.05669857592, "mad": 0.02932929993,
+      "percentiles": {"p50": 1.55138588, "p90": 1.630821228, "p99": 1.703742371, "p99_9": 1.711814438, "p99_99": 1.712621645},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "4K", "bytes": "4096", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_4K_bytes_4096_pages_base.csv",
+      "count": 15, "min": 3.256837845, "max": 3.637506485, "mean": 3.371777725, "stddev": 0.1012650305, "mad": 0.05518531799,
+      "percentiles": {"p50": 3.347332001, "p90": 3.482778931, "p99": 3.617966118, "p99_9": 3.635552448, "p99_99": 3.637311081},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "4.75K", "bytes": "4864", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_4.75K_bytes_4864_pages_base.csv",
+      "count": 15, "min": 1.705070496, "max": 2.049133301, "mean": 1.780705261, "stddev": 0.09309679058, "mad": 0.02410125732,
+      "percentiles": {"p50": 1.736312866, "p90": 1.878442383, "p99": 2.02802948, "p99_9": 2.047022919, "p99_99": 2.048922263},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "4.75K", "bytes": "4864", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_4.75K_bytes_4864_pages_base.csv",
+      "count": 15, "min": 1.464928812, "max": 1.595681815, "mean": 1.522467102, "stddev": 0.03881265967, "mad": 0.02619752484,
+      "percentiles": {"p50": 1.516249943, "p90": 1.570734843, "p99": 1.593508034, "p99_9": 1.595464437, "p99_99": 1.595660077},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "4.75K", "bytes": "4864", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_4.75K_bytes_4864_pages_base.csv",
+      "count": 15, "min": 3.052595337, "max": 3.460762845, "mean": 3.247391947, "stddev": 0.09528848152, "mad": 0.06235026171,
+      "percentiles": {"p50": 3.221893074, "p90": 3.341990432, "p99": 3.446707245, "p99_9": 3.459357285, "p99_99": 3.460622289},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "5.62K", "bytes": "5760", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_5.62K_bytes_5760_pages_base.csv",
+      "count": 15, "min": 1.541473389, "max": 1.918876648, "mean": 1.625609334, "stddev": 0.1166785947, "mad": 0.0220413208,
+      "percentiles": {"p50": 1.567420959, "p90": 1.787924194, "p99": 1.90924118, "p99_9": 1.917913101, "p99_99": 1.918780293},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "5.62K", "bytes": "5760", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_5.62K_bytes_5760_pages_base.csv",
+      "count": 15, "min": 1.280629471, "max": 1.654731521, "mean": 1.488605309, "stddev": 0.08911229708, "mad": 0.02909871245,
+      "percentiles": {"p50": 1.466210777, "p90": 1.605320744, "p99": 1.652755899, "p99_9": 1.654533959, "p99_99": 1.654711765},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "5.62K", "bytes": "5760", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_5.62K_bytes_5760_pages_base.csv",
+      "count": 15, "min": 2.190090606, "max": 3.281516452, "mean": 2.826523859, "stddev": 0.4859228363, "mad": 0.1060505484,
+      "percentiles": {"p50": 3.153413448, "p90": 3.255004292, "p99": 3.278429108, "p99_9": 3.281207718, "p99_99": 3.281485579},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "6.69K", "bytes": "6848", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_6.69K_bytes_6848_pages_base.csv",
+      "count": 15, "min": 1.51473999, "max": 1.642555237, "mean": 1.553098043, "stddev": 0.04581813384, "mad": 0.02667236328,
+      "percentiles": {"p50": 1.541633606, "p90": 1.615428162, "p99": 1.638821106, "p99_9": 1.642181824, "p99_99": 1.642517896},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "6.69K", "bytes": "6848", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_6.69K_bytes_6848_pages_base.csv",
+      "count": 15, "min": 0.9709362773, "max": 1.027879045, "mean": 0.9979637271, "stddev": 0.01578447971, "mad": 0.01237902833,
+      "percentiles": {"p50": 1.000047692, "p90": 1.013669774, "p99": 1.026005765, "p99_9": 1.027691717, "p99_99": 1.027860312},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "6.69K", "bytes": "6848", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_6.69K_bytes_6848_pages_base.csv",
+      "count": 15, "min": 2.199130854, "max": 3.331578255, "mean": 2.973854795, "stddev": 0.4211989217, "mad": 0.063159943,
+      "percentiles": {"p50": 3.175540307, "p90": 3.267304218, "p99": 3.325249593, "p99_9": 3.330945388, "p99_99": 3.331514968},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "8K", "bytes": "8192", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_8K_bytes_8192_pages_base.csv",
+      "count": 15, "min": 1.748497009, "max": 2.115943909, "mean": 1.843593852, "stddev": 0.09978636534, "mad": 0.02570343018,
+      "percentiles": {"p50": 1.812057495, "p90": 1.975939941, "p99": 2.098455658, "p99_9": 2.114195084, "p99_99": 2.115769026},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "8K", "bytes": "8192", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_8K_bytes_8192_pages_base.csv",
+      "count": 15, "min": 1.411254883, "max": 1.518714905, "mean": 1.454112116, "stddev": 0.03724437673, "mad": 0.02856254578,
+      "percentiles": {"p50": 1.447715759, "p90": 1.510865021, "p99": 1.517883911, "p99_9": 1.518631805, "p99_99": 1.518706595},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "8K", "bytes": "8192", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_8K_bytes_8192_pages_base.csv",
+      "count": 15, "min": 3.041576385, "max": 3.488990784, "mean": 3.172579829, "stddev": 0.1083203755, "mad": 0.05521774292,
+      "percentiles": {"p50": 3.149003983, "p90": 3.258002472, "p99": 3.458052826, "p99_9": 3.485896988, "p99_99": 3.488681404},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "9.5K", "bytes": "9728", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_9.5K_bytes_9728_pages_base.csv",
+      "count": 15, "min": 1.547027588, "max": 2.208854675, "mean": 1.662754822, "stddev": 0.1836167765, "mad": 0.03953552246,
+      "percentiles": {"p50": 1.588935852, "p90": 1.855606079, "p99": 2.174462433, "p99_9": 2.205415451, "p99_99": 2.208510753},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "9.5K", "bytes": "9728", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_9.5K_bytes_9728_pages_base.csv",
+      "count": 15, "min": 1.396117868, "max": 1.545661595, "mean": 1.447652256, "stddev": 0.04333753341, "mad": 0.02019845569,
+      "percentiles": {"p50": 1.434839999, "p90": 1.5043983, "p99": 1.540703827, "p99_9": 1.545165818, "p99_99": 1.545612018},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "9.5K", "bytes": "9728", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_9.5K_bytes_9728_pages_base.csv",
+      "count": 15, "min": 2.894134074, "max": 3.281406891, "mean": 3.17661285, "stddev": 0.08983289531, "mad": 0.03301490897,
+      "percentiles": {"p50": 3.185858601, "p90": 3.256166547, "p99": 3.278105362, "p99_9": 3.281076738, "p99_99": 3.281373876},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "11.3K", "bytes": "11584", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_11.3K_bytes_11584_pages_base.csv",
+      "count": 15, "min": 1.794265747, "max": 2.55153656, "mean": 1.924802653, "stddev": 0.200958379, "mad": 0.04623413086,
+      "percentiles": {"p50": 1.862762451, "p90": 2.102276611, "p99": 2.50222702, "p99_9": 2.546605606, "p99_99": 2.551043465},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "11.3K", "bytes": "11584", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_11.3K_bytes_11584_pages_base.csv",
+      "count": 15, "min": 1.378470208, "max": 1.723400156, "mean": 1.49018434, "stddev": 0.1070121721, "mad": 0.04818228992,
+      "percentiles": {"p50": 1.455326074, "p90": 1.656103294, "p99": 1.720560766, "p99_9": 1.723116217, "p99_99": 1.723371762},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "11.3K", "bytes": "11584", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_11.3K_bytes_11584_pages_base.csv",
+      "count": 15, "min": 3.066405177, "max": 4.228989881, "mean": 3.248756397, "stddev": 0.297946374, "mad": 0.05242513965,
+      "percentiles": {"p50": 3.127470544, "p90": 3.426653261, "p99": 4.121715912, "p99_9": 4.218262484, "p99_99": 4.227917142},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "13.4K", "bytes": "13760", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_13.4K_bytes_13760_pages_base.csv",
+      "count": 15, "min": 1.551826477, "max": 1.998291016, "mean": 1.631059265, "stddev": 0.1171673214, "mad": 0.02503967285,
+      "percentiles": {"p50": 1.585533142, "p90": 1.716165161, "p99": 1.958916016, "p99_9": 1.994353516, "p99_99": 1.997897266},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "13.4K", "bytes": "13760", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_13.4K_bytes_13760_pages_base.csv",
+      "count": 15, "min": 1.242621669, "max": 1.845408932, "mean": 1.427330192, "stddev": 0.13375163, "mad": 0.05302478204,
+      "percentiles": {"p50": 1.398170441, "p90": 1.490686991, "p99": 1.795782475, "p99_9": 1.840446287, "p99_99": 1.844912668},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "13.4K", "bytes": "13760", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_13.4K_bytes_13760_pages_base.csv",
+      "count": 15, "min": 3.03281569, "max": 3.610166549, "mean": 3.135847022, "stddev": 0.1440586496, "mad": 0.03851040693,
+      "percentiles": {"p50": 3.083713299, "p90": 3.220823779, "p99": 3.560767652, "p99_9": 3.605226659, "p99_99": 3.60967256},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "16K", "bytes": "16384", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_16K_bytes_16384_pages_base.csv",
+      "count": 15, "min": 1.56867218, "max": 2.247421265, "mean": 1.831083171, "stddev": 0.1716748327, "mad": 0.08473968506,
+      "percentiles": {"p50": 1.849822998, "p90": 1.955958557, "p99": 2.208613434, "p99_9": 2.243540482, "p99_99": 2.247033186},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "16K", "bytes": "16384", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_16K_bytes_16384_pages_base.csv",
+      "count": 15, "min": 1.032701492, "max": 1.659524918, "mean": 1.396556727, "stddev": 0.1331386763, "mad": 0.04354667664,
+      "percentiles": {"p50": 1.387197495, "p90": 1.519807053, "p99": 1.641801682, "p99_9": 1.657752594, "p99_99": 1.659347685},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "16K", "bytes": "16384", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_16K_bytes_16384_pages_base.csv",
+      "count": 15, "min": 3.020421982, "max": 3.291820526, "mean": 3.128539149, "stddev": 0.08015463508, "mad": 0.05100440979,
+      "percentiles": {"p50": 3.107280731, "p90": 3.245832062, "p99": 3.289597244, "p99_9": 3.291598198, "p99_99": 3.291798293},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "19K", "bytes": "19456", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_19K_bytes_19456_pages_base.csv",
+      "count": 15, "min": 1.590377808, "max": 2.025650024, "mean": 1.740512594, "stddev": 0.1463631372, "mad": 0.1368484497,
+      "percentiles": {"p50": 1.744659424, "p90": 1.948764038, "p99": 2.019540405, "p99_9": 2.025039062, "p99_99": 2.025588928},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "19K", "bytes": "19456", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_19K_bytes_19456_pages_base.csv",
+      "count": 15, "min": 1.34736575, "max": 2.105242169, "mean": 1.494267081, "stddev": 0.2285978346, "mad": 0.03391363414,
+      "percentiles": {"p50": 1.381279384, "p90": 1.809018577, "p99": 2.081296938, "p99_9": 2.102847646, "p99_99": 2.105002717},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "19K", "bytes": "19456", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_19K_bytes_19456_pages_base.csv",
+      "count": 15, "min": 2.151773721, "max": 3.966353492, "mean": 3.417278641, "stddev": 0.4450400895, "mad": 0.1897591281,
+      "percentiles": {"p50": 3.466050113, "p90": 3.751316171, "p99": 3.942941179, "p99_9": 3.964012261, "p99_99": 3.966119369},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "22.6K", "bytes": "23168", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_22.6K_bytes_23168_pages_base.csv",
+      "count": 15, "min": 1.532707214, "max": 2.155349731, "mean": 1.653015645, "stddev": 0.1788672676, "mad": 0.03735351562,
+      "percentiles": {"p50": 1.573944092, "p90": 1.857041931, "p99": 2.118030853, "p99_9": 2.151617844, "p99_99": 2.154976543},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "22.6K", "bytes": "23168", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_22.6K_bytes_23168_pages_base.csv",
+      "count": 15, "min": 0.8871333293, "max": 1.030205503, "mean": 0.9393537031, "stddev": 0.04707367832, "mad": 0.02127529685,
+      "percentiles": {"p50": 0.9127449559, "p90": 1.011556424, "p99": 1.028893845, "p99_9": 1.030074338, "p99_99": 1.030192387},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "22.6K", "bytes": "23168", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_22.6K_bytes_23168_pages_base.csv",
+      "count": 15, "min": 1.969832652, "max": 2.3060804, "mean": 2.097109241, "stddev": 0.08621481766, "mad": 0.06477595311,
+      "percentiles": {"p50": 2.082462761, "p90": 2.171656085, "p99": 2.288597494, "p99_9": 2.30433211, "p99_99": 2.305905571},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "26.9K", "bytes": "27520", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_26.9K_bytes_27520_pages_base.csv",
+      "count": 15, "min": 1.542770386, "max": 2.110877991, "mean": 1.645465088, "stddev": 0.159861243, "mad": 0.01572418213,
+      "percentiles": {"p50": 1.558494568, "p90": 1.804069519, "p99": 2.068091431, "p99_9": 2.106599335, "p99_99": 2.110450125},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "26.9K", "bytes": "27520", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_26.9K_bytes_27520_pages_base.csv",
+      "count": 15, "min": 0.8902035599, "max": 1.009481657, "mean": 0.933007612, "stddev": 0.0377611196, "mad": 0.02136139039,
+      "percentiles": {"p50": 0.9140794017, "p90": 0.988011523, "p99": 1.009266917, "p99_9": 1.009460183, "p99_99": 1.009479509},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "26.9K", "bytes": "27520", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_26.9K_bytes_27520_pages_base.csv",
+      "count": 15, "min": 1.988112635, "max": 96.49125856, "mean": 8.965526706, "stddev": 24.21632674, "mad": 0.429795677,
+      "percentiles": {"p50": 2.615260316, "p90": 3.195233989, "p99": 83.4299602, "p99_9": 95.18512873, "p99_99": 96.36064558},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "32K", "bytes": "32768", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_32K_bytes_32768_pages_base.csv",
+      "count": 15, "min": 2.453407288, "max": 2.933143616, "mean": 2.671006775, "stddev": 0.1342549454, "mad": 0.07662200928,
+      "percentiles": {"p50": 2.669120789, "p90": 2.845445251, "p99": 2.92925354, "p99_9": 2.932754608, "p99_99": 2.933104715},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "32K", "bytes": "32768", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_32K_bytes_32768_pages_base.csv",
+      "count": 15, "min": 1.298696518, "max": 1.56893158, "mean": 1.399273427, "stddev": 0.08080109856, "mad": 0.04702949524,
+      "percentiles": {"p50": 1.379163742, "p90": 1.516370392, "p99": 1.565767822, "p99_9": 1.568615204, "p99_99": 1.568899942},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "32K", "bytes": "32768", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_32K_bytes_32768_pages_base.csv",
+      "count": 15, "min": 3.08716011, "max": 3.276128769, "mean": 3.164299011, "stddev": 0.04990602498, "mad": 0.03086662292,
+      "percentiles": {"p50": 3.154073715, "p90": 3.218825531, "p99": 3.268842354, "p99_9": 3.275400127, "p99_99": 3.276055905},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "38K", "bytes": "38912", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_38K_bytes_38912_pages_base.csv",
+      "count": 15, "min": 4.092010498, "max": 4.573425293, "mean": 4.273349508, "stddev": 0.1284444677, "mad": 0.03514099121,
+      "percentiles": {"p50": 4.251869202, "p90": 4.456278992, "p99": 4.558538971, "p99_9": 4.571936661, "p99_99": 4.57327643},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "38K", "bytes": "38912", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_38K_bytes_38912_pages_base.csv",
+      "count": 15, "min": 1.216820964, "max": 1.642172426, "mean": 1.400846283, "stddev": 0.08579864151, "mad": 0.01397453902,
+      "percentiles": {"p50": 1.393355416, "p90": 1.448500275, "p99": 1.617877793, "p99_9": 1.639742963, "p99_99": 1.64192948},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "38K", "bytes": "38912", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_38K_bytes_38912_pages_base.csv",
+      "count": 15, "min": 3.158406094, "max": 3.409337221, "mean": 3.264293692, "stddev": 0.06081542964, "mad": 0.02521103004,
+      "percentiles": {"p50": 3.262766745, "p90": 3.323416702, "p99": 3.39886185, "p99_9": 3.408289684, "p99_99": 3.409232467},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "45.2K", "bytes": "46336", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_45.2K_bytes_46336_pages_base.csv",
+      "count": 15, "min": 5.265197754, "max": 6.249404907, "mean": 5.676060994, "stddev": 0.2875879755, "mad": 0.1762084961,
+      "percentiles": {"p50": 5.625602722, "p90": 6.096269226, "p99": 6.233409882, "p99_9": 6.247805405, "p99_99": 6.249244957},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "45.2K", "bytes": "46336", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_45.2K_bytes_46336_pages_base.csv",
+      "count": 15, "min": 1.366121303, "max": 1.606054073, "mean": 1.430135298, "stddev": 0.06419200258, "mad": 0.02385267544,
+      "percentiles": {"p50": 1.401868838, "p90": 1.501847853, "p99": 1.591972773, "p99_9": 1.604645943, "p99_99": 1.60591326},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "45.2K", "bytes": "46336", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_45.2K_bytes_46336_pages_base.csv",
+      "count": 15, "min": 3.154942233, "max": 3.44239721, "mean": 3.274001989, "stddev": 0.08273362126, "mad": 0.06111878453,
+      "percentiles": {"p50": 3.258787125, "p90": 3.380871692, "p99": 3.437953168, "p99_9": 3.441952806, "p99_99": 3.44235277},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "53.8K", "bytes": "55104", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_53.8K_bytes_55104_pages_base.csv",
+      "count": 15, "min": 4.858482361, "max": 6.214561462, "mean": 5.119061788, "stddev": 0.3529633513, "mad": 0.1300582886,
+      "percentiles": {"p50": 5.008476257, "p90": 5.406665039, "p99": 6.117968597, "p99_9": 6.204902176, "p99_99": 6.213595534},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "53.8K", "bytes": "55104", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_53.8K_bytes_55104_pages_base.csv",
+      "count": 15, "min": 0.835984779, "max": 1.693343496, "mean": 1.119293279, "stddev": 0.303948763, "mad": 0.1156549911,
+      "percentiles": {"p50": 0.9526579406, "p90": 1.513215967, "p99": 1.672315736, "p99_9": 1.69124072, "p99_99": 1.693133218},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "53.8K", "bytes": "55104", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_53.8K_bytes_55104_pages_base.csv",
+      "count": 15, "min": 1.925719405, "max": 3.581646571, "mean": 2.168944337, "stddev": 0.4072106166, "mad": 0.04955032398,
+      "percentiles": {"p50": 2.027532627, "p90": 2.275342319, "p99": 3.398797566, "p99_9": 3.56336167, "p99_99": 3.579818081},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "64K", "bytes": "65536", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_64K_bytes_65536_pages_base.csv",
+      "count": 15, "min": 5.100013733, "max": 5.923324585, "mean": 5.629788717, "stddev": 0.2506704377, "mad": 0.220703125,
+      "percentiles": {"p50": 5.663330078, "p90": 5.911750793, "p99": 5.923030853, "p99_9": 5.923295212, "p99_99": 5.923321648},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "64K", "bytes": "65536", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_64K_bytes_65536_pages_base.csv",
+      "count": 15, "min": 0.8462467194, "max": 1.084581375, "mean": 0.9317296346, "stddev": 0.07040270556, "mad": 0.03943634033,
+      "percentiles": {"p50": 0.9189739227, "p90": 1.02593689, "p99": 1.080923347, "p99_9": 1.084215572, "p99_99": 1.084544795},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "64K", "bytes": "65536", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_64K_bytes_65536_pages_base.csv",
+      "count": 15, "min": 1.74720192, "max": 2.132089615, "mean": 1.889385986, "stddev": 0.1155422526, "mad": 0.07267951965,
+      "percentiles": {"p50": 1.861581802, "p90": 2.059717941, "p99": 2.131078644, "p99_9": 2.131988518, "p99_99": 2.132079505},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "76.1K", "bytes": "77888", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_76.1K_bytes_77888_pages_base.csv",
+      "count": 15, "min": 4.875968933, "max": 5.388809204, "mean": 5.041283671, "stddev": 0.1499193765, "mad": 0.05941009521,
+      "percentiles": {"p50": 4.982803345, "p90": 5.265019226, "p99": 5.383422699, "p99_9": 5.388270554, "p99_99": 5.388755339},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "76.1K", "bytes": "77888", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_76.1K_bytes_77888_pages_base.csv",
+      "count": 15, "min": 0.8324224647, "max": 0.98863771, "mean": 0.8868078195, "stddev": 0.04745842413, "mad": 0.03113259827,
+      "percentiles": {"p50": 0.8676558827, "p90": 0.9477541037, "p99": 0.9833187212, "p99_9": 0.9881058111, "p99_99": 0.9885845201},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "76.1K", "bytes": "77888", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_76.1K_bytes_77888_pages_base.csv",
+      "count": 15, "min": 1.736162122, "max": 5.630414095, "mean": 2.24630474, "stddev": 1.016755046, "mad": 0.150142363,
+      "percentiles": {"p50": 1.898171256, "p90": 2.895740574, "p99": 5.307805469, "p99_9": 5.598153232, "p99_99": 5.627188009},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "90.5K", "bytes": "92672", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_90.5K_bytes_92672_pages_base.csv",
+      "count": 15, "min": 5.712783813, "max": 6.844703674, "mean": 6.197826131, "stddev": 0.2781654486, "mad": 0.1257629395,
+      "percentiles": {"p50": 6.143371582, "p90": 6.502218628, "p99": 6.798551483, "p99_9": 6.840088455, "p99_99": 6.844242152},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "90.5K", "bytes": "92672", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_90.5K_bytes_92672_pages_base.csv",
+      "count": 15, "min": 1.10196766, "max": 1.456709197, "mean": 1.260101569, "stddev": 0.1047234915, "mad": 0.08612565245,
+      "percentiles": {"p50": 1.269478191, "p90": 1.385294634, "p99": 1.448653086, "p99_9": 1.455903586, "p99_99": 1.456628636},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "90.5K", "bytes": "92672", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_90.5K_bytes_92672_pages_base.csv",
+      "count": 15, "min": 2.768428925, "max": 3.343941729, "mean": 2.964961896, "stddev": 0.1797334792, "mad": 0.09129567168,
+      "percentiles": {"p50": 2.947351653, "p90": 3.217265956, "p99": 3.341857926, "p99_9": 3.343733349, "p99_99": 3.343920891},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "108K", "bytes": "110208", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_108K_bytes_110208_pages_base.csv",
+      "count": 15, "min": 5.074806213, "max": 6.180160522, "mean": 5.52985026, "stddev": 0.2831414615, "mad": 0.1739196777,
+      "percentiles": {"p50": 5.544532776, "p90": 5.820317078, "p99": 6.137768097, "p99_9": 6.17592128, "p99_99": 6.179736598},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "108K", "bytes": "110208", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_108K_bytes_110208_pages_base.csv",
+      "count": 15, "min": 1.047831087, "max": 1.522399749, "mean": 1.25621587, "stddev": 0.1533220808, "mad": 0.1043022954,
+      "percentiles": {"p50": 1.238207944, "p90": 1.477151721, "p99": 1.519065346, "p99_9": 1.522066309, "p99_99": 1.522366405},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "108K", "bytes": "110208", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_108K_bytes_110208_pages_base.csv",
+      "count": 15, "min": 2.628574103, "max": 3.274206859, "mean": 2.925836313, "stddev": 0.2176821909, "mad": 0.1918687725,
+      "percentiles": {"p50": 2.933977474, "p90": 3.18474731, "p99": 3.265231409, "p99_9": 3.273309314, "p99_99": 3.274117104},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "128K", "bytes": "131072", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_128K_bytes_131072_pages_base.csv",
+      "count": 15, "min": 4.904701233, "max": 6.59336853, "mean": 5.439070638, "stddev": 0.5379886595, "mad": 0.2364044189,
+      "percentiles": {"p50": 5.278556824, "p90": 6.279165649, "p99": 6.564326477, "p99_9": 6.590464325, "p99_99": 6.59307811},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "128K", "bytes": "131072", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_128K_bytes_131072_pages_base.csv",
+      "count": 15, "min": 1.066146851, "max": 1.387844086, "mean": 1.233349737, "stddev": 0.104128844, "mad": 0.08531570435,
+      "percentiles": {"p50": 1.233221054, "p90": 1.357936478, "p99": 1.383878441, "p99_9": 1.387447521, "p99_99": 1.387804429},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "128K", "bytes": "131072", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_128K_bytes_131072_pages_base.csv",
+      "count": 15, "min": 2.663635254, "max": 3.336252213, "mean": 3.069077555, "stddev": 0.1820568847, "mad": 0.1172866821,
+      "percentiles": {"p50": 3.112941742, "p90": 3.285266495, "p99": 3.334251099, "p99_9": 3.336052101, "p99_99": 3.336232201},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "152K", "bytes": "155840", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_152K_bytes_155840_pages_base.csv",
+      "count": 15, "min": 5.014846802, "max": 5.827461243, "mean": 5.326591492, "stddev": 0.2108655601, "mad": 0.1341094971,
+      "percentiles": {"p50": 5.322555542, "p90": 5.560159302, "p99": 5.799701996, "p99_9": 5.824685318, "p99_99": 5.82718365},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "152K", "bytes": "155840", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_152K_bytes_155840_pages_base.csv",
+      "count": 15, "min": 1.14096557, "max": 1.463960651, "mean": 1.311695143, "stddev": 0.1005750752, "mad": 0.07840122248,
+      "percentiles": {"p50": 1.331244926, "p90": 1.428387947, "p99": 1.460729707, "p99_9": 1.463637557, "p99_99": 1.463928342},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "152K", "bytes": "155840", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_152K_bytes_155840_pages_base.csv",
+      "count": 15, "min": 2.689930758, "max": 3.102176591, "mean": 2.892243032, "stddev": 0.1235053642, "mad": 0.07098992407,
+      "percentiles": {"p50": 2.856923738, "p90": 3.060159878, "p99": 3.096408385, "p99_9": 3.101599771, "p99_99": 3.102118909},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "181K", "bytes": "185344", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_181K_bytes_185344_pages_base.csv",
+      "count": 15, "min": 4.966659546, "max": 5.800971985, "mean": 5.345460002, "stddev": 0.2453389185, "mad": 0.1745681763,
+      "percentiles": {"p50": 5.352935791, "p90": 5.681690979, "p99": 5.797515564, "p99_9": 5.800626343, "p99_99": 5.800937421},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "181K", "bytes": "185344", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_181K_bytes_185344_pages_base.csv",
+      "count": 15, "min": 1.013924712, "max": 1.46555737, "mean": 1.187197811, "stddev": 0.134401071, "mad": 0.08757936266,
+      "percentiles": {"p50": 1.13499855, "p90": 1.381620677, "p99": 1.459799533, "p99_9": 1.464981586, "p99_99": 1.465499792},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "181K", "bytes": "185344", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_181K_bytes_185344_pages_base.csv",
+      "count": 15, "min": 2.696649599, "max": 3.371520253, "mean": 3.094936688, "stddev": 0.194265151, "mad": 0.158526907,
+      "percentiles": {"p50": 3.053071869, "p90": 3.311793749, "p99": 3.364172721, "p99_9": 3.3707855, "p99_99": 3.371446777},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "215K", "bytes": "220416", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_215K_bytes_220416_pages_base.csv",
+      "count": 15, "min": 5.575660706, "max": 7.214759827, "mean": 6.21147054, "stddev": 0.383485442, "mad": 0.1351470947,
+      "percentiles": {"p50": 6.13319397, "p90": 6.555325317, "p99": 7.128166656, "p99_9": 7.20610051, "p99_99": 7.213893895},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "215K", "bytes": "220416", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_215K_bytes_220416_pages_base.csv",
+      "count": 15, "min": 1.131502537, "max": 1.551758589, "mean": 1.312223012, "stddev": 0.1243686223, "mad": 0.09282352222,
+      "percentiles": {"p50": 1.314435097, "p90": 1.46140007, "p99": 1.539474678, "p99_9": 1.550530197, "p99_99": 1.551635749},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "215K", "bytes": "220416", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_215K_bytes_220416_pages_base.csv",
+      "count": 15, "min": 1.725166575, "max": 2.771364387, "mean": 2.065686956, "stddev": 0.3090945041, "mad": 0.0736311052,
+      "percentiles": {"p50": 1.969510285, "p90": 2.476427349, "p99": 2.730309081, "p99_9": 2.767258856, "p99_99": 2.770953834},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "256K", "bytes": "262144", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_256K_bytes_262144_pages_base.csv",
+      "count": 15, "min": 4.886222839, "max": 5.172569275, "mean": 4.974139913, "stddev": 0.08012324463, "mad": 0.03739929199,
+      "percentiles": {"p50": 4.947792053, "p90": 5.08074646, "p99": 5.160199432, "p99_9": 5.171332291, "p99_99": 5.172445576},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "256K", "bytes": "262144", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_256K_bytes_262144_pages_base.csv",
+      "count": 15, "min": 0.8274097443, "max": 1.063043594, "mean": 0.8767662048, "stddev": 0.06290248861, "mad": 0.02284049988,
+      "percentiles": {"p50": 0.8532543182, "p90": 0.9336265564, "p99": 1.045617027, "p99_9": 1.061300938, "p99_99": 1.062869329},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "256K", "bytes": "262144", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_256K_bytes_262144_pages_base.csv",
+      "count": 15, "min": 1.838356018, "max": 2.273841858, "mean": 1.990300878, "stddev": 0.1225315161, "mad": 0.06673240662,
+      "percentiles": {"p50": 1.971538544, "p90": 2.149939728, "p99": 2.262257614, "p99_9": 2.272683434, "p99_99": 2.273726015},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "304K", "bytes": "311680", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_304K_bytes_311680_pages_base.csv",
+      "count": 15, "min": 4.850013733, "max": 5.161506653, "mean": 4.985825094, "stddev": 0.09970780616, "mad": 0.1014099121,
+      "percentiles": {"p50": 4.976425171, "p90": 5.100416565, "p99": 5.15365387, "p99_9": 5.160721375, "p99_99": 5.161428125},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "304K", "bytes": "311680", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_304K_bytes_311680_pages_base.csv",
+      "count": 15, "min": 0.8298125084, "max": 0.9495000864, "mean": 0.8697890959, "stddev": 0.03951912088, "mad": 0.02747701932,
+      "percentiles": {"p50": 0.8620794872, "p90": 0.932159128, "p99": 0.9492064327, "p99_9": 0.949470721, "p99_99": 0.9494971498},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "304K", "bytes": "311680", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_304K_bytes_311680_pages_base.csv",
+      "count": 15, "min": 1.842152027, "max": 2.662340479, "mean": 2.097774025, "stddev": 0.2349621665, "mad": 0.0789537316,
+      "percentiles": {"p50": 2.004053043, "p90": 2.441921357, "p99": 2.645517857, "p99_9": 2.660658216, "p99_99": 2.662172252},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "362K", "bytes": "370688", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_362K_bytes_370688_pages_base.csv",
+      "count": 15, "min": 4.850990295, "max": 6.611587524, "mean": 5.596966553, "stddev": 0.6230302634, "mad": 0.6676177979,
+      "percentiles": {"p50": 5.65499115, "p90": 6.477183533, "p99": 6.593345184, "p99_9": 6.60976329, "p99_99": 6.611405101},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "362K", "bytes": "370688", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_362K_bytes_370688_pages_base.csv",
+      "count": 15, "min": 0.8448779926, "max": 1.161241559, "mean": 0.9555381625, "stddev": 0.07801936487, "mad": 0.02365139656,
+      "percentiles": {"p50": 0.9412772406, "p90": 1.033811004, "p99": 1.144138774, "p99_9": 1.159531281, "p99_99": 1.161070531},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "362K", "bytes": "370688", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_362K_bytes_370688_pages_base.csv",
+      "count": 15, "min": 1.735472299, "max": 2.94940531, "mean": 2.172748363, "stddev": 0.3396604095, "mad": 0.1718366329,
+      "percentiles": {"p50": 2.051135666, "p90": 2.644432167, "p99": 2.928372545, "p99_9": 2.947302033, "p99_99": 2.949194982},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "430K", "bytes": "440832", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_430K_bytes_440832_pages_base.csv",
+      "count": 15, "min": 4.297798157, "max": 15.25296783, "mean": 6.939364115, "stddev": 2.614371425, "mad": 0.6792755127,
+      "percentiles": {"p50": 6.892951965, "p90": 7.733924866, "p99": 14.21593903, "p99_9": 15.14926495, "p99_99": 15.24259755},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "430K", "bytes": "440832", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_430K_bytes_440832_pages_base.csv",
+      "count": 15, "min": 1.305772052, "max": 1.901799086, "mean": 1.611221524, "stddev": 0.1705225951, "mad": 0.1591001131,
+      "percentiles": {"p50": 1.602775995, "p90": 1.793813039, "p99": 1.887168416, "p99_9": 1.900336019, "p99_99": 1.901652779},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "430K", "bytes": "440832", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_430K_bytes_440832_pages_base.csv",
+      "count": 15, "min": 2.93749809, "max": 3.370554817, "mean": 3.175689223, "stddev": 0.1242851836, "mad": 0.09642627911,
+      "percentiles": {"p50": 3.157940583, "p90": 3.312234091, "p99": 3.362890878, "p99_9": 3.369788423, "p99_99": 3.370478178},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "512K", "bytes": "524288", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_512K_bytes_524288_pages_base.csv",
+      "count": 15, "min": 5.982368469, "max": 6.944168091, "mean": 6.418506368, "stddev": 0.2511157922, "mad": 0.07129669189,
+      "percentiles": {"p50": 6.407928467, "p90": 6.779719543, "p99": 6.922768402, "p99_9": 6.942028122, "p99_99": 6.943954094},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "512K", "bytes": "524288", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_512K_bytes_524288_pages_base.csv",
+      "count": 15, "min": 1.185506821, "max": 1.481800079, "mean": 1.344987742, "stddev": 0.09232436075, "mad": 0.07642745972,
+      "percentiles": {"p50": 1.362939835, "p90": 1.477536392, "p99": 1.481207542, "p99_9": 1.481740826, "p99_99": 1.481794154},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "512K", "bytes": "524288", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_512K_bytes_524288_pages_base.csv",
+      "count": 15, "min": 2.998886108, "max": 3.89904213, "mean": 3.504079692, "stddev": 0.2767383615, "mad": 0.1749267578,
+      "percentiles": {"p50": 3.537082672, "p90": 3.763343811, "p99": 3.881228905, "p99_9": 3.897260807, "p99_99": 3.898863997},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "609K", "bytes": "623424", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_609K_bytes_623424_pages_base.csv",
+      "count": 15, "min": 6.383415222, "max": 8.211265564, "mean": 6.801441956, "stddev": 0.4522936299, "mad": 0.1028366089,
+      "percentiles": {"p50": 6.6745224, "p90": 7.185777283, "p99": 8.088774109, "p99_9": 8.199016418, "p99_99": 8.210040649},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "609K", "bytes": "623424", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_609K_bytes_623424_pages_base.csv",
+      "count": 15, "min": 1.282898776, "max": 1.562644182, "mean": 1.402951281, "stddev": 0.08233663806, "mad": 0.04571999698,
+      "percentiles": {"p50": 1.392174295, "p90": 1.496295177, "p99": 1.553939214, "p99_9": 1.561773686, "p99_99": 1.562557133},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "609K", "bytes": "623424", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_609K_bytes_623424_pages_base.csv",
+      "count": 15, "min": 2.879451376, "max": 4.719289988, "mean": 3.518657248, "stddev": 0.4661247823, "mad": 0.2526531506,
+      "percentiles": {"p50": 3.51071623, "p90": 3.892687009, "p99": 4.611892468, "p99_9": 4.708550236, "p99_99": 4.718216013},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "724K", "bytes": "741440", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_724K_bytes_741440_pages_base.csv",
+      "count": 15, "min": 6.527503967, "max": 7.534378052, "mean": 6.979570516, "stddev": 0.3053492585, "mad": 0.264503479,
+      "percentiles": {"p50": 7.000434875, "p90": 7.33789978, "p99": 7.508779602, "p99_9": 7.531818207, "p99_99": 7.534122067},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "724K", "bytes": "741440", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_724K_bytes_741440_pages_base.csv",
+      "count": 15, "min": 1.293680526, "max": 1.723193785, "mean": 1.462149203, "stddev": 0.1279468412, "mad": 0.09217666523,
+      "percentiles": {"p50": 1.450509759, "p90": 1.620676929, "p99": 1.70997351, "p99_9": 1.721871758, "p99_99": 1.723061582},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "724K", "bytes": "741440", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_724K_bytes_741440_pages_base.csv",
+      "count": 15, "min": 3.074949408, "max": 4.432121997, "mean": 3.490267172, "stddev": 0.4187475742, "mad": 0.1590389872,
+      "percentiles": {"p50": 3.365599194, "p90": 4.183583753, "p99": 4.422066005, "p99_9": 4.431116398, "p99_99": 4.432021437},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "861K", "bytes": "881728", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_861K_bytes_881728_pages_base.csv",
+      "count": 15, "min": 8.387367249, "max": 26.05360413, "mean": 13.06460215, "stddev": 5.006419633, "mad": 2.194732666,
+      "percentiles": {"p50": 11.30267334, "p90": 19.66385193, "p99": 25.5185083, "p99_9": 26.00009454, "p99_99": 26.04825317},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "861K", "bytes": "881728", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_861K_bytes_881728_pages_base.csv",
+      "count": 15, "min": 1.302945794, "max": 1.845188205, "mean": 1.552547406, "stddev": 0.173104012, "mad": 0.1325301895,
+      "percentiles": {"p50": 1.521777333, "p90": 1.780756639, "p99": 1.836746905, "p99_9": 1.844344075, "p99_99": 1.845103792},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "861K", "bytes": "881728", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_861K_bytes_881728_pages_base.csv",
+      "count": 15, "min": 3.314097103, "max": 5.236826824, "mean": 4.248083954, "stddev": 0.6070288808, "mad": 0.5273625379,
+      "percentiles": {"p50": 4.21655849, "p90": 4.900355665, "p99": 5.19890355, "p99_9": 5.233034497, "p99_99": 5.236447592},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "1M", "bytes": "1048576", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_1M_bytes_1048576_pages_base.csv",
+      "count": 15, "min": 6.895721436, "max": 385.0676956, "mean": 34.85190582, "stddev": 96.92931464, "mad": 0.5695037842,
+      "percentiles": {"p50": 8.604164124, "p90": 16.72051849, "p99": 333.5337994, "p99_9": 379.914306, "p99_99": 384.5523567},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "1M", "bytes": "1048576", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_1M_bytes_1048576_pages_base.csv",
+      "count": 15, "min": 1.200939178, "max": 1.825134277, "mean": 1.455123011, "stddev": 0.2209047714, "mad": 0.1674461365,
+      "percentiles": {"p50": 1.416629791, "p90": 1.778631592, "p99": 1.819965134, "p99_9": 1.824617363, "p99_99": 1.825082586},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "1M", "bytes": "1048576", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_1M_bytes_1048576_pages_base.csv",
+      "count": 15, "min": 3.282676697, "max": 3.831310272, "mean": 3.472229385, "stddev": 0.1864723623, "mad": 0.1085987091,
+      "percentiles": {"p50": 3.420597076, "p90": 3.782535553, "p99": 3.830292358, "p99_9": 3.831208481, "p99_99": 3.831300093},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "1.19M", "bytes": "1246912", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_1.19M_bytes_1246912_pages_base.csv",
+      "count": 15, "min": 11.49375153, "max": 57.34230042, "mean": 38.53906606, "stddev": 14.67418388, "mad": 10.89749908,
+      "percentiles": {"p50": 42.28079224, "p90": 53.67415009, "p99": 56.87503952, "p99_9": 57.29557433, "p99_99": 57.33762781},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "1.19M", "bytes": "1246912", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_1.19M_bytes_1246912_pages_base.csv",
+      "count": 15, "min": 1.529459608, "max": 1.847156693, "mean": 1.679848046, "stddev": 0.09164618258, "mad": 0.06180141267,
+      "percentiles": {"p50": 1.694828628, "p90": 1.774234737, "p99": 1.838528816, "p99_9": 1.846293905, "p99_99": 1.847070414},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "1.19M", "bytes": "1246912", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_1.19M_bytes_1246912_pages_base.csv",
+      "count": 15, "min": 3.182577316, "max": 3.982057336, "mean": 3.577570979, "stddev": 0.2480258855, "mad": 0.1444079454,
+      "percentiles": {"p50": 3.650492145, "p90": 3.819535769, "p99": 3.961603647, "p99_9": 3.980011967, "p99_99": 3.981852799},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "1.41M", "bytes": "1482880", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_1.41M_bytes_1482880_pages_base.csv",
+      "count": 15, "min": 8.330886841, "max": 321.5384216, "mean": 53.61531474, "stddev": 76.71606516, "mad": 15.43378448,
+      "percentiles": {"p50": 41.94019318, "p90": 57.43670502, "p99": 284.5700359, "p99_9": 317.8415831, "p99_99": 321.1687378},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "1.41M", "bytes": "1482880", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_1.41M_bytes_1482880_pages_base.csv",
+      "count": 15, "min": 1.198369757, "max": 1.326794052, "mean": 1.25309975, "stddev": 0.04433136808, "mad": 0.0345431004,
+      "percentiles": {"p50": 1.243153372, "p90": 1.314973124, "p99": 1.325196689, "p99_9": 1.326634316, "p99_99": 1.326778078},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "1.41M", "bytes": "1482880", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_1.41M_bytes_1482880_pages_base.csv",
+      "count": 15, "min": 2.493178876, "max": 4.151128026, "mean": 2.800139025, "stddev": 0.4842834971, "mad": 0.05583042335,
+      "percentiles": {"p50": 2.555204614, "p90": 3.38750461, "p99": 4.045462275, "p99_9": 4.140561451, "p99_99": 4.150071369},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "1.68M", "bytes": "1763456", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_1.68M_bytes_1763456_pages_base.csv",
+      "count": 15, "min": 20.38163757, "max": 86.14183807, "mean": 61.92311554, "stddev": 13.79029722, "mad": 2.084465027,
+      "percentiles": {"p50": 63.42137909, "p90": 70.32421265, "p99": 84.29166489, "p99_9": 85.95682076, "p99_99": 86.12333634},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "1.68M", "bytes": "1763456", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_1.68M_bytes_1763456_pages_base.csv",
+      "count": 15, "min": 1.565490539, "max": 2.934255414, "mean": 2.528425968, "stddev": 0.3204360644, "mad": 0.1196998812,
+      "percentiles": {"p50": 2.498808082, "p90": 2.881715903, "p99": 2.932150036, "p99_9": 2.934044876, "p99_99": 2.93423436},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "1.68M", "bytes": "1763456", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_1.68M_bytes_1763456_pages_base.csv",
+      "count": 15, "min": 2.562720858, "max": 4.253026593, "mean": 3.770732304, "stddev": 0.4036997234, "mad": 0.1959253218,
+      "percentiles": {"p50": 3.857132215, "p90": 4.122210549, "p99": 4.240200181, "p99_9": 4.251743952, "p99_99": 4.252898329},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "2M", "bytes": "2097152", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_2M_bytes_2097152_pages_base.csv",
+      "count": 15, "min": 50.29230499, "max": 53.44387054, "mean": 51.50584106, "stddev": 0.841562952, "mad": 0.4076461792,
+      "percentiles": {"p50": 51.54310608, "p90": 52.41217346, "p99": 53.33919418, "p99_9": 53.43340291, "p99_99": 53.44282378},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "2M", "bytes": "2097152", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_2M_bytes_2097152_pages_base.csv",
+      "count": 15, "min": 1.495609283, "max": 2.026205063, "mean": 1.669892502, "stddev": 0.1577869017, "mad": 0.09436416626,
+      "percentiles": {"p50": 1.627861023, "p90": 1.855474091, "p99": 2.00631649, "p99_9": 2.024216206, "p99_99": 2.026006177},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "2M", "bytes": "2097152", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_2M_bytes_2097152_pages_base.csv",
+      "count": 15, "min": 2.215053558, "max": 3.849227905, "mean": 2.750257365, "stddev": 0.5144161352, "mad": 0.3023204803,
+      "percentiles": {"p50": 2.617383957, "p90": 3.456938553, "p99": 3.807334557, "p99_9": 3.84503857, "p99_99": 3.848808972},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "2.38M", "bytes": "2493888", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_2.38M_bytes_2493888_pages_base.csv",
+      "count": 15, "min": 43.79479218, "max": 62.64340973, "mean": 52.47272797, "stddev": 4.932011705, "mad": 2.916748047,
+      "percentiles": {"p50": 52.47866821, "p90": 58.87363281, "p99": 62.3332814, "p99_9": 62.6123969, "p99_99": 62.64030845},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "2.38M", "bytes": "2493888", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_2.38M_bytes_2493888_pages_base.csv",
+      "count": 15, "min": 1.886831264, "max": 2.573641207, "mean": 2.103186062, "stddev": 0.2289246861, "mad": 0.1486583322,
+      "percentiles": {"p50": 2.052085492, "p90": 2.434507305, "p99": 2.558183394, "p99_9": 2.572095426, "p99_99": 2.573486629},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "2.38M", "bytes": "2493888", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_2.38M_bytes_2493888_pages_base.csv",
+      "count": 15, "min": 2.450941724, "max": 5.428929015, "mean": 4.044755951, "stddev": 0.8920190915, "mad": 0.665292723,
+      "percentiles": {"p50": 3.993862657, "p90": 5.098572559, "p99": 5.406734732, "p99_9": 5.426709587, "p99_99": 5.428707072},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "2.83M", "bytes": "2965760", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_2.83M_bytes_2965760_pages_base.csv",
+      "count": 15, "min": 49.17479706, "max": 72.02561188, "mean": 56.71173604, "stddev": 5.542378576, "mad": 3.388198853,
+      "percentiles": {"p50": 57.9347229, "p90": 60.45320129, "p99": 70.54514969, "p99_9": 71.87756566, "p99_99": 72.01080726},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "2.83M", "bytes": "2965760", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_2.83M_bytes_2965760_pages_base.csv",
+      "count": 15, "min": 2.474724369, "max": 3.346472712, "mean": 2.701292554, "stddev": 0.2241850737, "mad": 0.04559187037,
+      "percentiles": {"p50": 2.650896535, "p90": 2.933442932, "p99": 3.300397732, "p99_9": 3.341865214, "p99_99": 3.346011962},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "2.83M", "bytes": "2965760", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_2.83M_bytes_2965760_pages_base.csv",
+      "count": 15, "min": 3.304363009, "max": 5.148846471, "mean": 4.374072534, "stddev": 0.5987398658, "mad": 0.5141523129,
+      "percentiles": {"p50": 4.499272178, "p90": 5.05043277, "p99": 5.141765724, "p99_9": 5.148138396, "p99_99": 5.148775663},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "3.36M", "bytes": "3526912", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_3.36M_bytes_3526912_pages_base.csv",
+      "count": 15, "min": 57.37819672, "max": 90.2587204, "mean": 69.59050751, "stddev": 8.972978867, "mad": 3.925590515,
+      "percentiles": {"p50": 66.94297028, "p90": 82.10131531, "p99": 89.71087021, "p99_9": 90.20393538, "p99_99": 90.2532419},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "3.36M", "bytes": "3526912", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_3.36M_bytes_3526912_pages_base.csv",
+      "count": 15, "min": 3.053134048, "max": 3.902387635, "mean": 3.476157256, "stddev": 0.2626456246, "mad": 0.1908817433,
+      "percentiles": {"p50": 3.461050221, "p90": 3.828679845, "p99": 3.892184841, "p99_9": 3.901367355, "p99_99": 3.902285607},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "3.36M", "bytes": "3526912", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_3.36M_bytes_3526912_pages_base.csv",
+      "count": 15, "min": 4.685530635, "max": 5.233249054, "mean": 4.889546991, "stddev": 0.1402952452, "mad": 0.06680215819,
+      "percentiles": {"p50": 4.898101102, "p90": 5.019802731, "p99": 5.206992774, "p99_9": 5.230623426, "p99_99": 5.232986492},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "4M", "bytes": "4194304", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_4M_bytes_4194304_pages_base.csv",
+      "count": 15, "min": 55.74357605, "max": 84.14756775, "mean": 71.69170481, "stddev": 7.683787813, "mad": 3.375160217,
+      "percentiles": {"p50": 73.47676086, "p90": 79.13563232, "p99": 83.65812317, "p99_9": 84.09862329, "p99_99": 84.1426733},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "4M", "bytes": "4194304", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_4M_bytes_4194304_pages_base.csv",
+      "count": 15, "min": 2.452970505, "max": 3.315088272, "mean": 2.930328623, "stddev": 0.2818897098, "mad": 0.2079925537,
+      "percentiles": {"p50": 3.016010284, "p90": 3.213146591, "p99": 3.302931519, "p99_9": 3.313872597, "p99_99": 3.314966705},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "4M", "bytes": "4194304", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_4M_bytes_4194304_pages_base.csv",
+      "count": 15, "min": 2.710199356, "max": 4.216377258, "mean": 3.348015976, "stddev": 0.5905757819, "mad": 0.1970481873,
+      "percentiles": {"p50": 2.907247543, "p90": 3.98308754, "p99": 4.185423012, "p99_9": 4.213281834, "p99_99": 4.216067716},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "4.76M", "bytes": "4987840", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_4.76M_bytes_4987840_pages_base.csv",
+      "count": 15, "min": 49.24205017, "max": 101.1075363, "mean": 71.76384989, "stddev": 17.5598022, "mad": 12.29329681,
+      "percentiles": {"p50": 68.30133057, "p90": 99.19413605, "p99": 100.9240234, "p99_9": 101.089185, "p99_99": 101.1057012},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "4.76M", "bytes": "4987840", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_4.76M_bytes_4987840_pages_base.csv",
+      "count": 15, "min": 3.687812493, "max": 4.93730673, "mean": 4.076503069, "stddev": 0.4213144241, "mad": 0.0981394752,
+      "percentiles": {"p50": 3.861765146, "p90": 4.630350078, "p99": 4.895204038, "p99_9": 4.933096461, "p99_99": 4.936885703},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "4.76M", "bytes": "4987840", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_4.76M_bytes_4987840_pages_base.csv",
+      "count": 15, "min": 4.791229871, "max": 6.542409273, "mean": 5.249123272, "stddev": 0.4583533245, "mad": 0.1575180172,
+      "percentiles": {"p50": 5.156083061, "p90": 5.7918941, "p99": 6.467402494, "p99_9": 6.534908595, "p99_99": 6.541659205},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "5.66M", "bytes": "5931584", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_5.66M_bytes_5931584_pages_base.csv",
+      "count": 15, "min": 60.59673309, "max": 101.06427, "mean": 75.43167826, "stddev": 10.06653142, "mad": 7.231536865,
+      "percentiles": {"p50": 74.47893524, "p90": 83.96379242, "p99": 98.75982315, "p99_9": 100.8338253, "p99_99": 101.0412256},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "5.66M", "bytes": "5931584", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_5.66M_bytes_5931584_pages_base.csv",
+      "count": 15, "min": 3.820314843, "max": 5.529497955, "mean": 4.439954539, "stddev": 0.410041636, "mad": 0.1978075334,
+      "percentiles": {"p50": 4.416467237, "p90": 4.742947098, "p99": 5.425599379, "p99_9": 5.519108098, "p99_99": 5.52845897},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "5.66M", "bytes": "5931584", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_5.66M_bytes_5931584_pages_base.csv",
+      "count": 15, "min": 6.243422061, "max": 8.75149815, "mean": 6.89380995, "stddev": 0.7243177116, "mad": 0.1754793323,
+      "percentiles": {"p50": 6.640830375, "p90": 7.939614808, "p99": 8.67594549, "p99_9": 8.743942884, "p99_99": 8.750742623},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "6.73M", "bytes": "7053888", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_6.73M_bytes_7053888_pages_base.csv",
+      "count": 15, "min": 96.7276535, "max": 465.163002, "mean": 177.5739675, "stddev": 87.31865536, "mad": 11.22776794,
+      "percentiles": {"p50": 174.9532776, "p90": 194.5191101, "p99": 428.0510765, "p99_9": 461.4518095, "p99_99": 464.7918828},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "6.73M", "bytes": "7053888", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_6.73M_bytes_7053888_pages_base.csv",
+      "count": 15, "min": 3.573854306, "max": 5.537115418, "mean": 4.080234749, "stddev": 0.4771384711, "mad": 0.1299481931,
+      "percentiles": {"p50": 3.913658964, "p90": 4.506493554, "p99": 5.395710235, "p99_9": 5.5229749, "p99_99": 5.535701366},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "6.73M", "bytes": "7053888", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_6.73M_bytes_7053888_pages_base.csv",
+      "count": 15, "min": 5.088736311, "max": 6.236519775, "mean": 5.685957399, "stddev": 0.4085995545, "mad": 0.408319497,
+      "percentiles": {"p50": 5.702670641, "p90": 6.170008256, "p99": 6.227646643, "p99_9": 6.235632461, "p99_99": 6.236431043},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "8M", "bytes": "8388608", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_8M_bytes_8388608_pages_base.csv",
+      "count": 15, "min": 88.72274017, "max": 132.6683121, "mean": 116.7788493, "stddev": 14.69132835, "mad": 7.12588501,
+      "percentiles": {"p50": 122.3294907, "p90": 129.6612091, "p99": 132.2665288, "p99_9": 132.6281337, "p99_99": 132.6642942},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "8M", "bytes": "8388608", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_8M_bytes_8388608_pages_base.csv",
+      "count": 15, "min": 3.261051178, "max": 4.40953064, "mean": 3.633625031, "stddev": 0.3381013775, "mad": 0.2255840302,
+      "percentiles": {"p50": 3.556444168, "p90": 4.064773941, "p99": 4.378143806, "p99_9": 4.406391956, "p99_99": 4.409216771},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "8M", "bytes": "8388608", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_8M_bytes_8388608_pages_base.csv",
+      "count": 15, "min": 4.769626617, "max": 6.364812851, "mean": 5.497647858, "stddev": 0.3647946341, "mad": 0.1550827026,
+      "percentiles": {"p50": 5.507459641, "p90": 5.808372116, "p99": 6.295696182, "p99_9": 6.357901184, "p99_99": 6.364121684},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "9.51M", "bytes": "9975744", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_9.51M_bytes_9975744_pages_base.csv",
+      "count": 15, "min": 100.9811935, "max": 162.962738, "mean": 122.2916417, "stddev": 21.67069405, "mad": 9.080696106,
+      "percentiles": {"p50": 112.1831894, "p90": 157.5902084, "p99": 162.6861635, "p99_9": 162.9350806, "p99_99": 162.9599723},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "9.51M", "bytes": "9975744", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_9.51M_bytes_9975744_pages_base.csv",
+      "count": 15, "min": 3.260764778, "max": 5.973189368, "mean": 3.693968731, "stddev": 0.6431874221, "mad": 0.0888170346,
+      "percentiles": {"p50": 3.55650292, "p90": 3.724536315, "p99": 5.65851638, "p99_9": 5.941722069, "p99_99": 5.970042638},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "9.51M", "bytes": "9975744", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_9.51M_bytes_9975744_pages_base.csv",
+      "count": 15, "min": 3.893553002, "max": 114.1630194, "mean": 12.01395456, "stddev": 28.26173025, "mad": 0.2409556621,
+      "percentiles": {"p50": 4.683708537, "p90": 5.502640859, "p99": 98.97851582, "p99_9": 112.6445691, "p99_99": 114.0111744},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "11.3M", "bytes": "11863232", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_11.3M_bytes_11863232_pages_base.csv",
+      "count": 15, "min": 96.13980865, "max": 176.137558, "mean": 150.2943436, "stddev": 25.18100646, "mad": 4.137207031,
+      "percentiles": {"p50": 161.7922668, "p90": 168.9657944, "p99": 175.39511, "p99_9": 176.0633132, "p99_99": 176.1301335},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "11.3M", "bytes": "11863232", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_11.3M_bytes_11863232_pages_base.csv",
+      "count": 15, "min": 2.788272201, "max": 5.941919369, "mean": 3.60738353, "stddev": 0.7516466366, "mad": 0.1215938456,
+      "percentiles": {"p50": 3.359594417, "p90": 4.292457502, "p99": 5.73040391, "p99_9": 5.920767823, "p99_99": 5.939804214},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "11.3M", "bytes": "11863232", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_11.3M_bytes_11863232_pages_base.csv",
+      "count": 15, "min": 4.556046784, "max": 8.211463453, "mean": 5.538294949, "stddev": 0.9879156981, "mad": 0.2632995797,
+      "percentiles": {"p50": 5.028908142, "p90": 6.458026143, "p99": 7.976688552, "p99_9": 8.187985963, "p99_99": 8.209115704},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "13.5M", "bytes": "14107840", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_13.5M_bytes_14107840_pages_base.csv",
+      "count": 15, "min": 88.39432526, "max": 204.2690659, "mean": 153.1006943, "stddev": 30.20178788, "mad": 18.40377045,
+      "percentiles": {"p50": 155.4481201, "p90": 179.7267853, "p99": 200.8940364, "p99_9": 203.9315629, "p99_99": 204.2353156},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "13.5M", "bytes": "14107840", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_13.5M_bytes_14107840_pages_base.csv",
+      "count": 15, "min": 3.26917005, "max": 4.121303332, "mean": 3.517660081, "stddev": 0.2017348774, "mad": 0.07223898201,
+      "percentiles": {"p50": 3.472191349, "p90": 3.667335042, "p99": 4.058588019, "p99_9": 4.115031801, "p99_99": 4.120676179},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "13.5M", "bytes": "14107840", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_13.5M_bytes_14107840_pages_base.csv",
+      "count": 15, "min": 3.779388482, "max": 5.644360015, "mean": 4.798233039, "stddev": 0.4323186492, "mad": 0.1582620727,
+      "percentiles": {"p50": 4.783562048, "p90": 5.259662486, "p99": 5.60672924, "p99_9": 5.640596938, "p99_99": 5.643983708},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "16M", "bytes": "16777216", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_16M_bytes_16777216_pages_base.csv",
+      "count": 15, "min": 110.2624283, "max": 541.4916077, "mean": 171.9570709, "stddev": 106.3631134, "mad": 26.05240631,
+      "percentiles": {"p50": 142.5772247, "p90": 198.6206055, "p99": 494.6572519, "p99_9": 536.8081721, "p99_99": 541.0232641},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "16M", "bytes": "16777216", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_16M_bytes_16777216_pages_base.csv",
+      "count": 15, "min": 2.772745132, "max": 4.146345139, "mean": 3.469453557, "stddev": 0.4265162768, "mad": 0.3699169159,
+      "percentiles": {"p50": 3.373027802, "p90": 4.077685165, "p99": 4.141346893, "p99_9": 4.145845314, "p99_99": 4.146295156},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "16M", "bytes": "16777216", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_16M_bytes_16777216_pages_base.csv",
+      "count": 15, "min": 3.609743118, "max": 3.930383682, "mean": 3.729497147, "stddev": 0.07519848278, "mad": 0.03079414368,
+      "percentiles": {"p50": 3.725187302, "p90": 3.799162674, "p99": 3.915379333, "p99_9": 3.928883247, "p99_99": 3.930233639},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "19M", "bytes": "19951552", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_19M_bytes_19951552_pages_base.csv",
+      "count": 15, "min": 90.77725983, "max": 133.6738281, "mean": 117.5150375, "stddev": 11.31610778, "mad": 8.910202026,
+      "percentiles": {"p50": 119.0121231, "p90": 128.3663559, "p99": 132.9603496, "p99_9": 133.6024803, "p99_99": 133.6666933},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "19M", "bytes": "19951552", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_19M_bytes_19951552_pages_base.csv",
+      "count": 15, "min": 2.67350991, "max": 3.724077205, "mean": 2.953465301, "stddev": 0.3207872606, "mad": 0.0524502555,
+      "percentiles": {"p50": 2.819068913, "p90": 3.474390764, "p99": 3.71179555, "p99_9": 3.722849039, "p99_99": 3.723954388},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "19M", "bytes": "19951552", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_19M_bytes_19951552_pages_base.csv",
+      "count": 15, "min": 3.519937898, "max": 3.765335549, "mean": 3.617369436, "stddev": 0.07846566365, "mad": 0.02324992061,
+      "percentiles": {"p50": 3.581693895, "p90": 3.737122566, "p99": 3.763775418, "p99_9": 3.765179536, "p99_99": 3.765319948},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "22.6M", "bytes": "23726528", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_22.6M_bytes_23726528_pages_base.csv",
+      "count": 15, "min": 81.89493561, "max": 194.5138855, "mean": 125.4410207, "stddev": 28.84081183, "mad": 11.40936279,
+      "percentiles": {"p50": 116.855629, "p90": 163.7597916, "p99": 191.4997231, "p99_9": 194.2124693, "p99_99": 194.4837439},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "22.6M", "bytes": "23726528", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_22.6M_bytes_23726528_pages_base.csv",
+      "count": 15, "min": 3.657464927, "max": 8.077207757, "mean": 4.35878099, "stddev": 1.203642978, "mad": 0.11813275,
+      "percentiles": {"p50": 3.938234874, "p90": 5.533514419, "p99": 7.820141991, "p99_9": 8.05150118, "p99_99": 8.074637099},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "22.6M", "bytes": "23726528", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_22.6M_bytes_23726528_pages_base.csv",
+      "count": 15, "min": 4.964566919, "max": 7.574522492, "mean": 5.87267594, "stddev": 0.8010799101, "mad": 0.3995662577,
+      "percentiles": {"p50": 5.647249863, "p90": 7.134637617, "p99": 7.551337885, "p99_9": 7.572204032, "p99_99": 7.574290646},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "26.9M", "bytes": "28215744", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_26.9M_bytes_28215744_pages_base.csv",
+      "count": 15, "min": 126.9673767, "max": 598.0915833, "mean": 223.9274251, "stddev": 107.7684374, "mad": 14.09616089,
+      "percentiles": {"p50": 190.1213303, "p90": 250.7845779, "p99": 552.0710298, "p99_9": 593.4895279, "p99_99": 597.6313777},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "26.9M", "bytes": "28215744", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_26.9M_bytes_28215744_pages_base.csv",
+      "count": 15, "min": 2.323995001, "max": 7.172020841, "mean": 3.192732266, "stddev": 1.536866141, "mad": 0.118061746,
+      "percentiles": {"p50": 2.552794355, "p90": 5.323509144, "p99": 7.090934899, "p99_9": 7.163912246, "p99_99": 7.171209981},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "26.9M", "bytes": "28215744", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_26.9M_bytes_28215744_pages_base.csv",
+      "count": 15, "min": 3.018604081, "max": 3.522785577, "mean": 3.267998576, "stddev": 0.1444583364, "mad": 0.08130723046,
+      "percentiles": {"p50": 3.268046662, "p90": 3.469793658, "p99": 3.518362378, "p99_9": 3.522343257, "p99_99": 3.522741345},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "32M", "bytes": "33554432", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_32M_bytes_33554432_pages_base.csv",
+      "count": 15, "min": 86.14730072, "max": 204.0435715, "mean": 166.8342682, "stddev": 28.86632865, "mad": 7.643409729,
+      "percentiles": {"p50": 176.5792694, "p90": 184.5341873, "p99": 201.3413318, "p99_9": 203.7733475, "p99_99": 204.0165491},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "32M", "bytes": "33554432", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_32M_bytes_33554432_pages_base.csv",
+      "count": 15, "min": 3.414400101, "max": 9.812551498, "mean": 4.355491002, "stddev": 1.843399372, "mad": 0.08185577393,
+      "percentiles": {"p50": 3.531417847, "p90": 6.509900284, "p99": 9.483498306, "p99_9": 9.779646179, "p99_99": 9.809260966},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "32M", "bytes": "33554432", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_32M_bytes_33554432_pages_base.csv",
+      "count": 15, "min": 4.343639374, "max": 4.657867432, "mean": 4.512643051, "stddev": 0.08737986593, "mad": 0.06750869751,
+      "percentiles": {"p50": 4.514125824, "p90": 4.61367836, "p99": 4.653465462, "p99_9": 4.657427235, "p99_99": 4.657823412},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "38.1M", "bytes": "39903168", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_38.1M_bytes_39903168_pages_base.csv",
+      "count": 15, "min": 131.044632, "max": 367.9185562, "mean": 188.0536748, "stddev": 51.5492596, "mad": 1.889656067,
+      "percentiles": {"p50": 176.711647, "p90": 190.2810669, "p99": 343.5404356, "p99_9": 365.4807442, "p99_99": 367.674775},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "38.1M", "bytes": "39903168", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_38.1M_bytes_39903168_pages_base.csv",
+      "count": 15, "min": 3.40424259, "max": 8.480518439, "mean": 4.003882038, "stddev": 1.338265249, "mad": 0.07918208399,
+      "percentiles": {"p50": 3.559665238, "p90": 4.816953361, "p99": 8.058816623, "p99_9": 8.438348257, "p99_99": 8.476301421},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "38.1M", "bytes": "39903168", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_38.1M_bytes_39903168_pages_base.csv",
+      "count": 15, "min": 4.34261821, "max": 5.310943131, "mean": 4.666870681, "stddev": 0.3425539161, "mad": 0.06200931214,
+      "percentiles": {"p50": 4.481686066, "p90": 5.128707094, "p99": 5.291762394, "p99_9": 5.309025057, "p99_99": 5.310751324},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "45.3M", "bytes": "47453120", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_45.3M_bytes_47453120_pages_base.csv",
+      "count": 15, "min": 131.4445038, "max": 208.6563568, "mean": 190.3479665, "stddev": 18.97924812, "mad": 8.917045593,
+      "percentiles": {"p50": 193.682251, "p90": 206.7774872, "p99": 208.4189874, "p99_9": 208.6326199, "p99_99": 208.6539831},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "45.3M", "bytes": "47453120", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_45.3M_bytes_47453120_pages_base.csv",
+      "count": 15, "min": 3.215015072, "max": 8.828634239, "mean": 4.160531388, "stddev": 1.532544849, "mad": 0.1700925882,
+      "percentiles": {"p50": 3.643704608, "p90": 5.788502067, "p99": 8.513118719, "p99_9": 8.797082687, "p99_99": 8.825479084},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "45.3M", "bytes": "47453120", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_45.3M_bytes_47453120_pages_base.csv",
+      "count": 15, "min": 4.19014775, "max": 4.420370757, "mean": 4.287527901, "stddev": 0.06635959481, "mad": 0.03921613584,
+      "percentiles": {"p50": 4.281264541, "p90": 4.3832621, "p99": 4.418121936, "p99_9": 4.420145875, "p99_99": 4.420348269},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "53.8M", "bytes": "56431552", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_53.8M_bytes_56431552_pages_base.csv",
+      "count": 15, "min": 135.1065826, "max": 608.9274139, "mean": 229.9698598, "stddev": 108.4052922, "mad": 14.00311279,
+      "percentiles": {"p50": 214.8877487, "p90": 231.3417877, "p99": 556.2941794, "p99_9": 603.6640905, "p99_99": 608.4010816},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "53.8M", "bytes": "56431552", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_53.8M_bytes_56431552_pages_base.csv",
+      "count": 15, "min": 3.133283735, "max": 7.394315577, "mean": 4.154986884, "stddev": 1.13631569, "mad": 0.2726917027,
+      "percentiles": {"p50": 3.767086328, "p90": 5.445525964, "p99": 7.210873236, "p99_9": 7.375971343, "p99_99": 7.392481154},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "53.8M", "bytes": "56431552", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_53.8M_bytes_56431552_pages_base.csv",
+      "count": 15, "min": 4.339541113, "max": 5.061726603, "mean": 4.619644046, "stddev": 0.219612785, "mad": 0.1845027406,
+      "percentiles": {"p50": 4.57408678, "p90": 4.881529198, "p99": 5.039658109, "p99_9": 5.059519753, "p99_99": 5.061505918},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "64M", "bytes": "67108864", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_64M_bytes_67108864_pages_base.csv",
+      "count": 15, "min": 171.4438019, "max": 226.4414978, "mean": 198.6878494, "stddev": 16.28157744, "mad": 12.53272247,
+      "percentiles": {"p50": 194.5545807, "p90": 217.7156815, "p99": 225.5045055, "p99_9": 226.3477986, "p99_99": 226.4321279},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "64M", "bytes": "67108864", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_64M_bytes_67108864_pages_base.csv",
+      "count": 15, "min": 2.950206757, "max": 7.551177025, "mean": 3.833269183, "stddev": 1.500048609, "mad": 0.09803676605,
+      "percentiles": {"p50": 3.07388401, "p90": 6.236836815, "p99": 7.454953194, "p99_9": 7.541554642, "p99_99": 7.550214787},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "64M", "bytes": "67108864", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_64M_bytes_67108864_pages_base.csv",
+      "count": 15, "min": 3.691127777, "max": 4.95707798, "mean": 4.128551992, "stddev": 0.3397555426, "mad": 0.2368240356,
+      "percentiles": {"p50": 4.027517319, "p90": 4.470840645, "p99": 4.903564873, "p99_9": 4.951726669, "p99_99": 4.956542849},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "76.1M", "bytes": "79806336", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_76.1M_bytes_79806336_pages_base.csv",
+      "count": 15, "min": 170.5101242, "max": 407.8860397, "mean": 213.071725, "stddev": 58.15574251, "mad": 18.1516037,
+      "percentiles": {"p50": 201.0994415, "p90": 241.6243378, "p99": 385.459622, "p99_9": 405.643398, "p99_99": 407.6617756},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "76.1M", "bytes": "79806336", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_76.1M_bytes_79806336_pages_base.csv",
+      "count": 15, "min": 8.433827008, "max": 10.41510168, "mean": 9.168033175, "stddev": 0.6316407414, "mad": 0.2098856913,
+      "percentiles": {"p50": 8.939250538, "p90": 10.15941166, "p99": 10.38216765, "p99_9": 10.41180828, "p99_99": 10.41477234},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "76.1M", "bytes": "79806336", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_76.1M_bytes_79806336_pages_base.csv",
+      "count": 15, "min": 11.52491231, "max": 17.30203517, "mean": 12.72004484, "stddev": 1.842022978, "mad": 0.2100589106,
+      "percentiles": {"p50": 12.06540473, "p90": 15.33190812, "p99": 17.2663507, "p99_9": 17.29846672, "p99_99": 17.30167832},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "90.5M", "bytes": "94906240", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_90.5M_bytes_94906240_pages_base.csv",
+      "count": 15, "min": 179.4144745, "max": 460.3629608, "mean": 222.2283249, "stddev": 68.35431559, "mad": 10.9372406,
+      "percentiles": {"p50": 201.387207, "p90": 239.1375092, "p99": 430.1162488, "p99_9": 457.3382896, "p99_99": 460.0604937},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "90.5M", "bytes": "94906240", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_90.5M_bytes_94906240_pages_base.csv",
+      "count": 15, "min": 6.490835587, "max": 10.2094382, "mean": 8.52844169, "stddev": 1.17529519, "mad": 0.5074670749,
+      "percentiles": {"p50": 8.828490603, "p90": 9.673830239, "p99": 10.15482696, "p99_9": 10.20397707, "p99_99": 10.20889209},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "90.5M", "bytes": "94906240", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_90.5M_bytes_94906240_pages_base.csv",
+      "count": 15, "min": 9.230191987, "max": 10.77813421, "mean": 9.8872957, "stddev": 0.4767798568, "mad": 0.200192864,
+      "percentiles": {"p50": 9.686527841, "p90": 10.60430856, "p99": 10.76320334, "p99_9": 10.77664112, "p99_99": 10.7779849},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "108M", "bytes": "112863168", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_108M_bytes_112863168_pages_base.csv",
+      "count": 15, "min": 188.4249039, "max": 407.3361969, "mean": 243.9490158, "stddev": 52.06594651, "mad": 13.24802399,
+      "percentiles": {"p50": 228.9799728, "p90": 282.6036224, "p99": 391.8522516, "p99_9": 405.7878024, "p99_99": 407.1813574},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "108M", "bytes": "112863168", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_108M_bytes_112863168_pages_base.csv",
+      "count": 15, "min": 8.808994906, "max": 9.99292538, "mean": 9.531469791, "stddev": 0.2900962608, "mad": 0.1870606361,
+      "percentiles": {"p50": 9.513486065, "p90": 9.822958264, "p99": 9.971944358, "p99_9": 9.990827278, "p99_99": 9.99271557},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "108M", "bytes": "112863168", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_108M_bytes_112863168_pages_base.csv",
+      "count": 15, "min": 9.520574861, "max": 12.30212925, "mean": 11.09347787, "stddev": 0.8308195419, "mad": 0.9302058932,
+      "percentiles": {"p50": 10.74256856, "p90": 12.05164903, "p99": 12.28476158, "p99_9": 12.30039248, "p99_99": 12.30195557},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "128M", "bytes": "134217728", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_128M_bytes_134217728_pages_base.csv",
+      "count": 15, "min": 201.9707336, "max": 272.5694427, "mean": 226.2996496, "stddev": 23.61377193, "mad": 14.24442291,
+      "percentiles": {"p50": 216.2763672, "p90": 259.9566605, "p99": 270.8141054, "p99_9": 272.393909, "p99_99": 272.5518894},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "128M", "bytes": "134217728", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_128M_bytes_134217728_pages_base.csv",
+      "count": 15, "min": 6.990561485, "max": 11.25091314, "mean": 7.653824075, "stddev": 1.060715885, "mad": 0.1347312927,
+      "percentiles": {"p50": 7.289704323, "p90": 8.24047823, "p99": 10.86447306, "p99_9": 11.21226913, "p99_99": 11.24704874},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "128M", "bytes": "134217728", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_128M_bytes_134217728_pages_base.csv",
+      "count": 15, "min": 10.33564472, "max": 28.97983408, "mean": 12.42881781, "stddev": 4.64044406, "mad": 0.1036071777,
+      "percentiles": {"p50": 11.12922239, "p90": 12.95030298, "p99": 26.76108917, "p99_9": 28.75795959, "p99_99": 28.95764663},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "152M", "bytes": "159612672", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_152M_bytes_159612672_pages_base.csv",
+      "count": 15, "min": 188.3040619, "max": 381.0953369, "mean": 228.0995478, "stddev": 45.65964222, "mad": 11.41915131,
+      "percentiles": {"p50": 217.2099838, "p90": 246.4892731, "p99": 363.2402933, "p99_9": 379.3098326, "p99_99": 380.9167865},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "152M", "bytes": "159612672", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_152M_bytes_159612672_pages_base.csv",
+      "count": 15, "min": 7.351917121, "max": 23.48572985, "mean": 9.089624563, "stddev": 4.042453349, "mad": 0.1966332097,
+      "percentiles": {"p50": 7.887789962, "p90": 9.675039897, "p99": 21.55876712, "p99_9": 23.29303358, "p99_99": 23.46646023},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "152M", "bytes": "159612672", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_152M_bytes_159612672_pages_base.csv",
+      "count": 15, "min": 10.02351252, "max": 11.76512461, "mean": 10.92134891, "stddev": 0.5694617864, "mad": 0.4210428606,
+      "percentiles": {"p50": 10.84228821, "p90": 11.6033028, "p99": 11.74307747, "p99_9": 11.7629199, "p99_99": 11.76490414},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "181M", "bytes": "189812480", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_181M_bytes_189812480_pages_base.csv",
+      "count": 15, "min": 218.2443771, "max": 609.9382172, "mean": 286.4648382, "stddev": 91.39322931, "mad": 6.088150024,
+      "percentiles": {"p50": 268.0089493, "p90": 288.2122711, "p99": 565.0633701, "p99_9": 605.4507325, "p99_99": 609.4894687},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "181M", "bytes": "189812480", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_181M_bytes_189812480_pages_base.csv",
+      "count": 15, "min": 7.223757342, "max": 9.382420376, "mean": 8.681546823, "stddev": 0.5698047511, "mad": 0.2016862116,
+      "percentiles": {"p50": 8.796522715, "p90": 9.190171824, "p99": 9.363208765, "p99_9": 9.380499215, "p99_99": 9.38222826},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "181M", "bytes": "189812480", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_181M_bytes_189812480_pages_base.csv",
+      "count": 15, "min": 10.47225084, "max": 22.56387576, "mean": 11.95677292, "stddev": 2.999474738, "mad": 0.3410355315,
+      "percentiles": {"p50": 10.93480656, "p90": 12.37461889, "p99": 21.15176804, "p99_9": 22.42266499, "p99_99": 22.54975468},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "215M", "bytes": "225726400", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_215M_bytes_225726400_pages_base.csv",
+      "count": 15, "min": 224.8862534, "max": 268.3742523, "mean": 243.2595444, "stddev": 13.05388312, "mad": 9.981315613,
+      "percentiles": {"p50": 239.4359436, "p90": 259.6632858, "p99": 267.4060005, "p99_9": 268.2774271, "p99_99": 268.3645698},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "215M", "bytes": "225726400", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_215M_bytes_225726400_pages_base.csv",
+      "count": 15, "min": 6.820082082, "max": 20.45605342, "mean": 8.540016246, "stddev": 3.37245502, "mad": 0.8238320374,
+      "percentiles": {"p50": 7.739641194, "p90": 8.786014531, "p99": 18.82649478, "p99_9": 20.29309755, "p99_99": 20.43975783},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "215M", "bytes": "225726400", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_215M_bytes_225726400_pages_base.csv",
+      "count": 15, "min": 9.722723297, "max": 24.10288278, "mean": 11.39663421, "stddev": 3.558384002, "mad": 0.4135104445,
+      "percentiles": {"p50": 10.39642498, "p90": 11.59077323, "p99": 22.38245389, "p99_9": 23.93083989, "p99_99": 24.08567849},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "256M", "bytes": "268435456", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_256M_bytes_268435456_pages_base.csv",
+      "count": 15, "min": 201.2994308, "max": 281.765152, "mean": 248.8147003, "stddev": 19.44331045, "mad": 8.868713379,
+      "percentiles": {"p50": 248.7750244, "p90": 273.0023544, "p99": 281.221508, "p99_9": 281.7107876, "p99_99": 281.7597155},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "256M", "bytes": "268435456", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_256M_bytes_268435456_pages_base.csv",
+      "count": 15, "min": 7.116776943, "max": 16.85888362, "mean": 8.762148984, "stddev": 2.424222913, "mad": 0.8803706169,
+      "percentiles": {"p50": 8.216289997, "p90": 9.933350039, "p99": 15.90136958, "p99_9": 16.76313222, "p99_99": 16.84930848},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "256M", "bytes": "268435456", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_256M_bytes_268435456_pages_base.csv",
+      "count": 15, "min": 10.38796353, "max": 22.32039237, "mean": 11.57380392, "stddev": 2.99086452, "mad": 0.2053096294,
+      "percentiles": {"p50": 10.78278232, "p90": 11.48493209, "p99": 20.82379457, "p99_9": 22.17073259, "p99_99": 22.30542639},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "304M", "bytes": "319225344", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_304M_bytes_319225344_pages_base.csv",
+      "count": 15, "min": 224.0339127, "max": 286.7839203, "mean": 250.708315, "stddev": 16.91661292, "mad": 12.09575653,
+      "percentiles": {"p50": 248.8956528, "p90": 270.8516586, "p99": 284.9651155, "p99_9": 286.6020398, "p99_99": 286.7657322},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "304M", "bytes": "319225344", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_304M_bytes_319225344_pages_base.csv",
+      "count": 15, "min": 6.577499411, "max": 17.15328888, "mean": 8.515783101, "stddev": 2.574359296, "mad": 0.7295051862,
+      "percentiles": {"p50": 8.252973799, "p90": 9.378853408, "p99": 16.10186286, "p99_9": 17.04814628, "p99_99": 17.14277462},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "304M", "bytes": "319225344", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_304M_bytes_319225344_pages_base.csv",
+      "count": 15, "min": 10.21402712, "max": 19.36208554, "mean": 11.79213826, "stddev": 2.154444018, "mad": 0.2805659942,
+      "percentiles": {"p50": 11.16169964, "p90": 12.17121307, "p99": 18.38795932, "p99_9": 19.26467291, "p99_99": 19.35234427},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "362M", "bytes": "379625024", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_362M_bytes_379625024_pages_base.csv",
+      "count": 15, "min": 250.8786545, "max": 479.2433472, "mean": 304.5920024, "stddev": 53.33742476, "mad": 17.0918808,
+      "percentiles": {"p50": 297.905838, "p90": 328.1144089, "p99": 458.3556178, "p99_9": 477.1545742, "p99_99": 479.0344699},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "362M", "bytes": "379625024", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_362M_bytes_379625024_pages_base.csv",
+      "count": 15, "min": 6.786783455, "max": 12.64376469, "mean": 8.058071136, "stddev": 1.409505685, "mad": 0.3471548598,
+      "percentiles": {"p50": 7.732887408, "p90": 8.944482682, "p99": 12.13082509, "p99_9": 12.59247073, "p99_99": 12.63863529},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "362M", "bytes": "379625024", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_362M_bytes_379625024_pages_base.csv",
+      "count": 15, "min": 9.953163045, "max": 17.49132238, "mean": 11.36532092, "stddev": 1.794803364, "mad": 0.3753674573,
+      "percentiles": {"p50": 11.20425629, "p90": 11.59462233, "p99": 16.66718424, "p99_9": 17.40890857, "p99_99": 17.483081},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "431M", "bytes": "451452800", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_431M_bytes_451452800_pages_base.csv",
+      "count": 15, "min": 255.3778076, "max": 626.7418442, "mean": 308.8505229, "stddev": 89.67604351, "mad": 12.71884918,
+      "percentiles": {"p50": 293.9789886, "p90": 309.1934692, "p99": 582.5023878, "p99_9": 622.3178985, "p99_99": 626.2994496},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "431M", "bytes": "451452800", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_431M_bytes_451452800_pages_base.csv",
+      "count": 15, "min": 6.763257607, "max": 14.83037518, "mean": 8.663011599, "stddev": 1.869875023, "mad": 0.3941213079,
+      "percentiles": {"p50": 8.209973136, "p90": 9.412273095, "p99": 14.09319184, "p99_9": 14.75665685, "p99_99": 14.82300335},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "431M", "bytes": "451452800", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_431M_bytes_451452800_pages_base.csv",
+      "count": 15, "min": 10.61921604, "max": 14.80822801, "mean": 11.43825513, "stddev": 1.091987941, "mad": 0.2854077503,
+      "percentiles": {"p50": 11.11198407, "p90": 12.4713284, "p99": 14.48949619, "p99_9": 14.77635483, "p99_99": 14.8050407},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.latency_random",
+      "params": {"size": "512M", "bytes": "536870912", "pages": "base"},
+      "unit": "ns/access",
+      "raw_csv": "raw/mem.latency_random_size_512M_bytes_536870912_pages_base.csv",
+      "count": 15, "min": 258.7352829, "max": 539.7832336, "mean": 314.0634109, "stddev": 66.95553378, "mad": 17.23720551,
+      "percentiles": {"p50": 290.7767181, "p90": 347.9017883, "p99": 514.177117, "p99_9": 537.222622, "p99_99": 539.5271725},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.read_seq",
+      "params": {"size": "512M", "bytes": "536870912", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.read_seq_size_512M_bytes_536870912_pages_base.csv",
+      "count": 15, "min": 6.235745311, "max": 11.31712055, "mean": 7.866628599, "stddev": 1.210957623, "mad": 0.3005707264,
+      "percentiles": {"p50": 7.999121308, "p90": 8.508875513, "p99": 10.94393064, "p99_9": 11.27980156, "p99_99": 11.31338865},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "mem.write_seq",
+      "params": {"size": "512M", "bytes": "536870912", "pages": "base"},
+      "unit": "ns/line",
+      "raw_csv": "raw/mem.write_seq_size_512M_bytes_536870912_pages_base.csv",
+      "count": 15, "min": 9.548364878, "max": 16.88787162, "mean": 10.69472881, "stddev": 1.775667233, "mad": 0.3966737986,
+      "percentiles": {"p50": 10.35054779, "p90": 11.09460721, "p99": 16.10923726, "p99_9": 16.81000819, "p99_99": 16.88008528},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "multicore.c2c_latency",
+      "params": {"cpu_a": "0", "cpu_b": "1"},
+      "unit": "ns",
+      "raw_csv": "raw/multicore.c2c_latency_cpu_a_0_cpu_b_1.csv",
+      "count": 15, "min": 78.919, "max": 104.691, "mean": 86.43403333, "stddev": 8.360715123, "mad": 3.0225,
+      "percentiles": {"p50": 82.575, "p90": 99.4951, "p99": 104.37229, "p99_9": 104.659129, "p99_99": 104.6878129},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "multicore.c2c_latency",
+      "params": {"cpu_a": "0", "cpu_b": "2"},
+      "unit": "ns",
+      "raw_csv": "raw/multicore.c2c_latency_cpu_a_0_cpu_b_2.csv",
+      "count": 15, "min": 84.4695, "max": 136.3305, "mean": 100.7752333, "stddev": 13.73268051, "mad": 8.5055,
+      "percentiles": {"p50": 95.8725, "p90": 115.362, "p99": 133.89401, "p99_9": 136.086851, "p99_99": 136.3061351},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "multicore.c2c_latency",
+      "params": {"cpu_a": "0", "cpu_b": "3"},
+      "unit": "ns",
+      "raw_csv": "raw/multicore.c2c_latency_cpu_a_0_cpu_b_3.csv",
+      "count": 15, "min": 80.8445, "max": 101.3925, "mean": 85.7689, "stddev": 5.951499911, "mad": 2.3925,
+      "percentiles": {"p50": 83.2465, "p90": 93.1466, "p99": 100.65631, "p99_9": 101.318881, "p99_99": 101.3851381},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "multicore.c2c_latency",
+      "params": {"cpu_a": "1", "cpu_b": "2"},
+      "unit": "ns",
+      "raw_csv": "raw/multicore.c2c_latency_cpu_a_1_cpu_b_2.csv",
+      "count": 15, "min": 82.047, "max": 117.558, "mean": 90.71593333, "stddev": 10.8487057, "mad": 3.1565,
+      "percentiles": {"p50": 86.8585, "p90": 106.9053, "p99": 117.02803, "p99_9": 117.505003, "p99_99": 117.5527003},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "multicore.c2c_latency",
+      "params": {"cpu_a": "1", "cpu_b": "3"},
+      "unit": "ns",
+      "raw_csv": "raw/multicore.c2c_latency_cpu_a_1_cpu_b_3.csv",
+      "count": 15, "min": 80.77, "max": 116.431, "mean": 86.1153, "stddev": 8.769653855, "mad": 2.02,
+      "percentiles": {"p50": 83.2285, "p90": 88.2049, "p99": 112.48923, "p99_9": 116.036823, "p99_99": 116.3915823},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "multicore.c2c_latency",
+      "params": {"cpu_a": "2", "cpu_b": "3"},
+      "unit": "ns",
+      "raw_csv": "raw/multicore.c2c_latency_cpu_a_2_cpu_b_3.csv",
+      "count": 15, "min": 85.8815, "max": 108.4455, "mean": 90.79226667, "stddev": 7.397955079, "mad": 0.5795,
+      "percentiles": {"p50": 87.4385, "p90": 102.1905, "p99": 108.24586, "p99_9": 108.425536, "p99_99": 108.4435036},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "pattern.alloc_vector",
+      "params": {"allocator": "new_delete"},
+      "unit": "ns/element",
+      "raw_csv": "raw/pattern.alloc_vector_allocator_new_delete.csv",
+      "count": 10000, "min": 1.359375, "max": 1135.035156, "mean": 1.768836719, "stddev": 11.87872004, "mad": 0.0078125,
+      "percentiles": {"p50": 1.38671875, "p90": 1.93359375, "p99": 3.550859375, "p99_9": 20.42198047, "p99_99": 293.3224609},
+      "unreliable_percentiles": ["p99_99"]
+    },
+    {
+      "name": "pattern.alloc_vector",
+      "params": {"allocator": "reserve"},
+      "unit": "ns/element",
+      "raw_csv": "raw/pattern.alloc_vector_allocator_reserve.csv",
+      "count": 10000, "min": 0.99609375, "max": 126.3476562, "mean": 1.102698828, "stddev": 1.736812355, "mad": 0.00390625,
+      "percentiles": {"p50": 1.01171875, "p90": 1.01953125, "p99": 1.710976563, "p99_9": 12.14109375, "p99_99": 68.50187891},
+      "unreliable_percentiles": ["p99_99"]
+    },
+    {
+      "name": "pattern.alloc_vector",
+      "params": {"allocator": "pmr_monotonic"},
+      "unit": "ns/element",
+      "raw_csv": "raw/pattern.alloc_vector_allocator_pmr_monotonic.csv",
+      "count": 10000, "min": 1.3671875, "max": 77.42578125, "mean": 1.620904297, "stddev": 1.631782761, "mad": 0.015625,
+      "percentiles": {"p50": 1.46875, "p90": 1.71875, "p99": 3.039140625, "p99_9": 16.96098438, "p99_99": 61.08366562},
+      "unreliable_percentiles": ["p99_99"]
+    },
+    {
+      "name": "pattern.alloc_vector",
+      "params": {"allocator": "pmr_pool"},
+      "unit": "ns/element",
+      "raw_csv": "raw/pattern.alloc_vector_allocator_pmr_pool.csv",
+      "count": 10000, "min": 1.8984375, "max": 2149.804688, "mean": 2.553232422, "stddev": 24.49645352, "mad": 0.01953125,
+      "percentiles": {"p50": 1.96875, "p90": 2.26171875, "p99": 3.628945313, "p99_9": 55.77924609, "p99_99": 984.3353086},
+      "unreliable_percentiles": ["p99_99"]
+    },
+    {
+      "name": "pattern.alloc_list",
+      "params": {"allocator": "new_delete"},
+      "unit": "ns/element",
+      "raw_csv": "raw/pattern.alloc_list_allocator_new_delete.csv",
+      "count": 10000, "min": 27.37109375, "max": 963.171875, "mean": 33.26799375, "stddev": 17.9651986, "mad": 1.6953125,
+      "percentiles": {"p50": 29.125, "p90": 37.71914063, "p99": 85.24585938, "p99_9": 184.4336953, "p99_99": 832.6771133},
+      "unreliable_percentiles": ["p99_99"]
+    },
+    {
+      "name": "pattern.alloc_list",
+      "params": {"allocator": "pmr_monotonic"},
+      "unit": "ns/element",
+      "raw_csv": "raw/pattern.alloc_list_allocator_pmr_monotonic.csv",
+      "count": 10000, "min": 4.9765625, "max": 298.515625, "mean": 7.295079688, "stddev": 6.78491395, "mad": 0.6640625,
+      "percentiles": {"p50": 6.87890625, "p90": 8.172265625, "p99": 8.843828125, "p99_9": 101.8106914, "p99_99": 281.1189273},
+      "unreliable_percentiles": ["p99_99"]
+    },
+    {
+      "name": "pattern.alloc_list",
+      "params": {"allocator": "pmr_pool"},
+      "unit": "ns/element",
+      "raw_csv": "raw/pattern.alloc_list_allocator_pmr_pool.csv",
+      "count": 10000, "min": 21.81640625, "max": 574.671875, "mean": 33.45373711, "stddev": 16.60053715, "mad": 1.21484375,
+      "percentiles": {"p50": 30.80859375, "p90": 40.18046875, "p99": 92.13375, "p99_9": 299.2332344, "p99_99": 476.2012543},
+      "unreliable_percentiles": ["p99_99"]
+    },
+    {
+      "name": "pattern.spsc_latency",
+      "params": {"queue": "mutex_condvar"},
+      "unit": "ns",
+      "metrics": {"cpu_cores": 0.8108428232},
+      "raw_csv": "raw/pattern.spsc_latency_queue_mutex_condvar.csv",
+      "count": 10000, "min": 6556, "max": 651348, "mean": 14960.94945, "stddev": 12635.81159, "mad": 1023.5,
+      "percentiles": {"p50": 13382, "p90": 17842.25, "p99": 38188.9, "p99_9": 142774.8075, "p99_99": 518412.2949},
+      "unreliable_percentiles": ["p99_99"]
+    },
+    {
+      "name": "pattern.spsc_throughput",
+      "params": {"queue": "mutex_condvar"},
+      "unit": "ns/item",
+      "metrics": {"cpu_cores": 1.407661667},
+      "raw_csv": "raw/pattern.spsc_throughput_queue_mutex_condvar.csv",
+      "count": 15, "min": 202.1692085, "max": 253.4875221, "mean": 231.423409, "stddev": 14.72914728, "mad": 9.964996338,
+      "percentiles": {"p50": 229.4005547, "p90": 249.4607674, "p99": 253.0489198, "p99_9": 253.4436619, "p99_99": 253.4831361},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "pattern.spsc_latency",
+      "params": {"queue": "mutex_poll"},
+      "unit": "ns",
+      "metrics": {"cpu_cores": 1.486648873},
+      "raw_csv": "raw/pattern.spsc_latency_queue_mutex_poll.csv",
+      "count": 10000, "min": 412.5, "max": 510783.5, "mean": 3433.74085, "stddev": 7592.276186, "mad": 320.25,
+      "percentiles": {"p50": 1325.75, "p90": 8885.05, "p99": 18261.985, "p99_9": 72380.045, "p99_99": 171181.9635},
+      "unreliable_percentiles": ["p99_99"]
+    },
+    {
+      "name": "pattern.spsc_throughput",
+      "params": {"queue": "mutex_poll"},
+      "unit": "ns/item",
+      "metrics": {"cpu_cores": 1.519244354},
+      "raw_csv": "raw/pattern.spsc_throughput_queue_mutex_poll.csv",
+      "count": 15, "min": 163.6783829, "max": 248.4593925, "mean": 185.1879148, "stddev": 19.50105809, "mad": 8.060348511,
+      "percentiles": {"p50": 184.6016197, "p90": 192.6792839, "p99": 240.6711662, "p99_9": 247.6805699, "p99_99": 248.3815103},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "pattern.spsc_latency",
+      "params": {"queue": "spinlock"},
+      "unit": "ns",
+      "metrics": {"cpu_cores": 1.89975805},
+      "raw_csv": "raw/pattern.spsc_latency_queue_spinlock.csv",
+      "count": 10000, "min": 376, "max": 546986, "mean": 935.137, "stddev": 5743.221634, "mad": 79,
+      "percentiles": {"p50": 824, "p90": 981.5, "p99": 1296.025, "p99_9": 10123.1965, "p99_99": 164399.2625},
+      "unreliable_percentiles": ["p99_99"]
+    },
+    {
+      "name": "pattern.spsc_throughput",
+      "params": {"queue": "spinlock"},
+      "unit": "ns/item",
+      "metrics": {"cpu_cores": 1.938869877},
+      "raw_csv": "raw/pattern.spsc_throughput_queue_spinlock.csv",
+      "count": 15, "min": 274.1553612, "max": 583.4613762, "mean": 435.0482613, "stddev": 81.94217361, "mad": 38.91091919,
+      "percentiles": {"p50": 409.0481911, "p90": 548.1666206, "p99": 579.9925502, "p99_9": 583.1144936, "p99_99": 583.4266879},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "pattern.spsc_latency",
+      "params": {"queue": "lockfree"},
+      "unit": "ns",
+      "metrics": {"cpu_cores": 1.964244725},
+      "raw_csv": "raw/pattern.spsc_latency_queue_lockfree.csv",
+      "count": 10000, "min": 231, "max": 23991, "mean": 386.5003, "stddev": 420.6752705, "mad": 48,
+      "percentiles": {"p50": 343.5, "p90": 520, "p99": 563, "p99_9": 6654.9845, "p99_99": 17913.10785},
+      "unreliable_percentiles": ["p99_99"]
+    },
+    {
+      "name": "pattern.spsc_throughput",
+      "params": {"queue": "lockfree"},
+      "unit": "ns/item",
+      "metrics": {"cpu_cores": 1.73834585},
+      "raw_csv": "raw/pattern.spsc_throughput_queue_lockfree.csv",
+      "count": 15, "min": 50.41098022, "max": 251.3636208, "mean": 77.04211273, "stddev": 49.6639138, "mad": 1.912002563,
+      "percentiles": {"p50": 61.34012604, "p90": 92.46387405, "p99": 230.1512538, "p99_9": 249.2423841, "p99_99": 251.1514971},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "pattern.spsc_latency",
+      "params": {"queue": "lockfree_cached"},
+      "unit": "ns",
+      "metrics": {"cpu_cores": 1.975796091},
+      "raw_csv": "raw/pattern.spsc_latency_queue_lockfree_cached.csv",
+      "count": 10000, "min": 256, "max": 35913.5, "mean": 419.4253, "stddev": 610.5033839, "mad": 49,
+      "percentiles": {"p50": 387, "p90": 470, "p99": 632.07, "p99_9": 4926.1545, "p99_99": 34019.18945},
+      "unreliable_percentiles": ["p99_99"]
+    },
+    {
+      "name": "pattern.spsc_throughput",
+      "params": {"queue": "lockfree_cached"},
+      "unit": "ns/item",
+      "metrics": {"cpu_cores": 1.965873665},
+      "raw_csv": "raw/pattern.spsc_throughput_queue_lockfree_cached.csv",
+      "count": 15, "min": 24.53850174, "max": 47.81006622, "mean": 34.60919367, "stddev": 8.075072369, "mad": 7.298786163,
+      "percentiles": {"p50": 33.6921196, "p90": 44.53511429, "p99": 47.52753853, "p99_9": 47.78181345, "p99_99": 47.80724095},
+      "unreliable_percentiles": ["p90", "p99", "p99_9", "p99_99"]
+    },
+    {
+      "name": "sync.mutex_wakeup",
+      "params": {},
+      "unit": "ns",
+      "raw_csv": "raw/sync.mutex_wakeup.csv",
+      "count": 10000, "min": 13626, "max": 2616553, "mean": 57457.6703, "stddev": 78079.5539, "mad": 9076,
+      "percentiles": {"p50": 39115.5, "p90": 101371.6, "p99": 215160.91, "p99_9": 1254091.254, "p99_99": 2110698.59},
+      "unreliable_percentiles": ["p99_99"]
+    },
+    {
+      "name": "sync.condvar_wakeup",
+      "params": {},
+      "unit": "ns",
+      "note": "includes the worker's mutex unlock and notify_one() call",
+      "raw_csv": "raw/sync.condvar_wakeup.csv",
+      "count": 10000, "min": 14142, "max": 7552105, "mean": 60374.17, "stddev": 126665.9643, "mad": 8713,
+      "percentiles": {"p50": 39734, "p90": 104292.3, "p99": 238320.19, "p99_9": 1652721.359, "p99_99": 5757821.446},
+      "unreliable_percentiles": ["p99_99"]
+    },
+    {
+      "name": "thread.create_to_start",
+      "params": {},
+      "unit": "ns",
+      "note": "new threads inherit the main thread's affinity",
+      "raw_csv": "raw/thread.create_to_start.csv",
+      "count": 10000, "min": 4058, "max": 5061814, "mean": 11872.1687, "stddev": 76909.10907, "mad": 918.5,
+      "percentiles": {"p50": 6720.5, "p90": 12456.1, "p99": 79007.13, "p99_9": 527250.605, "p99_99": 3226682.531},
+      "unreliable_percentiles": ["p99_99"]
+    },
+    {
+      "name": "thread.exit_to_join",
+      "params": {},
+      "unit": "ns",
+      "note": "new threads inherit the main thread's affinity",
+      "raw_csv": "raw/thread.exit_to_join.csv",
+      "count": 10000, "min": 2771, "max": 844902, "mean": 4757.282, "stddev": 12002.97601, "mad": 285,
+      "percentiles": {"p50": 3999, "p90": 5047.3, "p99": 14917.45, "p99_9": 120892.072, "p99_99": 481178.376},
+      "unreliable_percentiles": ["p99_99"]
+    }
+  ]
+}

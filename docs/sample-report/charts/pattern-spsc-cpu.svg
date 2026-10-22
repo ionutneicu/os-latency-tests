@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 228" role="img" aria-label="SPSC CPU usage while handing off">
+<style>
+  .bg{fill:#fcfcfb} .ax{fill:#52514e;font:12px system-ui,sans-serif} .title{fill:#0b0b0b;font:600 15px system-ui,sans-serif}
+  .grid{stroke:#e4e3df} .zone-a{fill:#f3f2ef} .zone-b{fill:#fcfcfb} .marker{stroke:#8a8984}
+  .zlabel{fill:#8a8984;font:600 12px system-ui,sans-serif} .hit{fill:transparent}
+  .s1{stroke:#2a78d6} .s2{stroke:#eb6834} .s3{stroke:#1baf7a} .s4{stroke:#6250d6} .s5{stroke:#e87ba4}
+  .f1{fill:#2a78d6} .f2{fill:#eb6834} .f3{fill:#1baf7a} .f4{fill:#6250d6} .f5{fill:#e87ba4}
+</style><rect class="bg" width="1000" height="228"/>
+<text class="title" x="170" y="18">SPSC CPU usage while handing off</text><g transform="translate(0,24)">
+<text class="ax" x="160" y="25.0" text-anchor="end">mutex_condvar</text>
+<rect class="f1" x="170" y="10" width="205.2" height="22" rx="4"/>
+<text class="ax" x="383.2" y="25.0">0.81 cores busy  (least CPU)</text>
+<text class="ax" x="160" y="57.0" text-anchor="end">mutex_poll</text>
+<rect class="f1" x="170" y="42" width="376.2" height="22" rx="4"/>
+<text class="ax" x="554.2" y="57.0">1.49 cores busy  (1.8x more CPU)</text>
+<text class="ax" x="160" y="89.0" text-anchor="end">spinlock</text>
+<rect class="f1" x="170" y="74" width="480.8" height="22" rx="4"/>
+<text class="ax" x="658.8" y="89.0">1.90 cores busy  (2.3x more CPU)</text>
+<text class="ax" x="160" y="121.0" text-anchor="end">lockfree</text>
+<rect class="f1" x="170" y="106" width="497.1" height="22" rx="4"/>
+<text class="ax" x="675.1" y="121.0">1.96 cores busy  (2.4x more CPU)</text>
+<text class="ax" x="160" y="153.0" text-anchor="end">lockfree_cached</text>
+<rect class="f1" x="170" y="138" width="500.0" height="22" rx="4"/>
+<text class="ax" x="678.0" y="153.0">1.98 cores busy  (2.4x more CPU)</text>
+<text class="ax" x="170" y="196">CPU cores busy (producer + consumer)</text>
+</g>
+</svg>
