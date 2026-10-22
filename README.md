@@ -200,6 +200,7 @@ Installed packages provide it as `olt-report`.
 | `sync.condvar_wakeup` | worker sets the predicate (then unlocks and `notify_one()`) until `wait()` returns |
 | `mem.latency_random` | dependent loads along a random cycle of cache lines (pointer chase) in a buffer of each size: load-to-use latency of the level the working set fits in |
 | `mem.read_seq`, `mem.write_seq` | sequential read / write of the same buffer, cost per cache line (GB/s = line size / value) |
+| `pattern.*` | design-pattern comparisons, see [Design patterns](#design-patterns) |
 | `alloc.malloc`, `alloc.free` | `malloc()`/`free()` of one block, 16 B to 16 MiB, allocator best case (block reused, memory untouched) |
 
 The memory sweep allocates and pre-faults one buffer up front and reuses
@@ -216,6 +217,45 @@ Planned (see the project plan): thread pool vs spawn vs single thread,
 spin/atomic hand-offs, stride and prefetch-distance sweeps, stack copy vs
 persistent heap buffers, false sharing, pipes/eventfd/loopback sockets, timer
 and sleep jitter, perf counters per benchmark, and more design guidance.
+
+## Design patterns
+
+Benchmarks named `pattern.*` run the same task several ways, so the report can
+show which implementation choice wins on a given machine and by how much. They
+appear in the report's **Design patterns** section with comparison charts and
+in the design hints.
+
+### Container memory (`pattern.alloc_vector`, `pattern.alloc_list`)
+
+Build and destroy a 256-element container, cost per element:
+
+| Variant | What it is | Typical use |
+|---|---|---|
+| `new_delete` | default `std::allocator` (global `operator new`/`malloc`) | baseline |
+| `reserve` (vector only) | `reserve()` before filling: one allocation, no regrowth copies | known or bounded sizes |
+| `pmr_monotonic` | `std::pmr::monotonic_buffer_resource` over a stack buffer: bump-pointer allocation, free is a no-op, everything released at once | per-request / per-frame / per-message scratch data |
+| `pmr_pool` | `std::pmr::unsynchronized_pool_resource` kept alive: recycled fixed-size blocks, single-threaded | long-lived containers with churn, one thread |
+
+Node-based containers (`std::list`, `std::map`, ...) allocate per element, so
+the allocator choice matters far more for them than for `std::vector`.
+
+### Single producer / single consumer (`pattern.spsc_latency`, `pattern.spsc_throughput`)
+
+The same bounded ring of 64-bit items, synchronised five ways:
+
+| Variant | Synchronisation | Waiting consumer |
+|---|---|---|
+| `mutex_condvar` | `std::mutex` + `std::condition_variable` | sleeps in the kernel |
+| `mutex_poll` | `std::mutex`, `try_pop` in a loop | spins (takes the lock each poll) |
+| `spinlock` | test-and-test-and-set spinlock on `std::atomic` | spins |
+| `lockfree` | lock-free ring, each index on its own cache line, acquire/release | spins on an atomic load |
+| `lockfree_cached` | as `lockfree`, plus each side caches the other side's index | spins, touches shared lines only when needed |
+
+Latency is half of a ping-pong round trip through two queues; throughput
+streams 256 Ki items through one queue. The trade-off to read from the results:
+polling variants are much faster but keep a core busy, and blocking variants
+pay the OS wake-up cost (which grows with deep idle states, see `--no-idle`).
+Run with `--affinity same` to see what happens when both threads share a CPU.
 
 ## Build dependencies
 

@@ -133,8 +133,8 @@ CHART_STYLE_LIGHT = """
   .bg{fill:#fcfcfb} .ax{fill:#52514e;font:12px system-ui,sans-serif} .title{fill:#0b0b0b;font:600 15px system-ui,sans-serif}
   .grid{stroke:#e4e3df} .zone-a{fill:#f3f2ef} .zone-b{fill:#fcfcfb} .marker{stroke:#8a8984}
   .zlabel{fill:#8a8984;font:600 12px system-ui,sans-serif} .hit{fill:transparent}
-  .s1{stroke:#2a78d6} .s2{stroke:#eb6834} .s3{stroke:#1baf7a} .s4{stroke:#6250d6}
-  .f1{fill:#2a78d6} .f2{fill:#eb6834} .f3{fill:#1baf7a} .f4{fill:#6250d6}
+  .s1{stroke:#2a78d6} .s2{stroke:#eb6834} .s3{stroke:#1baf7a} .s4{stroke:#6250d6} .s5{stroke:#e87ba4}
+  .f1{fill:#2a78d6} .f2{fill:#eb6834} .f3{fill:#1baf7a} .f4{fill:#6250d6} .f5{fill:#e87ba4}
 """
 
 
@@ -181,12 +181,24 @@ class Chart:
             step *= next(k for k in (1, 2, 5, 10) if top / (k * step) <= 6)
             yticks = [i * step for i in range(int(top / step) + 1)]
 
+        # legend layout: wrap onto extra rows instead of running off the edge
+        legend, lx, row = [], M["l"], 0
+        if len(self.series) > 1:
+            for s in self.series:
+                width = 40 + 7 * len(s["name"])
+                if lx + width > W - M["r"] and lx > M["l"]:
+                    lx, row = M["l"], row + 1
+                legend.append((s, lx, row))
+                lx += width
+        extra = 20 * row
+        HH = H + extra
+
         o = []
-        o.append(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H + (24 if standalone else 0)}" '
+        o.append(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {HH + (24 if standalone else 0)}" '
                  f'role="img" aria-label="{html.escape(self.title)}">')
         if standalone:
             o.append(f"<style>{CHART_STYLE_LIGHT}</style>")
-            o.append(f'<rect class="bg" width="{W}" height="{H + 24}"/>')
+            o.append(f'<rect class="bg" width="{W}" height="{HH + 24}"/>')
             o.append(f'<text class="title" x="{M["l"]}" y="18">{html.escape(self.title)}</text>')
             o.append('<g transform="translate(0,24)">')
 
@@ -240,13 +252,11 @@ class Chart:
                     o.append(f'<circle class="f{s["slot"]}" cx="{X(p[0]):.1f}" cy="{Y(p[1]):.1f}" r="3"/>')
 
         # legend (always for >= 2 series)
-        if len(self.series) > 1:
-            lx, ly = M["l"], H - 12
-            for s in self.series:
-                dash = ' stroke-dasharray="6 4"' if s.get("dash") else ""
-                o.append(f'<line class="s{s["slot"]}" stroke-width="2"{dash} x1="{lx}" x2="{lx + 22}" y1="{ly - 4}" y2="{ly - 4}"/>')
-                o.append(f'<text class="ax" x="{lx + 28}" y="{ly}">{html.escape(s["name"])}</text>')
-                lx += 40 + 7 * len(s["name"])
+        for s, lx, row in legend:
+            ly = H - 12 + 20 * row
+            dash = ' stroke-dasharray="6 4"' if s.get("dash") else ""
+            o.append(f'<line class="s{s["slot"]}" stroke-width="2"{dash} x1="{lx}" x2="{lx + 22}" y1="{ly - 4}" y2="{ly - 4}"/>')
+            o.append(f'<text class="ax" x="{lx + 28}" y="{ly}">{html.escape(s["name"])}</text>')
 
         # hover columns (HTML only): one target per measured x with its readout
         if not standalone:
@@ -265,6 +275,47 @@ class Chart:
                          f'height="{ph}" data-x="{X(x):.1f}" data-tip="{tip}"/>')
             o.append(f'<line class="cross" x1="0" x2="0" y1="{M["t"]}" y2="{M["t"] + ph}" visibility="hidden"/>')
         if standalone:
+            o.append("</g>")
+        o.append("</svg>")
+        return "\n".join(o)
+
+
+class BarChart:
+    """Horizontal bars, one per variant (identity by label, single colour)."""
+
+    def __init__(self, cid, title, x_label, rows, higher_better=False):
+        self.cid, self.title, self.x_label, self.rows = cid, title, x_label, rows
+        self.higher_better = higher_better
+
+    def render(self, standalone=False):
+        if not self.rows:
+            return ""
+        lw, rw, bh, gap, top = 170, 330, 22, 10, 10
+        h = top + len(self.rows) * (bh + gap) + 34
+        pw = W - lw - rw
+        vmax = max(r["value"] for r in self.rows) or 1
+        o = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {h + (24 if standalone else 0)}" '
+             f'role="img" aria-label="{html.escape(self.title)}">']
+        if standalone:
+            o.append(f"<style>{CHART_STYLE_LIGHT}</style><rect class=\"bg\" width=\"{W}\" height=\"{h + 24}\"/>")
+            o.append(f'<text class="title" x="{lw}" y="18">{html.escape(self.title)}</text><g transform="translate(0,24)">')
+        vals = [r["value"] for r in self.rows]
+        best = max(vals) if self.higher_better else min(vals)
+        for i, r in enumerate(self.rows):
+            y = top + i * (bh + gap)
+            w = max(2.0, r["value"] / vmax * pw)
+            o.append(f'<text class="ax" x="{lw - 10}" y="{y + bh / 2 + 4}" text-anchor="end">{html.escape(r["label"])}</text>')
+            o.append(f'<rect class="f1" x="{lw}" y="{y}" width="{w:.1f}" height="{bh}" rx="4"/>')
+            slower = best / r["value"] if self.higher_better else r["value"] / best
+            ratio = "  (fastest)" if r["value"] == best else f"  ({slower:.1f}x slower)"
+            o.append(f'<text class="ax" x="{lw + w + 8:.1f}" y="{y + bh / 2 + 4}">{html.escape(r["text"] + ratio)}</text>')
+            if not standalone and r.get("tip"):
+                o.append(f'<rect class="hit" x="0" y="{y - gap / 2}" width="{W}" height="{bh + gap}" '
+                         f'data-x="-10" data-tip="{html.escape(r["tip"], quote=True)}"/>')
+        o.append(f'<text class="ax" x="{lw}" y="{h - 8}">{html.escape(self.x_label)}</text>')
+        if not standalone:
+            o.append(f'<line class="cross" x1="0" x2="0" y1="0" y2="0" visibility="hidden"/>')
+        else:
             o.append("</g>")
         o.append("</svg>")
         return "\n".join(o)
@@ -338,6 +389,40 @@ def build_guidance(summary, caches, platform, results, cfg):
         tips.append(f"Starting a thread costs {fmt_ns(create['percentiles']['p50'])} typically but "
                     f"{fmt_ns(create['percentiles']['p99'])} at p99 (max {fmt_ns(create['max'])}): reuse threads "
                     f"from a pool instead of spawning per task.")
+    def by_param(name):
+        return {next(iter(r["params"].values())): r for r in results if r["name"] == name and len(r["params"]) == 1}
+
+    lat = by_param("pattern.spsc_latency")
+    if "mutex_condvar" in lat and ("lockfree_cached" in lat or "lockfree" in lat):
+        lf = lat.get("lockfree_cached") or lat["lockfree"]
+        a, b = lat["mutex_condvar"]["percentiles"], lf["percentiles"]
+        head = (f"Thread-to-thread hand-off: a blocking mutex+condvar queue takes {fmt_ns(a['p50'])} (p99 "
+                f"{fmt_ns(a['p99'])}), a polling lock-free SPSC ring {fmt_ns(b['p50'])} (p99 {fmt_ns(b['p99'])})")
+        if b["p50"] < a["p50"]:
+            tips.append(f"{head}: {a['p50'] / b['p50']:.0f}x faster, at the price of a core spinning while it waits. "
+                        f"Give each polling thread its own core.")
+        else:
+            tips.append(f"{head}: here polling is {b['p50'] / a['p50']:.0f}x slower, because producer and consumer "
+                        f"{'share a CPU' if cfg.get('affinity') == 'same' else 'compete for CPU time'} and the spinner "
+                        f"burns the time slice the other side needs. Never spin-wait on a shared core; block instead.")
+    thr = by_param("pattern.spsc_throughput")
+    if len(thr) >= 2:
+        best = min(thr.items(), key=lambda kv: kv[1]["percentiles"]["p50"])
+        worst = max(thr.items(), key=lambda kv: kv[1]["percentiles"]["p50"])
+        tips.append(f"Streaming between two threads: {best[0]} moves {1e3 / best[1]['percentiles']['p50']:.3g} M items/s, "
+                    f"{worst[1]['percentiles']['p50'] / best[1]['percentiles']['p50']:.1f}x more than {worst[0]}.")
+    lst = by_param("pattern.alloc_list")
+    if "new_delete" in lst and "pmr_monotonic" in lst:
+        a, b = lst["new_delete"]["percentiles"]["p50"], lst["pmr_monotonic"]["percentiles"]["p50"]
+        tips.append(f"Node-based containers: a std::pmr::monotonic_buffer_resource arena makes building a list "
+                    f"{a / b:.1f}x cheaper than new/delete ({fmt_ns(b)} vs {fmt_ns(a)} per node). Use arenas for "
+                    f"short-lived, per-request or per-frame data that is freed all at once.")
+    vec = by_param("pattern.alloc_vector")
+    if "new_delete" in vec and "reserve" in vec:
+        a, b = vec["new_delete"]["percentiles"]["p50"], vec["reserve"]["percentiles"]["p50"]
+        if a > b * 1.15:
+            tips.append(f"std::vector: reserve() up front saves {100 * (1 - b / a):.0f}% of the build cost "
+                        f"by avoiding regrowth copies.")
     return tips
 
 
@@ -348,21 +433,21 @@ CSS = """
   color-scheme: light;
   --surface: #fcfcfb; --text: #0b0b0b; --text-2: #52514e; --muted: #8a8984;
   --grid: #e4e3df; --zone-a: #f3f2ef; --zone-b: #fcfcfb;
-  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #6250d6;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #6250d6; --s5: #e87ba4;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
     --surface: #1a1a19; --text: #f0efec; --text-2: #c3c2b7; --muted: #8f8e88;
     --grid: #33332f; --zone-a: #232322; --zone-b: #1a1a19;
-    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #9085e9;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #9085e9; --s5: #d55181;
   }
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
   --surface: #1a1a19; --text: #f0efec; --text-2: #c3c2b7; --muted: #8f8e88;
   --grid: #33332f; --zone-a: #232322; --zone-b: #1a1a19;
-  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #9085e9;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #9085e9; --s5: #d55181;
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--surface); color: var(--text);
@@ -386,6 +471,7 @@ dl.plat dd { margin: 0; overflow-wrap: anywhere; }
 .chart .cross { stroke: var(--text-2); }
 .chart .hit { fill: transparent; }
 .s1 { stroke: var(--s1); } .s2 { stroke: var(--s2); } .s3 { stroke: var(--s3); } .s4 { stroke: var(--s4); }
+.s5 { stroke: var(--s5); } .f5 { fill: var(--s5); background: var(--s5); }
 .f1 { fill: var(--s1); background: var(--s1); } .f2 { fill: var(--s2); background: var(--s2); }
 .f3 { fill: var(--s3); background: var(--s3); } .f4 { fill: var(--s4); background: var(--s4); }
 .chart circle { stroke: var(--surface); stroke-width: 1.5; }
@@ -416,9 +502,11 @@ document.querySelectorAll('.chart').forEach(chart => {
   svg.querySelectorAll('.hit').forEach(h => {
     h.addEventListener('pointerenter', () => {
       const x = +h.dataset.x;
-      cross.setAttribute('x1', x); cross.setAttribute('x2', x); cross.setAttribute('visibility', 'visible');
+      if (x >= 0) { cross.setAttribute('x1', x); cross.setAttribute('x2', x); cross.setAttribute('visibility', 'visible'); }
       tip.innerHTML = h.dataset.tip; tip.style.display = 'block';
       const r = svg.getBoundingClientRect(), px = x / W * r.width;
+      if (x < 0) { tip.style.left = r.width * 0.55 + 'px'; tip.style.top = (h.getBBox().y / svg.viewBox.baseVal.height * r.height) + 'px'; return; }
+      tip.style.top = '28px';
       tip.style.left = (px > r.width * 0.6 ? px - tip.offsetWidth - 12 : px + 12) + 'px';
     });
   });
@@ -492,7 +580,7 @@ def build_report(doc, src_path, charts_dir):
     # ---- latency distributions, one chart per benchmark group
     groups = {}
     for r in results:
-        if r["params"] or r["name"].startswith(("mem.", "alloc.")):
+        if r["params"] or r["name"].startswith(("mem.", "alloc.", "pattern.")):
             continue
         groups.setdefault(r["name"].split(".")[0], []).append(r)
     for g, rs in groups.items():
@@ -522,6 +610,59 @@ def build_report(doc, src_path, charts_dir):
                                    {"name": "free p50", "slot": 2, "points": pts("alloc.free", "p50")},
                                    {"name": "free p99", "slot": 2, "dash": True, "points": pts("alloc.free", "p99")}]))
         sections.append(("alloc", "Heap allocator", body))
+
+    # ---- design patterns: variants of one task side by side
+    pat_html = []
+
+    def variants(name):
+        return [r for r in results if r["name"] == name and len(r["params"]) == 1]
+
+    def bar_rows(rs, conv=None, unit_text=None):
+        rows = []
+        for r in rs:
+            v = r["percentiles"]["p50"]
+            label = next(iter(r["params"].values()))
+            text = (unit_text(v) if unit_text else f"p50 {fmt_ns(v)}, p99 {fmt_ns(r['percentiles'].get('p99'))}")
+            rows.append({"label": label, "value": conv(v) if conv else v, "text": text,
+                         "tip": f"<b>{html.escape(label)}</b><br>p50 {fmt_ns(v)} · p90 {fmt_ns(r['percentiles'].get('p90'))}"
+                                f" · p99 {fmt_ns(r['percentiles'].get('p99'))} · max {fmt_ns(r['max'])}"})
+        return rows
+
+    av, al = variants("pattern.alloc_vector"), variants("pattern.alloc_list")
+    if av or al:
+        pat_html.append("<h3>Container memory: heap vs reserve vs pmr arenas</h3>"
+                        "<p class='sub'>Build and destroy a 256-element container; cost per element (p50, shorter is "
+                        "better, compared with the fastest in brackets). Node containers allocate once per element, so the "
+                        "allocator matters far more there.</p>")
+        if av:
+            pat_html.append(chart_block(BarChart("pattern-alloc-vector", "std::vector<int>, 256 push_back: ns per element",
+                                                 "ns per element (p50)", bar_rows(av))))
+        if al:
+            pat_html.append(chart_block(BarChart("pattern-alloc-list", "std::list<int>, 256 push_back: ns per element",
+                                                 "ns per element (p50)", bar_rows(al))))
+    sl, st = variants("pattern.spsc_latency"), variants("pattern.spsc_throughput")
+    if sl or st:
+        pat_html.append("<h3>Single producer / single consumer: mutex vs spinlock vs lock-free</h3>"
+                        "<p class='sub'>The same bounded ring hand-off synchronised five ways. Latency is half a "
+                        "ping-pong round trip; throughput streams 256 Ki items through one queue.</p>")
+        if sl:
+            series = []
+            for i, r in enumerate(sl[:5]):
+                pts, mx = distribution(r, base)
+                series.append({"name": f"{r['params']['queue']} (max {fmt_ns(mx)})", "slot": i + 1, "points": pts})
+            pat_html.append(chart_block(Chart("pattern-spsc-latency", "SPSC hand-off latency by percentile", "nines",
+                                              True, "one-way latency (log)", "ns", series)))
+        if st:
+            pat_html.append(chart_block(BarChart(
+                "pattern-spsc-throughput", "SPSC streaming throughput", "million items per second (p50 run)",
+                bar_rows(st, conv=lambda v: 1e3 / v, unit_text=lambda v: f"{1e3 / v:.3g} M items/s ({fmt_ns(v)}/item)"),
+                higher_better=True)))
+    if pat_html:
+        sections.append(("patterns", "Design patterns", "\n".join(pat_html)))
+    else:
+        sections.append(("patterns", "Design patterns",
+                         "<p class='missing'>No design-pattern benchmarks in this run (run without <code>-t</code> "
+                         "or with <code>-t 'pattern.*'</code>).</p>"))
 
     # ---- hints
     tips = build_guidance(summary, caches, plat, results, cfg)

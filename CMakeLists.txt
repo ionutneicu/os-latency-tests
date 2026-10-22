@@ -80,6 +80,8 @@ add_executable(os-latency-tests
   src/main.cpp
   src/benchmarks/alloc.cpp
   src/benchmarks/memory.cpp
+  src/benchmarks/pattern_alloc.cpp
+  src/benchmarks/pattern_spsc.cpp
   src/benchmarks/sync.cpp
   src/benchmarks/threads.cpp
 )
