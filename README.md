@@ -4,6 +4,29 @@ Measures operating system and hardware latencies from user space and reports
 them as full distributions (p50, p90, p99, p99.9, p99.99, max), together with a
 description of the platform they were measured on.
 
+## At a glance
+
+One `./run-all.sh` on a 4-vCPU cloud VM (Xeon, 48 KiB L1, 2 MiB L2, 260 MiB L3)
+produced this chart and ten more ([full sample report](docs/sample-report/report.md)):
+
+[![Random load latency vs working set: one step per cache level](docs/sample-report/charts/mem-latency.svg)](docs/sample-report/report.md#memory)
+
+What it tells you about that machine, in its own numbers:
+
+- A random access that misses every cache costs **175x an L1 hit** (292 ns vs
+  1.67 ns): keep the data a hot loop touches under ~36 KiB per core.
+- Handing a value to another thread through a lock-free SPSC ring takes
+  **387 ns, 35x faster** than a mutex + condvar queue (13.4 us), at the price
+  of a core spinning while it waits.
+- Starting a thread costs 6.7 us typically but **79 us at p99**: reuse threads
+  from a pool instead of spawning per task.
+- A `std::pmr::monotonic_buffer_resource` arena builds a `std::list`
+  **4.2x cheaper** than new/delete.
+
+[Full report](docs/sample-report/report.md) ·
+[interactive HTML version](https://htmlpreview.github.io/?https://github.com/ionutneicu/os-latency-tests/blob/main/docs/sample-report/report.html)
+(hover for exact values) · run it on your machine: [Quick start](#quick-start)
+
 The goal is to compare kernels (generic, low-latency, `PREEMPT_RT`) and boards,
 and to back low-latency / HPC design decisions with data for a given platform:
 reuse threads or spawn them, block or spin, allocate per operation or keep
@@ -13,12 +36,6 @@ Supported today: **Linux on x86-64 and AArch64**. Everything platform specific
 sits behind a small hardware abstraction layer (see [Architecture](#architecture)),
 so other architectures and operating systems can be added without touching the
 benchmarks.
-
-**[See a sample report](docs/sample-report/report.md)**: graphs, tables and
-design hints from a full run on a 4-vCPU cloud VM (Xeon, 48 KiB L1, 2 MiB L2,
-260 MiB L3). The interactive HTML version of the same run, with hover details,
-is [docs/sample-report/report.html](docs/sample-report/report.html) (download
-it and open it in a browser).
 
 ## Prerequisites
 
