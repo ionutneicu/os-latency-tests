@@ -8,9 +8,22 @@
 // the cost of handing a value to a thread on that other CPU through shared
 // memory. SMT siblings share L1/L2 and are fastest, CPUs on the same die or
 // cluster come next, other clusters / sockets / CCXs are slowest.
+//
+// multicore.false_sharing: two threads on two physical cores each increment
+// their own counter, the counters `distance` bytes apart in one page, either
+// with a plain load + store (op=plain, a non-atomic `++field`) or with an
+// atomic fetch_add (op=atomic, e.g. per-thread statistics counters). Below
+// the coherence granule (64 B on most CPUs, effectively 128 B where the
+// adjacent-line prefetcher pairs lines) every write steals the line from the
+// other core. Plain stores hide part of the cost in the store buffer, atomic
+// read-modify-writes pay every transfer. The result is ns per increment against distance;
+// multicore.false_sharing_alone is the same loop on one core, the floor.
 
 #include <atomic>
 #include <cstdint>
+#include <cstdlib>
+#include <memory>
+#include <new>
 #include <string>
 #include <thread>
 #include <vector>
@@ -87,7 +100,120 @@ std::vector<double> ping_pong(int cpu_a, int cpu_b, size_t samples)
     return out;
 }
 
+constexpr uint64_t k_increments = uint64_t(1) << 17;  // per thread per sample
+constexpr size_t k_distances[] = {8, 16, 32, 64, 128, 256, 512};
+
+struct alignas(4096) Page {
+    unsigned char bytes[4096];
+};
+
+// Parses a sysfs CPU list such as "0,4" or "0-3,8".
+std::vector<int> parse_cpu_list(const char* s)
+{
+    std::vector<int> out;
+    while (*s) {
+        char* end;
+        const long a = std::strtol(s, &end, 10);
+        if (end == s) break;
+        long b = a;
+        if (*end == '-') b = std::strtol(end + 1, &end, 10);
+        for (long c = a; c <= b; ++c) out.push_back(static_cast<int>(c));
+        s = (*end == ',') ? end + 1 : end;
+    }
+    return out;
+}
+
+// Second CPU for the false-sharing pair: one that does not share an L1 with
+// `a` (an SMT sibling shares the line and would hide the effect), or -1.
+int other_core(int a, const std::vector<int>& cpus)
+{
+    olt_cache_level_t levels[16];
+    std::vector<int> siblings{a};
+    const int n = olt_os_cache_topology(a, levels, 16);
+    for (int i = 0; i < n; ++i)
+        if (levels[i].level == 1 && levels[i].type[0] != 'I') siblings = parse_cpu_list(levels[i].shared_cpus);
+    for (int c : cpus) {
+        bool shared = c == a;
+        for (int s : siblings) shared = shared || s == c;
+        if (!shared) return c;
+    }
+    return -1;
+}
+
+// ns per increment of the slower thread; cpu_b < 0 runs one thread alone.
+// Returns a negative value if pinning failed.
+double increment_race(int cpu_a, int cpu_b, size_t distance, bool atomic_rmw)
+{
+    auto page = std::make_unique<Page>();
+    auto* first = new (page->bytes) std::atomic<uint64_t>(0);
+    auto* second = new (page->bytes + distance) std::atomic<uint64_t>(0);
+    const int threads = cpu_b < 0 ? 1 : 2;
+    std::atomic<int> ready{0};
+    std::atomic<bool> failed{false};
+    uint64_t ns[2] = {0, 0};
+
+    auto body = [&](int idx, int cpu, std::atomic<uint64_t>* counter) {
+        if (olt_os_pin_current_thread(cpu) != 0) failed.store(true);
+        ready.fetch_add(1);
+        wait_ready(ready, threads);
+        const uint64_t t0 = olt::now_ns();
+        if (atomic_rmw) {
+            for (uint64_t i = 0; i < k_increments; ++i) counter->fetch_add(1, std::memory_order_relaxed);
+        } else {  // plain load + store, like `++field` on a non-atomic member
+            for (uint64_t i = 0; i < k_increments; ++i)
+                counter->store(counter->load(std::memory_order_relaxed) + 1, std::memory_order_relaxed);
+        }
+        ns[idx] = olt::now_ns() - t0;
+    };
+    std::thread ta(body, 0, cpu_a, first);
+    std::thread tb;
+    if (threads == 2) tb = std::thread(body, 1, cpu_b, second);
+    ta.join();
+    if (tb.joinable()) tb.join();
+    olt::do_not_optimize(first->load() + second->load());
+    if (failed.load()) return -1;
+    return double(ns[0] > ns[1] ? ns[0] : ns[1]) / double(k_increments);
+}
+
 }  // namespace
+
+OLT_BENCHMARK("multicore.false_sharing",
+              "False sharing: two cores increment their own counters placed 8 to 512 bytes apart; shows the "
+              "padding this CPU needs between fields written by different threads (multicore.false_sharing)")
+{
+    const olt::Config& cfg = ctx.config();
+    const std::vector<int>& cpus = cfg.allowed_cpus;
+    const int a = cfg.main_cpu >= 0 ? cfg.main_cpu : (cpus.empty() ? -1 : cpus[0]);
+    const int b = a < 0 ? -1 : other_core(a, cpus);
+    if (b < 0) {
+        ctx.add_result("multicore.false_sharing", {}, {}, "needs two allowed CPUs on different physical cores");
+        return;
+    }
+    const olt::Params pair{{"cpu_a", std::to_string(a)}, {"cpu_b", std::to_string(b)}};
+    auto samples = [&](int cpu_b, size_t distance, bool rmw, std::vector<double>& out) {
+        for (size_t s = 0; s < cfg.sweep_samples + 1; ++s) {  // first sample warms up
+            const double v = increment_race(a, cpu_b, distance, rmw);
+            if (v < 0) return false;
+            if (s > 0) out.push_back(v);
+        }
+        return true;
+    };
+    for (const char* op : {"plain", "atomic"}) {
+        const bool rmw = op[0] == 'a';
+        std::vector<double> alone;
+        if (!samples(-1, 0, rmw, alone)) return;  // pinning not permitted
+        olt::Params params{{"op", op}};
+        params.insert(params.end(), pair.begin(), pair.end());
+        ctx.add_result("multicore.false_sharing_alone", params, std::move(alone));
+        for (size_t d : k_distances) {
+            std::vector<double> lat;
+            if (!samples(b, d, rmw, lat)) return;
+            olt::Params dp{{"op", op}, {"distance", std::to_string(d)}};
+            dp.insert(dp.end(), pair.begin(), pair.end());
+            ctx.add_result("multicore.false_sharing", dp, std::move(lat));
+        }
+    }
+}
 
 OLT_BENCHMARK("multicore.c2c",
               "Core-to-core latency: one-way cache-line hand-off through a std::atomic ping-pong, for "

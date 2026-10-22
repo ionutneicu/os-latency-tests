@@ -87,6 +87,35 @@ def sweep_series(results, name):
     return sorted(pts, key=lambda d: d["x"])
 
 
+def false_sharing(results):
+    """{op: {"alone": p50, "points": [(distance, p50, min, p90)], "cpus": (a, b)}} from multicore.false_sharing*."""
+    out = {}
+    for r in results:
+        prm = r.get("params", {})
+        if not r["name"].startswith("multicore.false_sharing") or "op" not in prm or not r["percentiles"].get("p50"):
+            continue
+        d = out.setdefault(prm["op"], {"alone": None, "points": [], "cpus": (prm.get("cpu_a"), prm.get("cpu_b"))})
+        if r["name"] == "multicore.false_sharing_alone":
+            d["alone"] = r["percentiles"]["p50"]
+        else:
+            d["points"].append((int(prm["distance"]), r["percentiles"]["p50"], r.get("min"), r["percentiles"].get("p90")))
+    for d in out.values():
+        d["points"].sort()
+    return out
+
+
+def safe_padding(fs):
+    """Smallest distance from which the contended cost stays within 25% of one core alone, or None."""
+    if not fs.get("alone") or not fs["points"]:
+        return None
+    ok = None
+    for dist, p50, _, _ in reversed(fs["points"]):
+        if p50 > 1.25 * fs["alone"]:
+            break
+        ok = dist
+    return ok
+
+
 def percentile_sorted(v, p):
     if not v:
         return None
@@ -142,8 +171,9 @@ CHART_STYLE_LIGHT = """
 class Chart:
     """Line chart on a log2-bytes or 'nines' (percentile) x axis."""
 
-    def __init__(self, cid, title, x_kind, y_log, y_label, unit, series, zones=(), markers=(), note=""):
+    def __init__(self, cid, title, x_kind, y_log, y_label, unit, series, zones=(), markers=(), note="", x_title=None):
         self.cid, self.title, self.x_kind, self.y_log = cid, title, x_kind, y_log
+        self.x_title = x_title
         self.y_label, self.unit, self.series = y_label, unit, [s for s in series if s["points"]]
         self.zones, self.markers, self.note = list(zones), list(markers), note
 
@@ -232,7 +262,7 @@ class Chart:
             if xs[0] <= mk["x"] <= xs[-1]:
                 o.append(f'<line class="marker" x1="{X(mk["x"]):.1f}" x2="{X(mk["x"]):.1f}" y1="{M["t"]}" '
                          f'y2="{M["t"] + ph}" stroke-dasharray="4 3"/>')
-        xl = "working set (buffer size)" if self.x_kind == "bytes" else "percentile (log scale of nines)"
+        xl = self.x_title or ("working set (buffer size)" if self.x_kind == "bytes" else "percentile (log scale of nines)")
         if self.x_kind == "bytes" and self.cid.startswith("alloc"):
             xl = "block size"
         o.append(f'<text class="ax" x="{M["l"] + pw / 2}" y="{M["t"] + ph + 40}" text-anchor="middle">{xl}</text>')
@@ -468,6 +498,18 @@ def build_guidance(summary, caches, platform, results, cfg):
                         f"fastest pair but {fmt_ns(v[-1])} on the slowest ({v[-1] / v[0]:.0f}x). Keep communicating "
                         f"threads on nearby CPUs (see the core-to-core matrix).")
 
+    fs = false_sharing(results).get("atomic")
+    pad = safe_padding(fs) if fs else None
+    if pad and fs["points"][0][1] > 1.5 * fs["alone"]:
+        worst = max(p[1] for p in fs["points"])
+        line = platform.get("cache_line_size", 64)
+        extra = (f" That is more than the {line}-byte cache line because the adjacent-line prefetcher pulls lines "
+                 f"in pairs: alignas({line}) is not enough here, whatever "
+                 f"std::hardware_destructive_interference_size says.") if pad > line else ""
+        tips.append(f"False sharing: two cores updating counters in the same cache line pay {fmt_ns(worst)} per atomic "
+                    f"increment instead of {fmt_ns(fs['alone'])} ({worst / fs['alone']:.0f}x). Keep data written by "
+                    f"different threads at least {pad} bytes apart (alignas({pad}) or padding).{extra}")
+
     lat = by_param("pattern.spsc_latency")
     if "mutex_condvar" in lat and ("lockfree_cached" in lat or "lockfree" in lat):
         lf = lat.get("lockfree_cached") or lat["lockfree"]
@@ -569,6 +611,7 @@ ul.tips li { margin: 4px 0; }
 .warn { border: 1px solid var(--grid); border-left: 4px solid #eda100; border-radius: 6px; padding: 8px 12px; margin: 12px 0; }
 .warn ul { margin: 4px 0 0; padding-left: 20px; }
 .caution { border: 1px solid var(--grid); border-left: 4px solid var(--s1); border-radius: 6px; padding: 8px 12px; margin: 12px 0; color: var(--text-2); }
+.guide { margin: 4px 0 18px; font-size: 14px; }
 .missing { color: var(--text-2); border: 1px dashed var(--grid); border-radius: 6px; padding: 8px 12px; }
 """
 
@@ -606,6 +649,16 @@ HOT_PATH_WARNING = (
     "portability for nanoseconds. Apply them only to the measured hot path of ultra-low-latency or "
     "high-performance code, after profiling shows it matters, and keep the rest simple and portable. The numbers "
     "are for this machine; re-measure on each target.")
+
+
+GUIDE_URL = "https://github.com/ionutneicu/os-latency-tests/blob/main/docs/benchmarks/"
+GUIDES = {"thread": ("threads.md", "threads: spawn or pool"), "sync": ("sync.md", "blocking wake-up")}
+
+
+def guide_link(page, what):
+    """Link to the benchmark's page: goal, what is measured, how to apply it in C++."""
+    return (f"<p class='guide'>Benchmark guide: <a href='{GUIDE_URL}{page}'>{html.escape(what)}</a>, what is "
+            f"measured and how to apply the result in C++.</p>")
 
 
 def md_cell(text):
@@ -699,6 +752,8 @@ def build_report(doc, src_path, charts_dir):
         mem_html.append("<p class='missing'>The memory sweep was not part of this run. Run "
                         "<code>os-latency-tests</code> without <code>-t</code> (or with <code>-t 'mem.*'</code>) "
                         "to get the cache graphs.</p>")
+    if lat:
+        mem_html.append(guide_link("memory.md", "memory hierarchy"))
     sections.append(("memory", "Memory hierarchy", "\n".join(mem_html)))
 
     # ---- latency distributions, one chart per benchmark group
@@ -718,6 +773,8 @@ def build_report(doc, src_path, charts_dir):
                 f"samples beyond them are not drawn.</p>")
         body += chart_block(Chart(f"{g}-percentiles", f"{title}: latency by percentile", "nines", True,
                                   "latency (log)", "ns", series))
+        if g in GUIDES:
+            body += guide_link(*GUIDES[g])
         sections.append((g, title, body))
 
     # ---- allocator
@@ -733,6 +790,7 @@ def build_report(doc, src_path, charts_dir):
                                    {"name": "malloc p99", "slot": 1, "dash": True, "points": pts("alloc.malloc", "p99")},
                                    {"name": "free p50", "slot": 2, "points": pts("alloc.free", "p50")},
                                    {"name": "free p99", "slot": 2, "dash": True, "points": pts("alloc.free", "p99")}]))
+        body += guide_link("alloc.md", "heap allocator")
         sections.append(("alloc", "Heap allocator", body))
 
     # ---- design patterns: variants of one task side by side
@@ -764,6 +822,7 @@ def build_report(doc, src_path, charts_dir):
         if al:
             pat_html.append(chart_block(BarChart("pattern-alloc-list", "std::list<int>, 256 push_back: ns per element",
                                                  "ns per element (p50)", bar_rows(al))))
+        pat_html.append(guide_link("pattern-alloc.md", "container memory"))
     sl, st = variants("pattern.spsc_latency"), variants("pattern.spsc_throughput")
     if sl or st:
         pat_html.append("<h3>Single producer / single consumer: mutex vs spinlock vs lock-free</h3>"
@@ -795,11 +854,41 @@ def build_report(doc, src_path, charts_dir):
             pat_html.append(chart_block(BarChart("pattern-spsc-cpu", "SPSC CPU usage while handing off",
                                                  "CPU cores busy (producer + consumer)", cpu_rows,
                                                  best_label="least CPU", ratio_word="more CPU")))
+        pat_html.append(guide_link("pattern-spsc.md", "SPSC queues"))
     c2c = {}
     for r in results:
         if r["name"] == "multicore.c2c_latency" and "cpu_a" in r["params"] and r["percentiles"].get("p50"):
             a, b = int(r["params"]["cpu_a"]), int(r["params"]["cpu_b"])
             c2c[(min(a, b), max(a, b))] = r["percentiles"]["p50"]
+    fsd = false_sharing(results)
+    fs_html = ""
+    if fsd:
+        names = {"atomic": "atomic fetch_add", "plain": "plain ++ (non-atomic)"}
+        series = []
+        for slot, op in enumerate(("atomic", "plain"), start=1):
+            d = fsd.get(op)
+            if not d or not d["points"]:
+                continue
+            series.append({"name": f"{names[op]}, two cores", "slot": slot, "band": True, "points": d["points"]})
+            if d["alone"]:
+                series.append({"name": f"{names[op]}, one core alone", "slot": slot, "dash": True,
+                               "points": [(p[0], d["alone"]) for p in d["points"]]})
+        a, b = next(iter(fsd.values()))["cpus"]
+        line = plat.get("cache_line_size") or 64
+        fs_html = ("<h3>False sharing: how far apart must per-thread data be?</h3>"
+                   f"<p class='sub'>Threads on CPU {e(str(a))} and CPU {e(str(b))} (different physical cores) each "
+                   "increment their own counter; the counters sit the given distance apart. While both share a "
+                   "cache line, every write pulls the line away from the other core. Atomic read-modify-writes pay "
+                   "each transfer; plain stores hide most of it in the store buffer, so the penalty there is "
+                   "smaller but not zero. Dashed: the same loop on one core alone. Band: min to p90.</p>")
+        fs_html += chart_block(Chart("multicore-false-sharing", "False sharing: cost per increment vs distance "
+                                     "between counters", "bytes", True, "ns per increment (log)", "ns", series,
+                                     markers=[{"x": line}], x_title="distance between the two counters"))
+        pad = safe_padding(fsd.get("atomic", {})) if fsd.get("atomic") else None
+        if pad:
+            fs_html += (f"<p class='note'>On this CPU, counters written by different threads need at least "
+                        f"{pad} bytes between them (vertical line: the {line}-byte cache line).</p>")
+        fs_html += guide_link("false-sharing.md", "false sharing")
     if c2c:
         cpus = sorted({c for k in c2c for c in k})
         vals = sorted(c2c.values())
@@ -815,7 +904,10 @@ def build_report(doc, src_path, charts_dir):
                  f"{slow[0]} ↔ {slow[1]} ({fmt_ns(c2c[slow])}); median {fmt_ns(statistics.median(vals))}. Pin "
                  f"threads that talk a lot (producer/consumer pairs) to a fast pair with <code>--cpus A,B</code> "
                  f"or in your application.</p>")
-        sections.append(("multicore", "Multicore communication", body))
+        body += guide_link("c2c.md", "core-to-core latency")
+        sections.append(("multicore", "Multicore communication", body + fs_html))
+    elif fs_html:
+        sections.append(("multicore", "Multicore communication", fs_html))
     else:
         sections.append(("multicore", "Multicore communication",
                          "<p class='missing'>The core-to-core benchmark was not part of this run (run without "
