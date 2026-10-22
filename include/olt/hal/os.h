@@ -40,9 +40,25 @@ int olt_os_pin_current_thread(int cpu);
 int olt_os_set_rt_priority(int prio);
 /* Lock current and future pages in RAM (avoids page-fault latency). */
 int olt_os_lock_memory(void);
-/* Keep CPUs out of deep idle states for the rest of the process lifetime
- * (Linux: holds /dev/cpu_dma_latency at 0; usually needs root). */
-int olt_os_block_deep_idle(void);
+/* What olt_os_limit_idle() applied. */
+typedef struct {
+    int latency_us;  /* limit in microseconds; 0 allows only polling */
+    int per_cpu;     /* 1: only the requested CPUs are limited, 0: all CPUs are */
+    char states[96]; /* idle states the limit still allows, e.g. "POLL C1"; "" if unknown */
+    int had_limit;   /* 1 if a CPU already had a per-CPU limit, which comes back at exit */
+} olt_idle_limit_t;
+
+/* Keep CPUs out of deep idle (C-)states for the rest of the process lifetime,
+ * so blocked threads wake up quickly. latency_us < 0 picks the exit latency
+ * of the shallowest state that halts the CPU (C1 on x86): idle CPUs still stop
+ * instead of spinning. 0 allows only polling, so idle CPUs spin and use up
+ * power and SMT resources. The limit goes on cpus[0..n) only when the OS
+ * supports per-CPU limits; otherwise, or with n == 0, on all CPUs. Fills *out
+ * (may be NULL) with what was applied. Linux: per CPU through
+ * /sys/devices/system/cpu/cpuN/power/pm_qos_resume_latency_us (the previous
+ * values come back at exit), for all CPUs through /dev/cpu_dma_latency (held
+ * open); both usually need root. */
+int olt_os_limit_idle(const int* cpus, int n, int latency_us, olt_idle_limit_t* out);
 
 /* If the process runs elevated on behalf of another user (Linux: sudo, via
  * SUDO_UID/SUDO_GID), give ownership of `path` back to that user, so result

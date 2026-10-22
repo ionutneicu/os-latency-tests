@@ -55,4 +55,5 @@ while (!ready.load(std::memory_order_acquire))
   itself; the SPSC page measures that trade-off directly.
 * A middle ground: spin for a bounded time, then block (spin-then-park).
 * If you must block, keep the core out of deep C-states for the latency-critical
-  phase (`/dev/cpu_dma_latency`, what `--no-idle` does) rather than spinning.
+  phase rather than spinning: PM QoS, through `/dev/cpu_dma_latency` for all
+  CPUs or `pm_qos_resume_latency_us` for one, which is what `--no-idle` does.

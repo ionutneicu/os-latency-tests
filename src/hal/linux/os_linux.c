@@ -9,6 +9,7 @@
 #include <fcntl.h>
 #include <pthread.h>
 #include <sched.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -137,22 +138,181 @@ int olt_os_lock_memory(void)
     return mlockall(MCL_CURRENT | MCL_FUTURE) == 0 ? 0 : errno;
 }
 
-int olt_os_block_deep_idle(void)
+/* ---- idle (C-)state limits ---------------------------------------------- */
+
+#define IDLE_MAX_CPUS 16
+
+/* Per-CPU PM QoS values to write back at exit. The table is filled before a
+ * limit is written and not changed afterwards, so the signal handler below
+ * can use it. */
+static struct {
+    char path[96];
+    char value[16];
+    size_t len;
+} idle_saved[IDLE_MAX_CPUS];
+static volatile sig_atomic_t idle_saved_count = 0;
+
+/* Async-signal-safe: open, write and close only. */
+static void idle_restore(void)
 {
-    /* The PM QoS request lasts while the file stays open, so the descriptor
-     * is intentionally kept until the process exits. */
+    const int n = idle_saved_count;
+    idle_saved_count = 0;
+    for (int i = 0; i < n; ++i) {
+        int fd = open(idle_saved[i].path, O_WRONLY | O_CLOEXEC);
+        if (fd < 0) continue;
+        ssize_t rc = write(fd, idle_saved[i].value, idle_saved[i].len);
+        (void)rc;
+        close(fd);
+    }
+}
+
+static void idle_restore_on_signal(int sig)
+{
+    idle_restore();
+    raise(sig); /* SA_RESETHAND restored the default action */
+}
+
+/* Unlike /dev/cpu_dma_latency, a per-CPU limit outlives the process, so put
+ * the old values back on normal exit and on the signals that end a run
+ * (Ctrl-C, kill, crashes). Handlers others installed are left alone. Only
+ * SIGKILL leaves the limit in place until reboot or a manual write. */
+static void idle_install_restore(void)
+{
+    static int installed = 0;
+    if (installed) return;
+    installed = 1;
+    atexit(idle_restore);
+    const int sigs[] = {SIGINT, SIGTERM, SIGHUP, SIGQUIT, SIGABRT, SIGSEGV, SIGBUS, SIGFPE, SIGILL};
+    for (size_t i = 0; i < sizeof(sigs) / sizeof(sigs[0]); ++i) {
+        struct sigaction old;
+        if (sigaction(sigs[i], NULL, &old) != 0 || old.sa_handler != SIG_DFL) continue;
+        struct sigaction sa;
+        memset(&sa, 0, sizeof(sa));
+        sa.sa_handler = idle_restore_on_signal;
+        sa.sa_flags = SA_RESETHAND;
+        sigemptyset(&sa.sa_mask);
+        sigaction(sigs[i], &sa, NULL);
+    }
+}
+
+/* Exit latency (us) of the shallowest enabled idle state of `cpu` that halts
+ * it, i.e. any state but polling; -1 if the CPU has no such state. */
+static int idle_halt_latency(int cpu)
+{
+    int best = -1;
+    for (int s = 0; s < 32; ++s) {
+        char path[128], val[64];
+        snprintf(path, sizeof(path), "/sys/devices/system/cpu/cpu%d/cpuidle/state%d/name", cpu, s);
+        if (read_line(path, val, sizeof(val)) != 0) break;
+        if (strcmp(val, "POLL") == 0) continue;
+        snprintf(path, sizeof(path), "/sys/devices/system/cpu/cpu%d/cpuidle/state%d/disable", cpu, s);
+        if (read_line(path, val, sizeof(val)) == 0 && atoi(val) != 0) continue;
+        snprintf(path, sizeof(path), "/sys/devices/system/cpu/cpu%d/cpuidle/state%d/latency", cpu, s);
+        if (read_line(path, val, sizeof(val)) != 0) continue;
+        const int lat = atoi(val);
+        if (best < 0 || lat < best) best = lat;
+    }
+    return best;
+}
+
+/* Space-separated names of the enabled idle states of `cpu` whose exit
+ * latency fits within limit_us; "" if the CPU lists no idle states. */
+static void idle_allowed_states(int cpu, int limit_us, char* buf, size_t len)
+{
+    size_t used = 0;
+    buf[0] = '\0';
+    for (int s = 0; s < 32; ++s) {
+        char path[128], name[32], val[64];
+        snprintf(path, sizeof(path), "/sys/devices/system/cpu/cpu%d/cpuidle/state%d/name", cpu, s);
+        if (read_line(path, name, sizeof(name)) != 0) break;
+        snprintf(path, sizeof(path), "/sys/devices/system/cpu/cpu%d/cpuidle/state%d/disable", cpu, s);
+        if (read_line(path, val, sizeof(val)) == 0 && atoi(val) != 0) continue;
+        snprintf(path, sizeof(path), "/sys/devices/system/cpu/cpu%d/cpuidle/state%d/latency", cpu, s);
+        if (read_line(path, val, sizeof(val)) != 0 || atoi(val) > limit_us) continue;
+        const int w = snprintf(buf + used, len - used, "%s%s", used ? " " : "", name);
+        if (w < 0 || (size_t)w >= len - used) break;
+        used += (size_t)w;
+    }
+}
+
+/* Per-CPU limits through the device PM QoS files. In those files "0" means
+ * no limit and "n/a" means no latency at all, i.e. polling only. Sets
+ * *had_limit if a CPU already had a limit (say, left by a killed run). */
+static int idle_limit_per_cpu(const int* cpus, int n, int latency_us, int* had_limit)
+{
+    if (n > IDLE_MAX_CPUS) return E2BIG;
+    char value[16];
+    if (latency_us == 0) copy_str(value, sizeof(value), "n/a");
+    else snprintf(value, sizeof(value), "%d", latency_us);
+
+    idle_install_restore();
+    idle_restore(); /* a second call replaces the first limit */
+    int count = 0;
+    for (int i = 0; i < n; ++i) {
+        int dup = 0;
+        for (int j = 0; j < i; ++j) dup = dup || cpus[j] == cpus[i];
+        if (dup || cpus[i] < 0) continue;
+        char path[96], old[16];
+        snprintf(path, sizeof(path), "/sys/devices/system/cpu/cpu%d/power/pm_qos_resume_latency_us", cpus[i]);
+        int rc = read_line(path, old, sizeof(old));
+        int fd = rc == 0 ? open(path, O_WRONLY | O_CLOEXEC) : -1;
+        if (fd < 0) {
+            if (rc == 0) rc = errno;
+            idle_saved_count = count;
+            idle_restore();
+            return rc;
+        }
+        if (strcmp(old, "0") != 0) *had_limit = 1;
+        copy_str(idle_saved[count].path, sizeof(idle_saved[count].path), path);
+        copy_str(idle_saved[count].value, sizeof(idle_saved[count].value), old);
+        idle_saved[count].len = strlen(idle_saved[count].value);
+        idle_saved_count = ++count;
+        const ssize_t w = write(fd, value, strlen(value));
+        rc = w == (ssize_t)strlen(value) ? 0 : (errno ? errno : EIO);
+        close(fd);
+        if (rc != 0) {
+            idle_restore();
+            return rc;
+        }
+    }
+    return count > 0 ? 0 : EINVAL;
+}
+
+/* Global limit: the PM QoS request lasts while the file stays open, so the
+ * descriptor is kept until the process exits. */
+static int idle_limit_all(int latency_us)
+{
     static int fd = -1;
-    if (fd >= 0) return 0;
-    fd = open("/dev/cpu_dma_latency", O_WRONLY | O_CLOEXEC);
+    if (fd < 0) fd = open("/dev/cpu_dma_latency", O_WRONLY | O_CLOEXEC);
     if (fd < 0) return errno;
-    int32_t zero = 0;
-    if (write(fd, &zero, sizeof(zero)) != (ssize_t)sizeof(zero)) {
-        int rc = errno ? errno : EIO;
+    const int32_t v = latency_us;
+    if (write(fd, &v, sizeof(v)) != (ssize_t)sizeof(v)) {
+        const int rc = errno ? errno : EIO;
         close(fd);
         fd = -1;
         return rc;
     }
     return 0;
+}
+
+int olt_os_limit_idle(const int* cpus, int n, int latency_us, olt_idle_limit_t* out)
+{
+    const int probe = n > 0 && cpus[0] >= 0 ? cpus[0] : 0;
+    if (latency_us < 0) {
+        latency_us = idle_halt_latency(probe);
+        if (latency_us < 0) latency_us = 0; /* no halting state is listed: nothing deeper to allow */
+    }
+    int per_cpu = 0, had_limit = 0;
+    int rc = n > 0 ? idle_limit_per_cpu(cpus, n, latency_us, &had_limit) : EINVAL;
+    if (rc == 0) per_cpu = 1;
+    else rc = idle_limit_all(latency_us);
+    if (out) {
+        out->latency_us = latency_us;
+        out->per_cpu = per_cpu;
+        out->had_limit = per_cpu && had_limit;
+        idle_allowed_states(probe, latency_us, out->states, sizeof(out->states));
+    }
+    return rc;
 }
 
 int olt_os_restore_owner(const char* path)

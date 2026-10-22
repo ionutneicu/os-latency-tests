@@ -45,8 +45,11 @@ void usage(const char* argv0)
         << "      --cpus MAIN[,WORKER]   explicit CPUs to pin to (overrides automatic choice)\n"
         << "  -p, --rt-prio N            run threads as SCHED_FIFO with priority N (needs privileges)\n"
         << "  -m, --mlock                lock all memory with mlockall()\n"
-        << "      --no-idle              keep CPUs out of deep idle states during the run\n"
-        << "                             (/dev/cpu_dma_latency = 0, needs root)\n"
+        << "      --no-idle              keep the benchmark CPUs out of deep idle states during the run:\n"
+        << "                             only states that wake as fast as C1 stay allowed (needs root)\n"
+        << "      --idle-latency-us N    with --no-idle, allow idle states that wake within N us instead;\n"
+        << "                             0 = polling only (idle CPUs spin: costs turbo headroom and SMT\n"
+        << "                             sibling resources). Implies --no-idle\n"
         << "      --cpu-warmup-ms N      busy-spin the benchmark CPUs for N ms before each benchmark\n"
         << "                             so frequency scaling has ramped up (default 200, 0 = off)\n"
         << "      --park-us N            how long a signalling thread waits so its peer is\n"
@@ -107,6 +110,12 @@ Options parse_args(int argc, char** argv)
         else if (a == "-p" || a == "--rt-prio") o.config.rt_priority = static_cast<int>(parse_size(a, value()));
         else if (a == "-m" || a == "--mlock") o.config.lock_memory = true;
         else if (a == "--no-idle") o.config.block_deep_idle = true;
+        else if (a == "--idle-latency-us") {
+            const size_t us = parse_size(a, value());
+            if (us > 1000000) die("--idle-latency-us must be at most 1000000");
+            o.config.idle_latency_us = static_cast<int>(us);
+            o.config.block_deep_idle = true;
+        }
         else if (a == "--cpu-warmup-ms") o.config.cpu_warmup_ms = static_cast<unsigned>(parse_size(a, value()));
         else if (a == "--park-us") o.config.park_us = static_cast<unsigned>(parse_size(a, value()));
         else if (a == "--mem-min") o.config.mem_min_bytes = parse_bytes(a, value());
@@ -177,15 +186,27 @@ void resolve_cpus(Options& o)
     }
 }
 
-void apply_main_thread_settings(const olt::Config& c)
+void apply_main_thread_settings(olt::Config& c)
 {
     if (c.lock_memory) {
         if (int rc = olt_os_lock_memory())
             std::cerr << "warning: mlockall failed: " << std::strerror(rc) << "\n";
     }
     if (c.block_deep_idle) {
-        if (int rc = olt_os_block_deep_idle())
-            std::cerr << "warning: cannot block deep idle states: " << std::strerror(rc) << " (run as root)\n";
+        // only the CPUs the benchmarks wait on; unpinned runs limit all CPUs
+        std::vector<int> cpus;
+        if (c.main_cpu >= 0) cpus.push_back(c.main_cpu);
+        if (c.worker_cpu >= 0 && c.worker_cpu != c.main_cpu) cpus.push_back(c.worker_cpu);
+        olt_idle_limit_t lim{};
+        if (int rc = olt_os_limit_idle(cpus.data(), static_cast<int>(cpus.size()), c.idle_latency_us, &lim)) {
+            std::cerr << "warning: cannot limit idle states: " << std::strerror(rc) << " (run as root)\n";
+        } else {
+            c.idle_limit = {true, lim.latency_us, lim.per_cpu != 0, lim.states};
+            if (lim.had_limit)
+                std::cerr << "note: a benchmark CPU already had an idle-latency limit, which is put back after the "
+                             "run. If a killed run left it, reset it with: echo 0 | sudo tee "
+                             "/sys/devices/system/cpu/cpu*/power/pm_qos_resume_latency_us\n";
+        }
     }
     if (c.main_cpu >= 0) {
         if (int rc = olt_os_pin_current_thread(c.main_cpu))
