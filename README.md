@@ -27,6 +27,15 @@ What it tells you about that machine, in its own numbers:
 [interactive HTML version](https://htmlpreview.github.io/?https://github.com/ionutneicu/os-latency-tests/blob/main/docs/sample-report/report.html)
 (hover for exact values) · run it on your machine: [Quick start](#quick-start)
 
+> [!WARNING]
+> **Hot path only.** The techniques these benchmarks justify (spinning instead of
+> blocking, lock-free queues, pinning, cache-sized buffers, arenas, branchless
+> code, platform intrinsics) trade readability, maintainability and portability
+> for nanoseconds. Apply them only to the measured hot path of ultra-low-latency
+> or high-performance code, after a profiler has shown that path matters, and
+> keep everything else simple and portable. Re-measure on each target platform:
+> what wins on one CPU can lose on another.
+
 The goal is to compare kernels (generic, low-latency, `PREEMPT_RT`) and boards,
 and to back low-latency / HPC design decisions with data for a given platform:
 reuse threads or spawn them, block or spin, allocate per operation or keep

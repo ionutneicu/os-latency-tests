@@ -568,6 +568,7 @@ ul.tips li { margin: 4px 0; }
 .note { color: var(--text-2); font-size: 12px; }
 .warn { border: 1px solid var(--grid); border-left: 4px solid #eda100; border-radius: 6px; padding: 8px 12px; margin: 12px 0; }
 .warn ul { margin: 4px 0 0; padding-left: 20px; }
+.caution { border: 1px solid var(--grid); border-left: 4px solid var(--s1); border-radius: 6px; padding: 8px 12px; margin: 12px 0; color: var(--text-2); }
 .missing { color: var(--text-2); border: 1px dashed var(--grid); border-radius: 6px; padding: 8px 12px; }
 """
 
@@ -597,6 +598,14 @@ GROUP_TITLES = {
              "the blocked thread running again."),
     "thread": ("Thread lifecycle", "Cost of starting a new thread and of joining a finished one."),
 }
+
+
+HOT_PATH_WARNING = (
+    "Hot path only: the techniques these results justify (spinning instead of blocking, lock-free queues, "
+    "pinning, cache-sized buffers, arenas, branchless code, intrinsics) trade readability, maintainability and "
+    "portability for nanoseconds. Apply them only to the measured hot path of ultra-low-latency or "
+    "high-performance code, after profiling shows it matters, and keep the rest simple and portable. The numbers "
+    "are for this machine; re-measure on each target.")
 
 
 def md_cell(text):
@@ -878,6 +887,7 @@ def build_report(doc, src_path, charts_dir):
     if doc.get("warnings"):
         out.append("<div class='warn'><b>⚠ Pre-flight warnings: results may be noisy</b><ul>"
                    + "".join(f"<li>{e(w)}</li>" for w in doc["warnings"]) + "</ul></div>")
+    out.append(f"<div class='caution'>{e(HOT_PATH_WARNING)}</div>")
     out.append("<nav>" + "".join(f"<a href='#{a}'>{e(t)}</a>" for a, t, _ in sections) + "</nav>")
     for a, t, body in sections:
         out.append(f"<h2 id='{a}'>{e(t)}</h2>{body}")
@@ -892,6 +902,7 @@ def build_report(doc, src_path, charts_dir):
     if doc.get("warnings"):
         md.append("> **⚠ Pre-flight warnings: results may be noisy**\n>\n"
                   + "".join(f"> - {w}\n" for w in doc["warnings"]))
+    md.append(f"> [!WARNING]\n> {HOT_PATH_WARNING}\n")
     md.append("".join(f"- [{t}](#{a})\n" for a, t, _ in sections))
     for a, t, body in sections:
         md.append(f'<a id="{a}"></a>\n\n## {t}\n\n{html_to_markdown(body)}')
