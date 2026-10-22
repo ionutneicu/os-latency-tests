@@ -51,6 +51,15 @@ The six with the biggest x86 vs ARM differences and the clearest hints.
   CPU vulnerability mitigations listed in the report
 - [ ] **OS jitter on the measurement core**: tight timestamp loop recording gaps
   (osnoise style); interruptions per second and worst gap
+- [ ] **SMT siblings: logical vs physical cores**: the report's platform block
+  shows the topology (which logical CPUs share a physical core and its L1/L2)
+  and warns when two benchmark threads land on siblings. A new benchmark runs
+  a latency-sensitive loop (L1-resident pointer chase, ALU chain, SPSC
+  round trip) alone, with a busy thread on its SMT sibling (ALU-heavy, then
+  cache-thrashing), and with the same thread on another physical core; plus
+  two communicating threads on siblings vs separate cores (siblings are
+  fastest for hand-offs, since they share L1). Hint: how much a busy sibling
+  costs on this CPU, and whether to keep one hot thread per physical core
 
 ## Standard tier: second batch
 
@@ -197,6 +206,9 @@ Opt-in, documented in [expert-setup.md](expert-setup.md).
   machine, several results.json)
 - [ ] Mitigations on vs off (`mitigations=off`): syscall and context-switch cost
 - [ ] `idle=poll` / C-states disabled in BIOS vs `/dev/cpu_dma_latency`
+- [ ] SMT on vs off (`/sys/devices/system/cpu/smt/control`, `nosmt`, BIOS):
+  the full suite in both states, compared side by side, against "SMT on, both
+  siblings isolated, one thread pinned"
 - [ ] Reserved huge pages at boot (`hugepagesz=1G hugepages=N`)
 - [ ] Post-link and sampling-based optimisation (BOLT, AutoFDO): needs branch
   records (Intel LBR, AMD BRS, ARM BRBE or SPE), `perf record -b` and the LLVM
