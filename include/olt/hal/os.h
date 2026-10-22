@@ -42,6 +42,11 @@ int olt_os_lock_memory(void);
  * (Linux: holds /dev/cpu_dma_latency at 0; usually needs root). */
 int olt_os_block_deep_idle(void);
 
+/* If the process runs elevated on behalf of another user (Linux: sudo, via
+ * SUDO_UID/SUDO_GID), give ownership of `path` back to that user, so result
+ * files stay editable. No-op otherwise. */
+int olt_os_restore_owner(const char* path);
+
 /* Physical RAM in bytes, 0 if unknown. */
 uint64_t olt_os_physical_memory(void);
 /* Page-aligned anonymous buffer, every page touched (no first-use faults later).

@@ -243,6 +243,11 @@ int main(int argc, char** argv)
         for (const auto& r : ctx.results()) olt::write_raw_csv((fs::path(opt.out_dir) / "raw").string(), r);
     const std::string json = (fs::path(opt.out_dir) / "results.json").string();
     olt::write_json(json, platform, opt.config, summaries);
+
+    // under sudo, hand the results back to the invoking user
+    olt_os_restore_owner(opt.out_dir.c_str());
+    for (const auto& entry : fs::recursive_directory_iterator(opt.out_dir, ec))
+        olt_os_restore_owner(entry.path().c_str());
     std::cout << "\nResults written to " << json << (opt.raw ? " (raw samples in raw/)" : "") << "\n";
     return 0;
 }

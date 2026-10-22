@@ -1,0 +1,17 @@
+# Development / analysis environment:
+#   conda env create -f environment.yml && conda activate olt
+# The benchmark itself is built with the system compiler on purpose (the
+# toolchain and libc are part of what is measured), and tools/olt-report.py
+# needs only the Python standard library, so neither requires this env.
+name: olt
+channels:
+  - conda-forge
+dependencies:
+  - python>=3.9
+  - cmake>=3.16
+  - ninja
+  # analysis of raw/*.csv and results.json beyond the HTML report
+  - numpy
+  - pandas
+  - matplotlib
+  - jupyterlab

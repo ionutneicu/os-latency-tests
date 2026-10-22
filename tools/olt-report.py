@@ -418,7 +418,11 @@ def main():
     except (OSError, ValueError) as ex:
         sys.exit(f"error: cannot read {src}: {ex}")
     out = Path(args.output) if args.output else src.with_name("report.html")
-    out.write_text(build_html(doc, src.name))
+    try:
+        out.write_text(build_html(doc, src.name))
+    except PermissionError:
+        sys.exit(f"error: cannot write {out} (directory created by a sudo run?). "
+                 f"Fix with: sudo chown -R $USER: {out.parent}  or pass -o ~/report.html")
     print(f"report written to {out}")
 
 

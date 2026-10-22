@@ -155,6 +155,12 @@ Optional:
 
 There are no runtime dependencies beyond the C and C++ standard libraries.
 
+For analysis work there is a conda environment (Python, CMake, Ninja, NumPy,
+pandas, Matplotlib, JupyterLab): `conda env create -f environment.yml && conda
+activate olt`. Keep building the benchmark with the system compiler, since the
+toolchain and C library are part of what is measured; the HTML report needs no
+extra packages.
+
 ## Build options
 
 Optional features follow one pattern, `OLT_WITH_<FEATURE>=AUTO|ON|OFF`: `AUTO`

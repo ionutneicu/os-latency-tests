@@ -148,6 +148,14 @@ int olt_os_block_deep_idle(void)
     return 0;
 }
 
+int olt_os_restore_owner(const char* path)
+{
+    const char* uid = getenv("SUDO_UID");
+    const char* gid = getenv("SUDO_GID");
+    if (!uid || !gid || geteuid() != 0) return 0;
+    return chown(path, (uid_t)strtoul(uid, NULL, 10), (gid_t)strtoul(gid, NULL, 10)) == 0 ? 0 : errno;
+}
+
 /* ---- memory ------------------------------------------------------------ */
 
 uint64_t olt_os_physical_memory(void)
