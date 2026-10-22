@@ -188,7 +188,7 @@ The `debian/` directory builds a native package with debhelper and CMake
 (build dependencies are listed in `debian/control`):
 
 ```sh
-sudo apt install debhelper dpkg-dev cmake g++ linux-libc-dev
+sudo apt install build-essential debhelper dpkg-dev cmake linux-libc-dev
 dpkg-buildpackage -us -uc -b
 sudo apt install ../os-latency-tests_*.deb
 ```
