@@ -14,12 +14,49 @@ sits behind a small hardware abstraction layer (see [Architecture](#architecture
 so other architectures and operating systems can be added without touching the
 benchmarks.
 
-## Quick start
+## Prerequisites
 
-One command builds, runs every benchmark and opens the report:
+| What | Why | Debian/Ubuntu | Fedora | Arch |
+|---|---|---|---|---|
+| C/C++ compiler (GCC >= 8 or Clang >= 7), make | build the benchmark | `build-essential` | `gcc-c++ make` | `base-devel` |
+| CMake >= 3.16 | build system | `cmake` | `cmake` | `cmake` |
+| Linux kernel headers | perf counters (optional, auto-detected) | `linux-libc-dev` | `kernel-headers` | `linux-api-headers` |
+| Python >= 3.9 (standard library only) | HTML report and SVG charts | `python3` | `python3` | `python` |
+| sudo / root | optional: RT priority, `mlockall`, blocking deep idle | | | |
 
 ```sh
+# Debian / Ubuntu
 sudo apt install build-essential cmake linux-libc-dev python3
+# Fedora
+sudo dnf install gcc-c++ make cmake kernel-headers python3
+# Arch
+sudo pacman -S base-devel cmake linux-api-headers python
+```
+
+Check with `python3 --version` (3.9 or newer) and `cmake --version` (3.16 or
+newer). No Python packages are needed for the report.
+
+**Conda (optional).** If you prefer to get CMake, Ninja and Python (plus NumPy,
+pandas, Matplotlib and JupyterLab for your own analysis) from conda, install
+[Miniforge](https://github.com/conda-forge/miniforge) and create the bundled
+environment. The C/C++ compiler still comes from the system packages above,
+because the toolchain and C library are part of what is measured:
+
+```sh
+curl -LO https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-$(uname -m).sh
+bash Miniforge3-Linux-$(uname -m).sh       # follow the prompts, then open a new shell
+conda env create -f environment.yml
+conda activate olt                          # then use ./run-all.sh as below
+```
+
+See [With conda](#with-conda) for a full conda-based walkthrough.
+
+## Quick start
+
+One command builds, runs every benchmark and opens the report (install the
+[prerequisites](#prerequisites) first):
+
+```sh
 ./run-all.sh            # full run, asks for sudo (RT priority, mlock, deep idle blocked)
 ./run-all.sh --quick    # ~20 s smoke run; --no-sudo for an unprivileged run
 ```
@@ -30,7 +67,6 @@ standalone SVG in `charts/`, `results.json` and raw samples in `raw/`.
 Step by step:
 
 ```sh
-sudo apt install build-essential cmake        # see "Build dependencies"
 cmake -S . -B build
 cmake --build build -j
 ./build/os-latency-tests                       # all benchmarks, about a minute
