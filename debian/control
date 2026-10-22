@@ -15,6 +15,7 @@ Rules-Requires-Root: no
 Package: os-latency-tests
 Architecture: linux-any
 Depends: ${shlibs:Depends}, ${misc:Depends}
+Recommends: python3
 Description: measure OS and hardware latencies from user space
  os-latency-tests runs micro-benchmarks for thread creation, blocking
  synchronisation wake-up and memory allocation, and reports full latency
@@ -24,4 +25,5 @@ Description: measure OS and hardware latencies from user space
  .
  It is meant for comparing kernels (generic, low-latency, PREEMPT_RT) and
  boards, and for deriving low-latency design decisions from measured data.
- Results are written as JSON plus raw per-sample CSV for further analysis.
+ Results are written as JSON plus raw per-sample CSV, and olt-report turns
+ them into a self-contained HTML report with memory hierarchy graphs.

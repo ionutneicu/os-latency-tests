@@ -31,6 +31,13 @@ struct Config {
     int rt_priority = 0;  // SCHED_FIFO priority, 0 = keep default policy
     bool lock_memory = false;
     unsigned park_us = 200;  // how long a signalling thread waits so the other side is truly blocked
+
+    // memory hierarchy sweeps
+    size_t mem_min_bytes = 1024;
+    size_t mem_max_bytes = 0;      // 0 = automatic: 4x the largest cache, within RAM limits
+    unsigned sweep_steps_per_octave = 4;
+    size_t sweep_samples = 15;     // samples per buffer size (each sample is many accesses)
+    bool hugepages = false;
 };
 
 using Params = std::vector<std::pair<std::string, std::string>>;

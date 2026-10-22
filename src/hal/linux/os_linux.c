@@ -129,6 +129,47 @@ int olt_os_lock_memory(void)
     return mlockall(MCL_CURRENT | MCL_FUTURE) == 0 ? 0 : errno;
 }
 
+/* ---- memory ------------------------------------------------------------ */
+
+uint64_t olt_os_physical_memory(void)
+{
+    long pages = sysconf(_SC_PHYS_PAGES);
+    long page = sysconf(_SC_PAGESIZE);
+    return (pages > 0 && page > 0) ? (uint64_t)pages * (uint64_t)page : 0;
+}
+
+void* olt_os_alloc_buffer(size_t size, int huge)
+{
+    void* p = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if (p == MAP_FAILED) return NULL;
+#if defined(MADV_HUGEPAGE) && defined(MADV_NOHUGEPAGE)
+    madvise(p, size, huge ? MADV_HUGEPAGE : MADV_NOHUGEPAGE);
+#else
+    (void)huge;
+#endif
+    memset(p, 0x5a, size);
+    return p;
+}
+
+void olt_os_free_buffer(void* p, size_t size)
+{
+    if (p) munmap(p, size);
+}
+
+void olt_os_thp_mode(char* buf, size_t len)
+{
+    char val[128];
+    copy_str(buf, len, "");
+    if (read_line("/sys/kernel/mm/transparent_hugepage/enabled", val, sizeof(val)) != 0) return;
+    /* format: "always [madvise] never" - the bracketed word is active */
+    char* open = strchr(val, '[');
+    char* close = open ? strchr(open, ']') : NULL;
+    if (open && close) {
+        *close = '\0';
+        copy_str(buf, len, open + 1);
+    }
+}
+
 /* ---- platform discovery ------------------------------------------------ */
 
 int olt_os_cache_topology(int cpu, olt_cache_level_t* out, int max)

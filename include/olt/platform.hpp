@@ -19,6 +19,8 @@ struct PlatformInfo {
     std::string preempt_model;
     std::string governor;       // of the main benchmark CPU
     std::string isolated_cpus;
+    std::string thp_mode;       // transparent huge pages policy
+    uint64_t physical_memory = 0;
     int cpu_count = 0;
     size_t cache_line_size = 0;
     std::vector<olt_cache_level_t> caches;  // as seen by the main benchmark CPU

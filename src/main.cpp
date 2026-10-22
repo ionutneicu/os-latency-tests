@@ -45,6 +45,12 @@ void usage(const char* argv0)
         << "  -m, --mlock                lock all memory with mlockall()\n"
         << "      --park-us N            how long a signalling thread waits so its peer is\n"
         << "                             blocked in the kernel (default 200)\n"
+        << "      --mem-min BYTES        smallest buffer for memory sweeps (default 1K; K/M/G suffixes)\n"
+        << "      --mem-max BYTES        largest buffer for memory sweeps (default 4x the largest cache)\n"
+        << "      --sweep-steps N        buffer sizes per doubling in memory sweeps (default 4)\n"
+        << "      --sweep-samples N      samples per buffer size in memory sweeps (default 15)\n"
+        << "      --hugepages            back sweep buffers with transparent huge pages (removes most\n"
+        << "                             TLB misses; default uses base pages so TLB effects show)\n"
         << "  -o, --out DIR              output directory for results.json and raw/ (default olt-results)\n"
         << "      --no-raw               do not write raw per-sample CSV files\n"
         << "  -h, --help                 show this help\n\n"
@@ -66,6 +72,17 @@ size_t parse_size(const std::string& opt, const char* v)
     return static_cast<size_t>(n);
 }
 
+size_t parse_bytes(const std::string& opt, const char* v)
+{
+    char* end = nullptr;
+    unsigned long long n = std::strtoull(v, &end, 10);
+    if (end && (*end == 'K' || *end == 'k')) { n <<= 10; ++end; }
+    else if (end && (*end == 'M' || *end == 'm')) { n <<= 20; ++end; }
+    else if (end && (*end == 'G' || *end == 'g')) { n <<= 30; ++end; }
+    if (!end || *end != '\0') die("invalid size for " + opt + ": " + v);
+    return static_cast<size_t>(n);
+}
+
 Options parse_args(int argc, char** argv)
 {
     Options o;
@@ -83,6 +100,11 @@ Options parse_args(int argc, char** argv)
         else if (a == "-p" || a == "--rt-prio") o.config.rt_priority = static_cast<int>(parse_size(a, value()));
         else if (a == "-m" || a == "--mlock") o.config.lock_memory = true;
         else if (a == "--park-us") o.config.park_us = static_cast<unsigned>(parse_size(a, value()));
+        else if (a == "--mem-min") o.config.mem_min_bytes = parse_bytes(a, value());
+        else if (a == "--mem-max") o.config.mem_max_bytes = parse_bytes(a, value());
+        else if (a == "--sweep-steps") o.config.sweep_steps_per_octave = static_cast<unsigned>(parse_size(a, value()));
+        else if (a == "--sweep-samples") o.config.sweep_samples = parse_size(a, value());
+        else if (a == "--hugepages") o.config.hugepages = true;
         else if (a == "-o" || a == "--out") o.out_dir = value();
         else if (a == "--no-raw") o.raw = false;
         else if (a == "-a" || a == "--affinity") {
@@ -103,6 +125,8 @@ Options parse_args(int argc, char** argv)
         } else die("unknown option: " + a + " (see --help)");
     }
     if (o.config.samples == 0) die("--samples must be > 0");
+    if (o.config.sweep_samples == 0) die("--sweep-samples must be > 0");
+    if (o.config.sweep_steps_per_octave == 0) die("--sweep-steps must be > 0");
     return o;
 }
 

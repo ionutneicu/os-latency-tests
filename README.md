@@ -20,8 +20,11 @@ benchmarks.
 sudo apt install build-essential cmake        # see "Build dependencies"
 cmake -S . -B build
 cmake --build build -j
-./build/os-latency-tests                       # all benchmarks, 10000 samples each
+./build/os-latency-tests                       # all benchmarks, about a minute
+python3 tools/olt-report.py olt-results/results.json   # -> olt-results/report.html
 ```
+
+Open `olt-results/report.html` in a browser for the graphs.
 
 For trustworthy tail latencies run with real-time scheduling and locked memory:
 
@@ -29,7 +32,7 @@ For trustworthy tail latencies run with real-time scheduling and locked memory:
 sudo ./build/os-latency-tests --rt-prio 80 --mlock --samples 100000
 ```
 
-Example output (x86-64 VM, trimmed):
+Example console output (x86-64 VM, trimmed):
 
 ```
 benchmark                                         n       min       p50       p90       p99     p99.9    p99.99       max
@@ -55,6 +58,10 @@ p99.99 needs 100 000).
 | `-p, --rt-prio N` | run benchmark threads as `SCHED_FIFO` priority N (root or `CAP_SYS_NICE`) |
 | `-m, --mlock` | `mlockall()` to avoid page-fault latency |
 | `--park-us N` | how long a signalling thread waits so its peer is really blocked in the kernel (default 200) |
+| `--mem-min BYTES`, `--mem-max BYTES` | buffer size range of the memory sweep (default 1K to 4x the largest cache, max 512M and RAM/4; `K`/`M`/`G` suffixes) |
+| `--sweep-steps N` | buffer sizes per doubling in the memory sweep (default 4) |
+| `--sweep-samples N` | samples per buffer size in the memory sweep (default 15) |
+| `--hugepages` | back the sweep buffer with transparent huge pages, removing most TLB misses |
 | `-o, --out DIR` | output directory (default `olt-results`) |
 | `--no-raw` | skip per-sample CSV files |
 
@@ -72,6 +79,27 @@ p99.99 needs 100 000).
 Percentiles use linear interpolation between closest ranks (Hyndman & Fan
 type 7, the NumPy/R default).
 
+## HTML report
+
+`tools/olt-report.py` (Python 3 standard library only, so it also runs on the
+board) turns a `results.json` into one self-contained HTML file:
+
+* **random load latency vs working-set size** (log scale) and **sequential
+  read/write bandwidth vs size**, with the cache sizes reported by the OS drawn
+  as bands, so every drop in performance can be matched to the L1/L2/LLC
+  capacity it comes from; hover shows each measured point;
+* a **per-level summary**: typical latency and bandwidth while the data fits
+  each level;
+* **design hints** derived from the measurements (e.g. the cost ratio of a
+  DRAM miss to an L1 hit and the working-set sizes to aim for);
+* a percentile table for every other benchmark.
+
+```sh
+python3 tools/olt-report.py olt-results/results.json -o report.html
+```
+
+Installed packages provide it as `olt-report`.
+
 ## Benchmarks
 
 | Name | What is measured |
@@ -80,7 +108,14 @@ type 7, the NumPy/R default).
 | `thread.exit_to_join` | last instruction of a thread until `join()` returns |
 | `sync.mutex_wakeup` | worker `unlock()` until the blocked main thread's `lock()` returns |
 | `sync.condvar_wakeup` | worker sets the predicate (then unlocks and `notify_one()`) until `wait()` returns |
+| `mem.latency_random` | dependent loads along a random cycle of cache lines (pointer chase) in a buffer of each size: load-to-use latency of the level the working set fits in |
+| `mem.read_seq`, `mem.write_seq` | sequential read / write of the same buffer, cost per cache line (GB/s = line size / value) |
 | `alloc.malloc`, `alloc.free` | `malloc()`/`free()` of one block, 16 B to 16 MiB, allocator best case (block reused, memory untouched) |
+
+The memory sweep allocates and pre-faults one buffer up front and reuses
+prefixes of it for every size, so page faults never show up in the curves.
+By default it uses base pages, so latency past the TLB reach includes page
+walks; compare with a `--hugepages` run to separate TLB from cache effects.
 
 Wake-up benchmarks use a persistent worker thread, so thread creation does not
 leak into them, and timestamps come from the monotonic clock shared by all CPUs.
@@ -88,10 +123,9 @@ Measurements below ~100 ns include the clock read overhead reported in the
 platform section.
 
 Planned (see the project plan): thread pool vs spawn vs single thread,
-spin/atomic hand-offs, cache-size sweeps that show the L1/L2/L3/DRAM steps,
-stack copy vs persistent heap buffers, false sharing, pipes/eventfd/loopback
-sockets, timer and sleep jitter, perf counters per benchmark, and an HTML report
-with graphs and design guidance.
+spin/atomic hand-offs, stride and prefetch-distance sweeps, stack copy vs
+persistent heap buffers, false sharing, pipes/eventfd/loopback sockets, timer
+and sleep jitter, perf counters per benchmark, and more design guidance.
 
 ## Build dependencies
 
@@ -109,6 +143,7 @@ Optional:
 |---|---|---|
 | Linux UAPI headers (`<linux/perf_event.h>`) | perf counters (`OLT_WITH_PERF`) | `linux-libc-dev` |
 | AArch64 cross toolchain | cross-compiling for ARM boards | `g++-aarch64-linux-gnu` |
+| Python 3 | `tools/olt-report.py` HTML report | `python3` |
 | qemu user emulation | running cross-built tests on the build host | `qemu-user` |
 | debhelper, dpkg-dev | building `.deb` packages | `debhelper`, `dpkg-dev` |
 
@@ -180,6 +215,7 @@ include/olt/hal/perf.h        optional counters
   src/hal/stub/perf_stub.c    no-counter stub
 include/olt/*.hpp, src/core/  C++17 harness: clock calibration, statistics, registry, reports
 src/benchmarks/               benchmarks, self-registered with OLT_BENCHMARK(...)
+tools/olt-report.py           results.json -> self-contained HTML report
 ```
 
 The HAL headers are plain C, so they can also be used from C code. To port:

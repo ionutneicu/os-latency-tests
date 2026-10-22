@@ -79,6 +79,7 @@ target_compile_options(olt_core PUBLIC
 add_executable(os-latency-tests
   src/main.cpp
   src/benchmarks/alloc.cpp
+  src/benchmarks/memory.cpp
   src/benchmarks/sync.cpp
   src/benchmarks/threads.cpp
 )
@@ -86,6 +87,7 @@ target_link_libraries(os-latency-tests PRIVATE olt_core)
 
 include(GNUInstallDirs)
 install(TARGETS os-latency-tests RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(PROGRAMS tools/olt-report.py DESTINATION ${CMAKE_INSTALL_BINDIR} RENAME olt-report)
 install(FILES README.md DESTINATION ${CMAKE_INSTALL_DOCDIR})
 
 # ---- tests --------------------------------------------------------------------
@@ -96,7 +98,14 @@ if(OLT_BUILD_TESTS)
   target_link_libraries(olt_unit_tests PRIVATE olt_core)
   add_test(NAME unit_tests COMMAND olt_unit_tests)
   # End-to-end smoke run with few samples
-  add_test(NAME smoke_run COMMAND os-latency-tests -n 200 -w 10 --park-us 20 -o ${CMAKE_CURRENT_BINARY_DIR}/smoke-results)
+  add_test(NAME smoke_run COMMAND os-latency-tests -n 200 -w 10 --park-us 20 --mem-max 1M --sweep-samples 3
+                                  -o ${CMAKE_CURRENT_BINARY_DIR}/smoke-results)
+  find_package(Python3 COMPONENTS Interpreter QUIET)
+  if(Python3_Interpreter_FOUND)
+    add_test(NAME report COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/olt-report.py
+                                 ${CMAKE_CURRENT_BINARY_DIR}/smoke-results/results.json)
+    set_tests_properties(report PROPERTIES DEPENDS smoke_run)
+  endif()
 endif()
 
 if(OLT_FORCE_GENERIC_ARCH)

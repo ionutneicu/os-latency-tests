@@ -39,6 +39,16 @@ int olt_os_set_rt_priority(int prio);
 /* Lock current and future pages in RAM (avoids page-fault latency). */
 int olt_os_lock_memory(void);
 
+/* Physical RAM in bytes, 0 if unknown. */
+uint64_t olt_os_physical_memory(void);
+/* Page-aligned anonymous buffer, every page touched (no first-use faults later).
+ * huge != 0 asks for transparent huge pages, huge == 0 forbids them so TLB
+ * effects of base pages stay visible. Returns NULL on failure. */
+void* olt_os_alloc_buffer(size_t size, int huge);
+void  olt_os_free_buffer(void* p, size_t size);
+/* Transparent huge page policy, e.g. "always", "madvise", "never", or "". */
+void olt_os_thp_mode(char* buf, size_t len);
+
 typedef struct olt_cache_level {
     int      level;        /* 1, 2, 3, ... */
     char     type[16];     /* "Data", "Instruction", "Unified" */

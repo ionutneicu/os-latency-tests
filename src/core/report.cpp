@@ -110,6 +110,8 @@ void print_platform(std::ostream& os, const PlatformInfo& p, const Config& cfg)
     if (!p.board.empty()) os << "  board          : " << p.board << "\n";
     os << "  kernel         : " << p.kernel_release << " [" << p.preempt_model << "]\n";
     if (!p.governor.empty()) os << "  governor       : " << p.governor << "\n";
+    if (!p.thp_mode.empty()) os << "  huge pages     : THP " << p.thp_mode << ", benchmark buffers "
+                                << (cfg.hugepages ? "request huge pages" : "use base pages") << "\n";
     if (!p.isolated_cpus.empty()) os << "  isolated cpus  : " << p.isolated_cpus << "\n";
     os << "  caches         :";
     for (const auto& c : p.caches)
@@ -138,10 +140,10 @@ void print_platform(std::ostream& os, const PlatformInfo& p, const Config& cfg)
 
 void print_table_header(std::ostream& os)
 {
-    os << std::left << std::setw(44) << "benchmark" << std::right << std::setw(7) << "n"
+    os << std::left << std::setw(58) << "benchmark" << std::right << std::setw(7) << "n"
        << std::setw(10) << "min" << std::setw(10) << "p50" << std::setw(10) << "p90" << std::setw(10)
        << "p99" << std::setw(10) << "p99.9" << std::setw(10) << "p99.99" << std::setw(10) << "max" << "\n";
-    os << std::string(44 + 7 + 10 * 7, '-') << "\n";
+    os << std::string(58 + 7 + 10 * 7, '-') << "\n";
 }
 
 void print_table_row(std::ostream& os, const SummarizedResult& r)
@@ -155,7 +157,7 @@ void print_table_row(std::ostream& os, const SummarizedResult& r)
             if (std::fabs(pc.p - p) < 1e-9) return (pc.reliable ? "" : "~") + format_ns(pc.value);
         return std::string("n/a");
     };
-    os << std::left << std::setw(44) << label << std::right << std::setw(7) << s.count << std::setw(10)
+    os << std::left << std::setw(58) << label << std::right << std::setw(7) << s.count << std::setw(10)
        << format_ns(s.min) << std::setw(10) << cell(50) << std::setw(10) << cell(90) << std::setw(10)
        << cell(99) << std::setw(10) << cell(99.9) << std::setw(10) << cell(99.99) << std::setw(10)
        << format_ns(s.max) << "\n";
@@ -180,6 +182,8 @@ void write_json(const std::string& path, const PlatformInfo& p, const Config& cf
     f << "    \"preempt_model\": " << q(p.preempt_model) << ",\n";
     f << "    \"governor\": " << q(p.governor) << ",\n";
     f << "    \"isolated_cpus\": " << q(p.isolated_cpus) << ",\n";
+    f << "    \"thp_mode\": " << q(p.thp_mode) << ",\n";
+    f << "    \"physical_memory\": " << p.physical_memory << ",\n";
     f << "    \"cache_line_size\": " << p.cache_line_size << ",\n";
     f << "    \"caches\": [";
     for (size_t i = 0; i < p.caches.size(); ++i) {
@@ -206,6 +210,7 @@ void write_json(const std::string& path, const PlatformInfo& p, const Config& cf
       << ", \"affinity\": " << q(affinity_name(cfg.affinity)) << ", \"main_cpu\": " << cfg.main_cpu
       << ", \"worker_cpu\": " << cfg.worker_cpu << ", \"rt_priority\": " << cfg.rt_priority
       << ", \"lock_memory\": " << (cfg.lock_memory ? "true" : "false") << ", \"park_us\": " << cfg.park_us
+      << ", \"sweep_samples\": " << cfg.sweep_samples << ", \"hugepages\": " << (cfg.hugepages ? "true" : "false")
       << "},\n";
 
     f << "  \"results\": [";

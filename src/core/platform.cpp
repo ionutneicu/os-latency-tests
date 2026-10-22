@@ -45,6 +45,8 @@ PlatformInfo collect_platform_info(int cpu, const TickCalibration& cal, const Ti
     const int topo_cpu = cpu >= 0 ? cpu : 0;
     p.governor = get_str<64>([topo_cpu](char* b, size_t l) { olt_os_cpu_governor(topo_cpu, b, l); });
     p.isolated_cpus = get_str<256>(olt_os_isolated_cpus);
+    p.thp_mode = get_str<64>(olt_os_thp_mode);
+    p.physical_memory = olt_os_physical_memory();
     p.cpu_count = olt_os_cpu_count();
     p.cache_line_size = olt_cache_line_size();
 
