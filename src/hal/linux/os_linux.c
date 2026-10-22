@@ -6,6 +6,7 @@
 
 #include <ctype.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <pthread.h>
 #include <sched.h>
 #include <stdio.h>
@@ -127,6 +128,24 @@ int olt_os_set_rt_priority(int prio)
 int olt_os_lock_memory(void)
 {
     return mlockall(MCL_CURRENT | MCL_FUTURE) == 0 ? 0 : errno;
+}
+
+int olt_os_block_deep_idle(void)
+{
+    /* The PM QoS request lasts while the file stays open, so the descriptor
+     * is intentionally kept until the process exits. */
+    static int fd = -1;
+    if (fd >= 0) return 0;
+    fd = open("/dev/cpu_dma_latency", O_WRONLY | O_CLOEXEC);
+    if (fd < 0) return errno;
+    int32_t zero = 0;
+    if (write(fd, &zero, sizeof(zero)) != (ssize_t)sizeof(zero)) {
+        int rc = errno ? errno : EIO;
+        close(fd);
+        fd = -1;
+        return rc;
+    }
+    return 0;
 }
 
 /* ---- memory ------------------------------------------------------------ */
@@ -276,6 +295,11 @@ void olt_os_cpu_governor(int cpu, char* buf, size_t len)
     char path[128];
     snprintf(path, sizeof(path), "/sys/devices/system/cpu/cpu%d/cpufreq/scaling_governor", cpu);
     if (read_line(path, buf, len) != 0) copy_str(buf, len, "");
+}
+
+void olt_os_cpuidle_driver(char* buf, size_t len)
+{
+    if (read_line("/sys/devices/system/cpu/cpuidle/current_driver", buf, len) != 0) copy_str(buf, len, "");
 }
 
 void olt_os_isolated_cpus(char* buf, size_t len)

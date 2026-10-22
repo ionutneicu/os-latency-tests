@@ -348,6 +348,8 @@ def build_html(doc, src_name):
         ("Memory", fmt_bytes(plat["physical_memory"]) if plat.get("physical_memory") else "unknown"),
         ("Huge pages", f"THP {plat.get('thp_mode') or 'n/a'}; sweep used {'huge' if cfg.get('hugepages') else 'base'} pages"),
         ("Governor", plat.get("governor") or "n/a"),
+        ("CPU idle", (plat.get("cpuidle_driver") or "n/a")
+                     + ("; deep idle blocked during run" if cfg.get("block_deep_idle") else "; deep idle allowed")),
         ("Perf counters", f"{perf.get('backend', 'none')}: {', '.join(perf.get('events', [])) or 'none available'}"),
         ("Run", f"affinity {cfg.get('affinity')}, CPU {cfg.get('main_cpu')}/{cfg.get('worker_cpu')}, "
                 f"RT priority {cfg.get('rt_priority') or 'default'}, mlock {'on' if cfg.get('lock_memory') else 'off'}"),

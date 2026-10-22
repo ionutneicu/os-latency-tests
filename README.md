@@ -32,6 +32,11 @@ For trustworthy tail latencies run with real-time scheduling and locked memory:
 sudo ./build/os-latency-tests --rt-prio 80 --mlock --samples 100000
 ```
 
+On laptops and boards with power management, blocking wake-ups are often
+dominated by the sleeping core leaving a deep idle state and by the frequency
+governor. Run once as is and once with `--no-idle` (and the `performance`
+governor) to see both sides.
+
 Example console output (x86-64 VM, trimmed):
 
 ```
@@ -57,6 +62,7 @@ p99.99 needs 100 000).
 | `--cpus MAIN[,WORKER]` | pin to explicit CPUs instead of the automatic choice (highest-numbered allowed CPUs, away from CPU 0's interrupt load) |
 | `-p, --rt-prio N` | run benchmark threads as `SCHED_FIFO` priority N (root or `CAP_SYS_NICE`) |
 | `-m, --mlock` | `mlockall()` to avoid page-fault latency |
+| `--no-idle` | keep CPUs out of deep idle (C-)states for the run via `/dev/cpu_dma_latency` (root); compare with and without to see how much wake-up latency comes from idle exit |
 | `--park-us N` | how long a signalling thread waits so its peer is really blocked in the kernel (default 200) |
 | `--mem-min BYTES`, `--mem-max BYTES` | buffer size range of the memory sweep (default 1K to 4x the largest cache, max 512M and RAM/4; `K`/`M`/`G` suffixes) |
 | `--sweep-steps N` | buffer sizes per doubling in the memory sweep (default 4) |

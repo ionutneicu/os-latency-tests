@@ -38,6 +38,9 @@ int olt_os_pin_current_thread(int cpu);
 int olt_os_set_rt_priority(int prio);
 /* Lock current and future pages in RAM (avoids page-fault latency). */
 int olt_os_lock_memory(void);
+/* Keep CPUs out of deep idle states for the rest of the process lifetime
+ * (Linux: holds /dev/cpu_dma_latency at 0; usually needs root). */
+int olt_os_block_deep_idle(void);
 
 /* Physical RAM in bytes, 0 if unknown. */
 uint64_t olt_os_physical_memory(void);
@@ -67,6 +70,7 @@ void olt_os_kernel_release(char* buf, size_t len); /* e.g. "6.8.0-45-generic" */
 void olt_os_kernel_version(char* buf, size_t len); /* build string, shows PREEMPT flags */
 void olt_os_preempt_model(char* buf, size_t len);  /* "PREEMPT_RT", "PREEMPT_DYNAMIC", "PREEMPT", "VOLUNTARY/NONE" */
 void olt_os_cpu_governor(int cpu, char* buf, size_t len);
+void olt_os_cpuidle_driver(char* buf, size_t len);   /* e.g. "intel_idle", "psci_idle", "" */
 void olt_os_isolated_cpus(char* buf, size_t len);
 
 #ifdef __cplusplus

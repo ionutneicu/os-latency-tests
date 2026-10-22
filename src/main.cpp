@@ -43,6 +43,8 @@ void usage(const char* argv0)
         << "      --cpus MAIN[,WORKER]   explicit CPUs to pin to (overrides automatic choice)\n"
         << "  -p, --rt-prio N            run threads as SCHED_FIFO with priority N (needs privileges)\n"
         << "  -m, --mlock                lock all memory with mlockall()\n"
+        << "      --no-idle              keep CPUs out of deep idle states during the run\n"
+        << "                             (/dev/cpu_dma_latency = 0, needs root)\n"
         << "      --park-us N            how long a signalling thread waits so its peer is\n"
         << "                             blocked in the kernel (default 200)\n"
         << "      --mem-min BYTES        smallest buffer for memory sweeps (default 1K; K/M/G suffixes)\n"
@@ -99,6 +101,7 @@ Options parse_args(int argc, char** argv)
         else if (a == "-w" || a == "--warmup") o.config.warmup = parse_size(a, value());
         else if (a == "-p" || a == "--rt-prio") o.config.rt_priority = static_cast<int>(parse_size(a, value()));
         else if (a == "-m" || a == "--mlock") o.config.lock_memory = true;
+        else if (a == "--no-idle") o.config.block_deep_idle = true;
         else if (a == "--park-us") o.config.park_us = static_cast<unsigned>(parse_size(a, value()));
         else if (a == "--mem-min") o.config.mem_min_bytes = parse_bytes(a, value());
         else if (a == "--mem-max") o.config.mem_max_bytes = parse_bytes(a, value());
@@ -167,6 +170,10 @@ void apply_main_thread_settings(const olt::Config& c)
     if (c.lock_memory) {
         if (int rc = olt_os_lock_memory())
             std::cerr << "warning: mlockall failed: " << std::strerror(rc) << "\n";
+    }
+    if (c.block_deep_idle) {
+        if (int rc = olt_os_block_deep_idle())
+            std::cerr << "warning: cannot block deep idle states: " << std::strerror(rc) << " (run as root)\n";
     }
     if (c.main_cpu >= 0) {
         if (int rc = olt_os_pin_current_thread(c.main_cpu))

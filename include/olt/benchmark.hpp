@@ -30,6 +30,7 @@ struct Config {
     int worker_cpu = -1;  // resolved CPU for worker threads, -1 = not pinned
     int rt_priority = 0;  // SCHED_FIFO priority, 0 = keep default policy
     bool lock_memory = false;
+    bool block_deep_idle = false;  // hold PM QoS cpu_dma_latency at 0 during the run
     unsigned park_us = 200;  // how long a signalling thread waits so the other side is truly blocked
 
     // memory hierarchy sweeps

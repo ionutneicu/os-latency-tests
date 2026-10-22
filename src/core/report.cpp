@@ -110,6 +110,7 @@ void print_platform(std::ostream& os, const PlatformInfo& p, const Config& cfg)
     if (!p.board.empty()) os << "  board          : " << p.board << "\n";
     os << "  kernel         : " << p.kernel_release << " [" << p.preempt_model << "]\n";
     if (!p.governor.empty()) os << "  governor       : " << p.governor << "\n";
+    if (!p.cpuidle_driver.empty()) os << "  cpuidle        : " << p.cpuidle_driver << "\n";
     if (!p.thp_mode.empty()) os << "  huge pages     : THP " << p.thp_mode << ", benchmark buffers "
                                 << (cfg.hugepages ? "request huge pages" : "use base pages") << "\n";
     if (!p.isolated_cpus.empty()) os << "  isolated cpus  : " << p.isolated_cpus << "\n";
@@ -135,7 +136,8 @@ void print_platform(std::ostream& os, const PlatformInfo& p, const Config& cfg)
     os << "  affinity       : " << affinity_name(cfg.affinity) << " (main cpu " << cfg.main_cpu
        << ", worker cpu " << cfg.worker_cpu << ")\n";
     os << "  rt priority    : " << (cfg.rt_priority > 0 ? "SCHED_FIFO " + std::to_string(cfg.rt_priority) : "default")
-       << ", mlockall " << (cfg.lock_memory ? "on" : "off") << "\n\n";
+       << ", mlockall " << (cfg.lock_memory ? "on" : "off")
+       << ", deep idle " << (cfg.block_deep_idle ? "blocked" : "allowed") << "\n\n";
 }
 
 void print_table_header(std::ostream& os)
@@ -181,6 +183,7 @@ void write_json(const std::string& path, const PlatformInfo& p, const Config& cf
     f << "    \"kernel_version\": " << q(p.kernel_version) << ",\n";
     f << "    \"preempt_model\": " << q(p.preempt_model) << ",\n";
     f << "    \"governor\": " << q(p.governor) << ",\n";
+    f << "    \"cpuidle_driver\": " << q(p.cpuidle_driver) << ",\n";
     f << "    \"isolated_cpus\": " << q(p.isolated_cpus) << ",\n";
     f << "    \"thp_mode\": " << q(p.thp_mode) << ",\n";
     f << "    \"physical_memory\": " << p.physical_memory << ",\n";
@@ -209,7 +212,8 @@ void write_json(const std::string& path, const PlatformInfo& p, const Config& cf
     f << "  \"config\": {\"samples\": " << cfg.samples << ", \"warmup\": " << cfg.warmup
       << ", \"affinity\": " << q(affinity_name(cfg.affinity)) << ", \"main_cpu\": " << cfg.main_cpu
       << ", \"worker_cpu\": " << cfg.worker_cpu << ", \"rt_priority\": " << cfg.rt_priority
-      << ", \"lock_memory\": " << (cfg.lock_memory ? "true" : "false") << ", \"park_us\": " << cfg.park_us
+      << ", \"lock_memory\": " << (cfg.lock_memory ? "true" : "false")
+      << ", \"block_deep_idle\": " << (cfg.block_deep_idle ? "true" : "false") << ", \"park_us\": " << cfg.park_us
       << ", \"sweep_samples\": " << cfg.sweep_samples << ", \"hugepages\": " << (cfg.hugepages ? "true" : "false")
       << "},\n";
 

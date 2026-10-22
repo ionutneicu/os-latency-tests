@@ -18,6 +18,7 @@ struct PlatformInfo {
     std::string kernel_version;
     std::string preempt_model;
     std::string governor;       // of the main benchmark CPU
+    std::string cpuidle_driver;
     std::string isolated_cpus;
     std::string thp_mode;       // transparent huge pages policy
     uint64_t physical_memory = 0;
