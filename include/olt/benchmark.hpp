@@ -28,10 +28,12 @@ struct Config {
     Affinity affinity = Affinity::DifferentCpus;
     int main_cpu = -1;    // resolved CPU for the main thread, -1 = not pinned
     int worker_cpu = -1;  // resolved CPU for worker threads, -1 = not pinned
+    std::vector<int> allowed_cpus;  // CPUs the process may use, read before any pinning
     int rt_priority = 0;  // SCHED_FIFO priority, 0 = keep default policy
     bool lock_memory = false;
     bool block_deep_idle = false;  // hold PM QoS cpu_dma_latency at 0 during the run
     unsigned park_us = 200;  // how long a signalling thread waits so the other side is truly blocked
+    unsigned cpu_warmup_ms = 200;  // busy-spin main and worker CPUs before each benchmark (frequency ramp-up)
 
     // memory hierarchy sweeps
     size_t mem_min_bytes = 1024;
@@ -49,6 +51,7 @@ struct Result {
     std::string unit = "ns";
     std::vector<double> samples;
     std::string note;  // caveats shown next to the result
+    std::vector<std::pair<std::string, double>> metrics;  // extra per-result figures, e.g. cpu_cores
 };
 
 class Context {
@@ -60,6 +63,10 @@ public:
 
     // Applies worker affinity and RT priority to the calling (worker) thread.
     void setup_worker_thread() const;
+
+    // Busy-spins the main and the worker CPU for config.cpu_warmup_ms so that
+    // frequency scaling has ramped up before measuring.
+    void warm_cpus() const;
 
     // Calls fn() config.warmup times (discarded) then config.samples times;
     // fn returns one sample, in the result's unit.

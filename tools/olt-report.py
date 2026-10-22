@@ -283,9 +283,9 @@ class Chart:
 class BarChart:
     """Horizontal bars, one per variant (identity by label, single colour)."""
 
-    def __init__(self, cid, title, x_label, rows, higher_better=False):
+    def __init__(self, cid, title, x_label, rows, higher_better=False, best_label="fastest", ratio_word="slower"):
         self.cid, self.title, self.x_label, self.rows = cid, title, x_label, rows
-        self.higher_better = higher_better
+        self.higher_better, self.best_label, self.ratio_word = higher_better, best_label, ratio_word
 
     def render(self, standalone=False):
         if not self.rows:
@@ -307,7 +307,7 @@ class BarChart:
             o.append(f'<text class="ax" x="{lw - 10}" y="{y + bh / 2 + 4}" text-anchor="end">{html.escape(r["label"])}</text>')
             o.append(f'<rect class="f1" x="{lw}" y="{y}" width="{w:.1f}" height="{bh}" rx="4"/>')
             slower = best / r["value"] if self.higher_better else r["value"] / best
-            ratio = "  (fastest)" if r["value"] == best else f"  ({slower:.1f}x slower)"
+            ratio = f"  ({self.best_label})" if r["value"] == best else f"  ({slower:.1f}x {self.ratio_word})"
             o.append(f'<text class="ax" x="{lw + w + 8:.1f}" y="{y + bh / 2 + 4}">{html.escape(r["text"] + ratio)}</text>')
             if not standalone and r.get("tip"):
                 o.append(f'<rect class="hit" x="0" y="{y - gap / 2}" width="{W}" height="{bh + gap}" '
@@ -315,6 +315,73 @@ class BarChart:
         o.append(f'<text class="ax" x="{lw}" y="{h - 8}">{html.escape(self.x_label)}</text>')
         if not standalone:
             o.append(f'<line class="cross" x1="0" x2="0" y1="0" y2="0" visibility="hidden"/>')
+        else:
+            o.append("</g>")
+        o.append("</svg>")
+        return "\n".join(o)
+
+
+class Heatmap:
+    """Symmetric CPU x CPU matrix, sequential single-hue colour scale (darker = slower)."""
+
+    LIGHT, DARK = (219, 232, 248), (13, 61, 120)
+
+    def __init__(self, cid, title, cpus, values, unit_fmt=fmt_ns):
+        self.cid, self.title, self.cpus, self.values, self.unit_fmt = cid, title, cpus, values, unit_fmt
+
+    def colour(self, v, lo, hi):
+        t = 0.0 if hi <= lo else (math.log(v) - math.log(lo)) / (math.log(hi) - math.log(lo))
+        rgb = [round(a + (b - a) * t) for a, b in zip(self.LIGHT, self.DARK)]
+        return "#%02x%02x%02x" % tuple(rgb), t > 0.55
+
+    def render(self, standalone=False):
+        if not self.values:
+            return ""
+        n = len(self.cpus)
+        cell = max(22, min(56, (W - 120) // n))
+        left, top = 60, 34
+        size = cell * n
+        h = top + size + 46
+        vals = list(self.values.values())
+        lo, hi = min(vals), max(vals)
+        o = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {h + (24 if standalone else 0)}" '
+             f'role="img" aria-label="{html.escape(self.title)}">']
+        if standalone:
+            o.append(f"<style>{CHART_STYLE_LIGHT}</style><rect class=\"bg\" width=\"{W}\" height=\"{h + 24}\"/>")
+            o.append(f'<text class="title" x="{left}" y="18">{html.escape(self.title)}</text><g transform="translate(0,24)">')
+        show_text = cell >= 34
+        for i, a in enumerate(self.cpus):
+            o.append(f'<text class="ax" x="{left - 8}" y="{top + i * cell + cell / 2 + 4}" text-anchor="end">{a}</text>')
+            o.append(f'<text class="ax" x="{left + i * cell + cell / 2}" y="{top - 8}" text-anchor="middle">{a}</text>')
+            for j, b in enumerate(self.cpus):
+                x, y = left + j * cell, top + i * cell
+                if a == b:
+                    o.append(f'<rect class="grid" fill="none" x="{x + 1}" y="{y + 1}" width="{cell - 2}" height="{cell - 2}"/>')
+                    continue
+                v = self.values.get((min(a, b), max(a, b)))
+                if v is None:
+                    continue
+                fill, dark = self.colour(v, lo, hi)
+                o.append(f'<rect x="{x + 1}" y="{y + 1}" width="{cell - 2}" height="{cell - 2}" rx="3" fill="{fill}"/>')
+                if show_text:
+                    o.append(f'<text x="{x + cell / 2}" y="{y + cell / 2 + 4}" text-anchor="middle" '
+                             f'style="font:11px system-ui,sans-serif" fill="{"#ffffff" if dark else "#0b0b0b"}">{v:.0f}</text>')
+                if not standalone:
+                    tip = html.escape(f"<b>CPU {a} ↔ CPU {b}</b><br>one-way hand-off p50: <b>{self.unit_fmt(v)}</b>", quote=True)
+                    o.append(f'<rect class="hit" x="{x}" y="{y}" width="{cell}" height="{cell}" data-x="-10" data-tip="{tip}"/>')
+        # colour scale legend
+        lx, ly = left + size + 30, top
+        if lx + 40 < W:
+            steps = 6
+            for k in range(steps):
+                v = math.exp(math.log(lo) + (math.log(hi) - math.log(lo)) * k / (steps - 1)) if hi > lo else lo
+                fill, _ = self.colour(v, lo, hi)
+                o.append(f'<rect x="{lx}" y="{ly + k * 22}" width="18" height="20" fill="{fill}"/>')
+                o.append(f'<text class="ax" x="{lx + 26}" y="{ly + k * 22 + 14}">{self.unit_fmt(v)}</text>')
+        o.append(f'<text class="ax" x="{left}" y="{top + size + 26}">one-way latency between CPUs, p50 '
+                 f'(ns in cells; darker = slower)</text>')
+        if not standalone:
+            o.append('<line class="cross" x1="0" x2="0" y1="0" y2="0" visibility="hidden"/>')
         else:
             o.append("</g>")
         o.append("</svg>")
@@ -391,6 +458,14 @@ def build_guidance(summary, caches, platform, results, cfg):
                     f"from a pool instead of spawning per task.")
     def by_param(name):
         return {next(iter(r["params"].values())): r for r in results if r["name"] == name and len(r["params"]) == 1}
+
+    c2c = [r for r in results if r["name"] == "multicore.c2c_latency" and r["percentiles"].get("p50")]
+    if len(c2c) >= 2:
+        v = sorted(r["percentiles"]["p50"] for r in c2c)
+        if v[-1] > 2 * v[0]:
+            tips.append(f"Where threads run matters: handing a cache line to another CPU costs {fmt_ns(v[0])} on the "
+                        f"fastest pair but {fmt_ns(v[-1])} on the slowest ({v[-1] / v[0]:.0f}x). Keep communicating "
+                        f"threads on nearby CPUs (see the core-to-core matrix).")
 
     lat = by_param("pattern.spsc_latency")
     if "mutex_condvar" in lat and ("lockfree_cached" in lat or "lockfree" in lat):
@@ -580,7 +655,7 @@ def build_report(doc, src_path, charts_dir):
     # ---- latency distributions, one chart per benchmark group
     groups = {}
     for r in results:
-        if r["params"] or r["name"].startswith(("mem.", "alloc.", "pattern.")):
+        if r["params"] or r["name"].startswith(("mem.", "alloc.", "pattern.", "multicore.")):
             continue
         groups.setdefault(r["name"].split(".")[0], []).append(r)
     for g, rs in groups.items():
@@ -657,6 +732,46 @@ def build_report(doc, src_path, charts_dir):
                 "pattern-spsc-throughput", "SPSC streaming throughput", "million items per second (p50 run)",
                 bar_rows(st, conv=lambda v: 1e3 / v, unit_text=lambda v: f"{1e3 / v:.3g} M items/s ({fmt_ns(v)}/item)"),
                 higher_better=True)))
+        cpu_rows = []
+        for r in (sl or st):
+            m = r.get("metrics", {}).get("cpu_cores")
+            if m is not None:
+                cpu_rows.append({"label": r["params"]["queue"], "value": m, "text": f"{m:.2f} cores busy",
+                                 "tip": f"<b>{html.escape(r['params']['queue'])}</b><br>CPU time of producer + consumer / "
+                                        f"wall time during the latency test: {m:.2f}"})
+        if cpu_rows:
+            pat_html.append("<p class='sub'>What it costs: CPU time burnt by producer plus consumer during the "
+                            "latency test, divided by wall time. 2.0 means both threads kept a core fully busy "
+                            "(polling); low values mean they slept while waiting.</p>")
+            pat_html.append(chart_block(BarChart("pattern-spsc-cpu", "SPSC CPU usage while handing off",
+                                                 "CPU cores busy (producer + consumer)", cpu_rows,
+                                                 best_label="least CPU", ratio_word="more CPU")))
+    c2c = {}
+    for r in results:
+        if r["name"] == "multicore.c2c_latency" and "cpu_a" in r["params"] and r["percentiles"].get("p50"):
+            a, b = int(r["params"]["cpu_a"]), int(r["params"]["cpu_b"])
+            c2c[(min(a, b), max(a, b))] = r["percentiles"]["p50"]
+    if c2c:
+        cpus = sorted({c for k in c2c for c in k})
+        vals = sorted(c2c.values())
+        fast = min(c2c, key=c2c.get)
+        slow = max(c2c, key=c2c.get)
+        body = ("<p class='sub'>Two threads pinned to a pair of CPUs ping-pong one value through a "
+                "<code>std::atomic</code> on its own cache line; each cell is the one-way hand-off latency (half a "
+                "round trip, p50). This is the floor for any inter-thread communication between those CPUs: "
+                "SMT siblings share L1/L2 and are fastest, other cores on the same die or cluster come next, "
+                "other clusters, CCXs or sockets are slowest.</p>")
+        body += chart_block(Heatmap("multicore-c2c", "Core-to-core latency (one-way, p50)", cpus, c2c))
+        body += (f"<p class='note'>Fastest pair: CPU {fast[0]} ↔ {fast[1]} ({fmt_ns(c2c[fast])}); slowest: CPU "
+                 f"{slow[0]} ↔ {slow[1]} ({fmt_ns(c2c[slow])}); median {fmt_ns(statistics.median(vals))}. Pin "
+                 f"threads that talk a lot (producer/consumer pairs) to a fast pair with <code>--cpus A,B</code> "
+                 f"or in your application.</p>")
+        sections.append(("multicore", "Multicore communication", body))
+    else:
+        sections.append(("multicore", "Multicore communication",
+                         "<p class='missing'>The core-to-core benchmark was not part of this run (run without "
+                         "<code>-t</code> or with <code>-t 'multicore.*'</code>).</p>"))
+
     if pat_html:
         sections.append(("patterns", "Design patterns", "\n".join(pat_html)))
     else:

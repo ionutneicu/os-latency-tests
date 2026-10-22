@@ -1,5 +1,9 @@
 #include "olt/benchmark.hpp"
 
+#include <atomic>
+#include <thread>
+
+#include "olt/hal/arch.h"
 #include "olt/hal/os.h"
 
 namespace olt {
@@ -14,6 +18,23 @@ void Context::setup_worker_thread() const
 {
     if (config_.worker_cpu >= 0) olt_os_pin_current_thread(config_.worker_cpu);
     if (config_.rt_priority > 0) olt_os_set_rt_priority(config_.rt_priority);
+}
+
+void Context::warm_cpus() const
+{
+    if (config_.cpu_warmup_ms == 0) return;
+    const uint64_t deadline = now_ns() + uint64_t(config_.cpu_warmup_ms) * 1000000ull;
+    auto spin = [deadline] {
+        uint64_t x = 0;
+        while (now_ns() < deadline)
+            for (int i = 0; i < 1000; ++i) do_not_optimize(x += uint64_t(i));
+    };
+    std::thread worker([&] {
+        setup_worker_thread();
+        spin();
+    });
+    spin();
+    worker.join();
 }
 
 void Context::add_result(std::string name, Params params, std::vector<double> samples, std::string note)

@@ -140,6 +140,7 @@ p99.99 needs 100 000).
 | `-p, --rt-prio N` | run benchmark threads as `SCHED_FIFO` priority N (root or `CAP_SYS_NICE`) |
 | `-m, --mlock` | `mlockall()` to avoid page-fault latency |
 | `--no-idle` | keep CPUs out of deep idle (C-)states for the run via `/dev/cpu_dma_latency` (root); compare with and without to see how much wake-up latency comes from idle exit |
+| `--cpu-warmup-ms N` | busy-spin the main and worker CPUs for N ms before each benchmark so frequency scaling has ramped up (default 200, 0 = off) |
 | `--park-us N` | how long a signalling thread waits so its peer is really blocked in the kernel (default 200) |
 | `--mem-min BYTES`, `--mem-max BYTES` | buffer size range of the memory sweep (default 1K to 4x the largest cache, max 512M and RAM/4; `K`/`M`/`G` suffixes) |
 | `--sweep-steps N` | buffer sizes per doubling in the memory sweep (default 4) |
@@ -200,6 +201,7 @@ Installed packages provide it as `olt-report`.
 | `sync.condvar_wakeup` | worker sets the predicate (then unlocks and `notify_one()`) until `wait()` returns |
 | `mem.latency_random` | dependent loads along a random cycle of cache lines (pointer chase) in a buffer of each size: load-to-use latency of the level the working set fits in |
 | `mem.read_seq`, `mem.write_seq` | sequential read / write of the same buffer, cost per cache line (GB/s = line size / value) |
+| `multicore.c2c_latency` | one-way cache-line hand-off between every pair of CPUs (atomic ping-pong), drawn as a heatmap |
 | `pattern.*` | design-pattern comparisons, see [Design patterns](#design-patterns) |
 | `alloc.malloc`, `alloc.free` | `malloc()`/`free()` of one block, 16 B to 16 MiB, allocator best case (block reused, memory untouched) |
 
@@ -252,10 +254,31 @@ The same bounded ring of 64-bit items, synchronised five ways:
 | `lockfree_cached` | as `lockfree`, plus each side caches the other side's index | spins, touches shared lines only when needed |
 
 Latency is half of a ping-pong round trip through two queues; throughput
-streams 256 Ki items through one queue. The trade-off to read from the results:
+streams 256 Ki items through one queue. Each result also records
+`metrics.cpu_cores`: CPU time of producer plus consumer divided by wall time
+(2.0 = both threads kept a core busy), shown as "CPU cores busy" in the report. The trade-off to read from the results:
 polling variants are much faster but keep a core busy, and blocking variants
 pay the OS wake-up cost (which grows with deep idle states, see `--no-idle`).
 Run with `--affinity same` to see what happens when both threads share a CPU.
+
+## Multicore communication
+
+`multicore.c2c_latency` pins two threads to every pair of allowed CPUs and
+ping-pongs one value through a `std::atomic` on its own cache line. The report
+draws the one-way latency per pair as a heatmap. It shows the machine's
+topology as the software sees it: SMT siblings (shared L1/L2) are fastest,
+cores in the same cluster or die next, other clusters (big.LITTLE), CCXs or
+sockets slowest. Use it to choose where producer/consumer pairs run, for
+example with `--cpus A,B` for the SPSC patterns.
+
+## Measurement hygiene
+
+Before each benchmark the main and worker CPUs are busy-spun for
+`--cpu-warmup-ms` (200 ms) so frequency scaling has left its idle clocks, and
+every benchmark discards `--warmup` iterations (or a whole first run) before
+recording. For the most stable tails also use `--rt-prio`, `--mlock`,
+`--no-idle` and the `performance` governor (`./run-all.sh` does all but the
+governor).
 
 ## Build dependencies
 

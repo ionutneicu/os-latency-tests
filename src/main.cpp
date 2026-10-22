@@ -45,6 +45,8 @@ void usage(const char* argv0)
         << "  -m, --mlock                lock all memory with mlockall()\n"
         << "      --no-idle              keep CPUs out of deep idle states during the run\n"
         << "                             (/dev/cpu_dma_latency = 0, needs root)\n"
+        << "      --cpu-warmup-ms N      busy-spin the benchmark CPUs for N ms before each benchmark\n"
+        << "                             so frequency scaling has ramped up (default 200, 0 = off)\n"
         << "      --park-us N            how long a signalling thread waits so its peer is\n"
         << "                             blocked in the kernel (default 200)\n"
         << "      --mem-min BYTES        smallest buffer for memory sweeps (default 1K; K/M/G suffixes)\n"
@@ -102,6 +104,7 @@ Options parse_args(int argc, char** argv)
         else if (a == "-p" || a == "--rt-prio") o.config.rt_priority = static_cast<int>(parse_size(a, value()));
         else if (a == "-m" || a == "--mlock") o.config.lock_memory = true;
         else if (a == "--no-idle") o.config.block_deep_idle = true;
+        else if (a == "--cpu-warmup-ms") o.config.cpu_warmup_ms = static_cast<unsigned>(parse_size(a, value()));
         else if (a == "--park-us") o.config.park_us = static_cast<unsigned>(parse_size(a, value()));
         else if (a == "--mem-min") o.config.mem_min_bytes = parse_bytes(a, value());
         else if (a == "--mem-max") o.config.mem_max_bytes = parse_bytes(a, value());
@@ -139,6 +142,11 @@ Options parse_args(int argc, char** argv)
 void resolve_cpus(Options& o)
 {
     olt::Config& c = o.config;
+    {
+        int all[1024];
+        const int n = olt_os_allowed_cpus(all, 1024);
+        c.allowed_cpus.assign(all, all + (n > 0 ? n : 0));
+    }
     if (!o.cpus.empty()) {
         c.main_cpu = o.cpus[0];
         c.worker_cpu = o.cpus.size() > 1 ? o.cpus[1] : o.cpus[0];
@@ -224,6 +232,7 @@ int main(int argc, char** argv)
     for (const auto* b : todo) {
         std::cerr << "running " << b->name << " ...\r" << std::flush;
         const size_t first = ctx.results().size();
+        ctx.warm_cpus();
         b->run(ctx);
         std::cerr << std::string(b->name.size() + 12, ' ') << "\r" << std::flush;
         for (size_t i = first; i < ctx.results().size(); ++i) {

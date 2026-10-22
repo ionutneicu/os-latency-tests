@@ -17,6 +17,10 @@
 // pattern.spsc_throughput  cost per item when streaming 256 Ki items through
 //                          one queue as fast as possible (ns/item)
 //
+// Each result also carries metric cpu_cores: CPU time used by producer plus
+// consumer divided by wall time (2.0 = both threads kept a core fully busy,
+// near 0 = they mostly slept). This is the price paid for polling.
+//
 // Polling loops fall back to yield() after a while so that two threads
 // pinned to the same CPU still make progress.
 
@@ -31,6 +35,7 @@
 
 #include "olt/benchmark.hpp"
 #include "olt/hal/arch.h"
+#include "olt/hal/os.h"
 
 namespace {
 
@@ -212,12 +217,17 @@ void measure(olt::Context& ctx)
         const size_t total = cfg.warmup + cfg.samples;
         auto ping = std::make_unique<Q>();
         auto pong = std::make_unique<Q>();
+        uint64_t echo_cpu = 0;
         std::thread echo([&] {
             ctx.setup_worker_thread();
+            const uint64_t c0 = olt_os_thread_cpu_ns();
             for (size_t i = 0; i < total; ++i) pong->push(ping->pop());
+            echo_cpu = olt_os_thread_cpu_ns() - c0;
         });
         std::vector<double> lat;
         lat.reserve(cfg.samples);
+        const uint64_t wall0 = olt::now_ns();
+        const uint64_t cpu0 = olt_os_thread_cpu_ns();
         for (size_t i = 0; i < total; ++i) {
             const uint64_t t0 = olt::now_ns();
             ping->push(t0);
@@ -225,32 +235,45 @@ void measure(olt::Context& ctx)
             const uint64_t t1 = olt::now_ns();
             if (i >= cfg.warmup) lat.push_back(double(t1 - back) / 2.0);
         }
+        const uint64_t main_cpu = olt_os_thread_cpu_ns() - cpu0;
         echo.join();
+        const uint64_t wall = olt::now_ns() - wall0;
         ctx.add_result("pattern.spsc_latency", params, std::move(lat));
+        ctx.results().back().metrics.push_back({"cpu_cores", double(main_cpu + echo_cpu) / double(wall)});
     }
 
     // streaming throughput
     {
         std::vector<double> per_item;
         auto q = std::make_unique<Q>();
+        uint64_t cpu_total = 0, wall_total = 0;
         for (size_t s = 0; s < cfg.sweep_samples + 1; ++s) {  // first run is warm-up
             std::atomic<bool> go{false};
-            uint64_t checksum = 0;
+            uint64_t checksum = 0, consumer_cpu = 0;
             std::thread consumer([&] {
                 ctx.setup_worker_thread();
                 while (!go.load(std::memory_order_acquire)) olt_cpu_relax();
+                const uint64_t c0 = olt_os_thread_cpu_ns();
                 for (size_t i = 0; i < k_stream_items; ++i) checksum += q->pop();
+                consumer_cpu = olt_os_thread_cpu_ns() - c0;
             });
             const uint64_t t0 = olt::now_ns();
+            const uint64_t c0 = olt_os_thread_cpu_ns();
             go.store(true, std::memory_order_release);
             for (size_t i = 0; i < k_stream_items; ++i) q->push(i);
+            const uint64_t producer_cpu = olt_os_thread_cpu_ns() - c0;
             consumer.join();
             const uint64_t t1 = olt::now_ns();
             olt::do_not_optimize(checksum);
-            if (s > 0) per_item.push_back(double(t1 - t0) / double(k_stream_items));
+            if (s > 0) {
+                per_item.push_back(double(t1 - t0) / double(k_stream_items));
+                cpu_total += producer_cpu + consumer_cpu;
+                wall_total += t1 - t0;
+            }
         }
         ctx.add_result("pattern.spsc_throughput", params, std::move(per_item));
         ctx.results().back().unit = "ns/item";
+        ctx.results().back().metrics.push_back({"cpu_cores", double(cpu_total) / double(wall_total)});
     }
 }
 

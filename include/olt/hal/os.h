@@ -25,6 +25,8 @@ const char* olt_os_name(void);
 uint64_t olt_os_monotonic_ns(void);
 /* Reported resolution of that clock, in nanoseconds. */
 uint64_t olt_os_monotonic_resolution_ns(void);
+/* CPU time consumed by the calling thread so far, in nanoseconds. */
+uint64_t olt_os_thread_cpu_ns(void);
 
 /* Number of online CPUs. */
 int olt_os_cpu_count(void);

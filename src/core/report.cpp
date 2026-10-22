@@ -141,7 +141,8 @@ void print_platform(std::ostream& os, const PlatformInfo& p, const Config& cfg)
     }
     os << "\n";
     os << "Config\n";
-    os << "  samples/warmup : " << cfg.samples << " / " << cfg.warmup << "\n";
+    os << "  samples/warmup : " << cfg.samples << " / " << cfg.warmup << " iterations, CPU warm-up "
+       << cfg.cpu_warmup_ms << " ms per benchmark\n";
     os << "  affinity       : " << affinity_name(cfg.affinity) << " (main cpu " << cfg.main_cpu
        << ", worker cpu " << cfg.worker_cpu << ")\n";
     os << "  rt priority    : " << (cfg.rt_priority > 0 ? "SCHED_FIFO " + std::to_string(cfg.rt_priority) : "default")
@@ -173,6 +174,11 @@ void print_table_row(std::ostream& os, const SummarizedResult& r)
        << cell(99) << std::setw(10) << cell(99.9) << std::setw(10) << cell(99.99) << std::setw(10)
        << format_ns(s.max) << "\n";
     if (!r.result->note.empty()) os << "    note: " << r.result->note << "\n";
+    if (!r.result->metrics.empty()) {
+        os << "    metrics:";
+        for (const auto& m : r.result->metrics) os << " " << m.first << "=" << std::setprecision(3) << m.second;
+        os << std::defaultfloat << "\n";
+    }
 }
 
 void write_json(const std::string& path, const PlatformInfo& p, const Config& cfg,
@@ -223,7 +229,7 @@ void write_json(const std::string& path, const PlatformInfo& p, const Config& cf
       << ", \"worker_cpu\": " << cfg.worker_cpu << ", \"rt_priority\": " << cfg.rt_priority
       << ", \"lock_memory\": " << (cfg.lock_memory ? "true" : "false")
       << ", \"block_deep_idle\": " << (cfg.block_deep_idle ? "true" : "false") << ", \"park_us\": " << cfg.park_us
-      << ", \"sweep_samples\": " << cfg.sweep_samples << ", \"hugepages\": " << (cfg.hugepages ? "true" : "false")
+      << ", \"cpu_warmup_ms\": " << cfg.cpu_warmup_ms << ", \"sweep_samples\": " << cfg.sweep_samples << ", \"hugepages\": " << (cfg.hugepages ? "true" : "false")
       << "},\n";
 
     f << "  \"results\": [";
@@ -235,6 +241,12 @@ void write_json(const std::string& path, const PlatformInfo& p, const Config& cf
             f << (k ? ", " : "") << q(r.params[k].first) << ": " << q(r.params[k].second);
         f << "},\n      \"unit\": " << q(r.unit) << ",\n";
         if (!r.note.empty()) f << "      \"note\": " << q(r.note) << ",\n";
+        if (!r.metrics.empty()) {
+            f << "      \"metrics\": {";
+            for (size_t k = 0; k < r.metrics.size(); ++k)
+                f << (k ? ", " : "") << q(r.metrics[k].first) << ": " << num(r.metrics[k].second);
+            f << "},\n";
+        }
         f << "      \"raw_csv\": " << q("raw/" + sanitize_filename(r.name + (r.params.empty() ? "" : "_" + format_params(r.params))) + ".csv") << ",\n";
         f << "      \"count\": " << s.count << ", \"min\": " << num(s.min) << ", \"max\": " << num(s.max)
           << ", \"mean\": " << num(s.mean) << ", \"stddev\": " << num(s.stddev) << ", \"mad\": " << num(s.mad)
