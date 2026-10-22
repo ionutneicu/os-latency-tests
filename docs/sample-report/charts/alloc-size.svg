@@ -9,12 +9,10 @@
 <rect class="bg" width="1000" height="444"/>
 <text class="title" x="72" y="18">malloc / free latency vs block size</text>
 <g transform="translate(0,24)">
-<line class="grid" x1="72" x2="980" y1="282.0" y2="282.0"/>
-<text class="ax" x="64" y="286.0" text-anchor="end">50 ns</text>
-<line class="grid" x1="72" x2="980" y1="183.4" y2="183.4"/>
-<text class="ax" x="64" y="187.4" text-anchor="end">100 ns</text>
-<line class="grid" x1="72" x2="980" y1="84.7" y2="84.7"/>
-<text class="ax" x="64" y="88.7" text-anchor="end">200 ns</text>
+<line class="grid" x1="72" x2="980" y1="274.2" y2="274.2"/>
+<text class="ax" x="64" y="278.2" text-anchor="end">50 ns</text>
+<line class="grid" x1="72" x2="980" y1="148.7" y2="148.7"/>
+<text class="ax" x="64" y="152.7" text-anchor="end">100 ns</text>
 <text class="ax" x="72.0" y="360" text-anchor="middle">16</text>
 <text class="ax" x="162.8" y="360" text-anchor="middle">64</text>
 <text class="ax" x="253.6" y="360" text-anchor="middle">256</text>
@@ -28,54 +26,54 @@
 <text class="ax" x="980.0" y="360" text-anchor="middle">16M</text>
 <text class="ax" x="526.0" y="382" text-anchor="middle">block size</text>
 <text class="ax" x="16" y="186.0" transform="rotate(-90 16 186.0)" text-anchor="middle">latency (log)</text>
-<polyline class="s1" fill="none" stroke-width="2" stroke-linejoin="round" points="72.0,310.2 162.8,310.2 253.6,310.2 344.4,310.2 435.2,211.6 526.0,226.2 616.8,224.3 707.6,256.1 798.4,256.1 889.2,256.1 980.0,256.1"/>
-<circle class="f1" cx="72.0" cy="310.2" r="3"/>
-<circle class="f1" cx="162.8" cy="310.2" r="3"/>
-<circle class="f1" cx="253.6" cy="310.2" r="3"/>
-<circle class="f1" cx="344.4" cy="310.2" r="3"/>
-<circle class="f1" cx="435.2" cy="211.6" r="3"/>
-<circle class="f1" cx="526.0" cy="226.2" r="3"/>
-<circle class="f1" cx="616.8" cy="224.3" r="3"/>
-<circle class="f1" cx="707.6" cy="256.1" r="3"/>
-<circle class="f1" cx="798.4" cy="256.1" r="3"/>
-<circle class="f1" cx="889.2" cy="256.1" r="3"/>
-<circle class="f1" cx="980.0" cy="256.1" r="3"/>
-<polyline class="s1" fill="none" stroke-width="2" stroke-linejoin="round" stroke-dasharray="6 4" points="72.0,293.9 162.8,293.9 253.6,293.9 344.4,297.0 435.2,196.8 526.0,204.8 616.8,204.8 707.6,240.3 798.4,209.9 889.2,105.3 980.0,61.8"/>
-<circle class="f1" cx="72.0" cy="293.9" r="3"/>
-<circle class="f1" cx="162.8" cy="293.9" r="3"/>
-<circle class="f1" cx="253.6" cy="293.9" r="3"/>
-<circle class="f1" cx="344.4" cy="297.0" r="3"/>
-<circle class="f1" cx="435.2" cy="196.8" r="3"/>
-<circle class="f1" cx="526.0" cy="204.8" r="3"/>
-<circle class="f1" cx="616.8" cy="204.8" r="3"/>
-<circle class="f1" cx="707.6" cy="240.3" r="3"/>
-<circle class="f1" cx="798.4" cy="209.9" r="3"/>
-<circle class="f1" cx="889.2" cy="105.3" r="3"/>
-<circle class="f1" cx="980.0" cy="61.8" r="3"/>
-<polyline class="s2" fill="none" stroke-width="2" stroke-linejoin="round" points="72.0,303.5 162.8,303.5 253.6,303.5 344.4,303.5 435.2,249.1 526.0,251.4 616.8,249.1 707.6,258.4 798.4,260.9 889.2,260.9 980.0,260.9"/>
-<circle class="f2" cx="72.0" cy="303.5" r="3"/>
-<circle class="f2" cx="162.8" cy="303.5" r="3"/>
-<circle class="f2" cx="253.6" cy="303.5" r="3"/>
-<circle class="f2" cx="344.4" cy="303.5" r="3"/>
-<circle class="f2" cx="435.2" cy="249.1" r="3"/>
-<circle class="f2" cx="526.0" cy="251.4" r="3"/>
-<circle class="f2" cx="616.8" cy="249.1" r="3"/>
-<circle class="f2" cx="707.6" cy="258.4" r="3"/>
-<circle class="f2" cx="798.4" cy="260.9" r="3"/>
-<circle class="f2" cx="889.2" cy="260.9" r="3"/>
-<circle class="f2" cx="980.0" cy="260.9" r="3"/>
-<polyline class="s2" fill="none" stroke-width="2" stroke-linejoin="round" stroke-dasharray="6 4" points="72.0,290.8 162.8,287.8 253.6,287.8 344.4,290.8 435.2,232.1 526.0,226.2 616.8,232.1 707.6,246.9 798.4,244.7 889.2,249.1 980.0,246.9"/>
-<circle class="f2" cx="72.0" cy="290.8" r="3"/>
-<circle class="f2" cx="162.8" cy="287.8" r="3"/>
-<circle class="f2" cx="253.6" cy="287.8" r="3"/>
-<circle class="f2" cx="344.4" cy="290.8" r="3"/>
-<circle class="f2" cx="435.2" cy="232.1" r="3"/>
-<circle class="f2" cx="526.0" cy="226.2" r="3"/>
-<circle class="f2" cx="616.8" cy="232.1" r="3"/>
-<circle class="f2" cx="707.6" cy="246.9" r="3"/>
-<circle class="f2" cx="798.4" cy="244.7" r="3"/>
-<circle class="f2" cx="889.2" cy="249.1" r="3"/>
-<circle class="f2" cx="980.0" cy="246.9" r="3"/>
+<polyline class="s1" fill="none" stroke-width="2" stroke-linejoin="round" points="72.0,297.4 162.8,297.4 253.6,297.4 344.4,297.4 435.2,165.8 526.0,180.3 616.8,182.4 707.6,221.2 798.4,267.1 889.2,297.4 980.0,281.6"/>
+<circle class="f1" cx="72.0" cy="297.4" r="3"/>
+<circle class="f1" cx="162.8" cy="297.4" r="3"/>
+<circle class="f1" cx="253.6" cy="297.4" r="3"/>
+<circle class="f1" cx="344.4" cy="297.4" r="3"/>
+<circle class="f1" cx="435.2" cy="165.8" r="3"/>
+<circle class="f1" cx="526.0" cy="180.3" r="3"/>
+<circle class="f1" cx="616.8" cy="182.4" r="3"/>
+<circle class="f1" cx="707.6" cy="221.2" r="3"/>
+<circle class="f1" cx="798.4" cy="267.1" r="3"/>
+<circle class="f1" cx="889.2" cy="297.4" r="3"/>
+<circle class="f1" cx="980.0" cy="281.6" r="3"/>
+<polyline class="s1" fill="none" stroke-width="2" stroke-linejoin="round" stroke-dasharray="6 4" points="72.0,232.4 162.8,257.0 253.6,256.9 344.4,232.4 435.2,77.6 526.0,131.4 616.8,133.1 707.6,78.9 798.4,70.4 889.2,95.6 980.0,93.0"/>
+<circle class="f1" cx="72.0" cy="232.4" r="3"/>
+<circle class="f1" cx="162.8" cy="257.0" r="3"/>
+<circle class="f1" cx="253.6" cy="256.9" r="3"/>
+<circle class="f1" cx="344.4" cy="232.4" r="3"/>
+<circle class="f1" cx="435.2" cy="77.6" r="3"/>
+<circle class="f1" cx="526.0" cy="131.4" r="3"/>
+<circle class="f1" cx="616.8" cy="133.1" r="3"/>
+<circle class="f1" cx="707.6" cy="78.9" r="3"/>
+<circle class="f1" cx="798.4" cy="70.4" r="3"/>
+<circle class="f1" cx="889.2" cy="95.6" r="3"/>
+<circle class="f1" cx="980.0" cy="93.0" r="3"/>
+<polyline class="s2" fill="none" stroke-width="2" stroke-linejoin="round" points="72.0,285.5 162.8,285.5 253.6,285.5 344.4,285.5 435.2,208.2 526.0,208.2 616.8,208.2 707.6,223.9 798.4,277.9 889.2,301.6 980.0,285.5"/>
+<circle class="f2" cx="72.0" cy="285.5" r="3"/>
+<circle class="f2" cx="162.8" cy="285.5" r="3"/>
+<circle class="f2" cx="253.6" cy="285.5" r="3"/>
+<circle class="f2" cx="344.4" cy="285.5" r="3"/>
+<circle class="f2" cx="435.2" cy="208.2" r="3"/>
+<circle class="f2" cx="526.0" cy="208.2" r="3"/>
+<circle class="f2" cx="616.8" cy="208.2" r="3"/>
+<circle class="f2" cx="707.6" cy="223.9" r="3"/>
+<circle class="f2" cx="798.4" cy="277.9" r="3"/>
+<circle class="f2" cx="889.2" cy="301.6" r="3"/>
+<circle class="f2" cx="980.0" cy="285.5" r="3"/>
+<polyline class="s2" fill="none" stroke-width="2" stroke-linejoin="round" stroke-dasharray="6 4" points="72.0,223.9 162.8,250.5 253.6,244.3 344.4,208.2 435.2,169.8 526.0,169.8 616.8,169.8 707.6,150.5 798.4,200.8 889.2,293.3 980.0,277.9"/>
+<circle class="f2" cx="72.0" cy="223.9" r="3"/>
+<circle class="f2" cx="162.8" cy="250.5" r="3"/>
+<circle class="f2" cx="253.6" cy="244.3" r="3"/>
+<circle class="f2" cx="344.4" cy="208.2" r="3"/>
+<circle class="f2" cx="435.2" cy="169.8" r="3"/>
+<circle class="f2" cx="526.0" cy="169.8" r="3"/>
+<circle class="f2" cx="616.8" cy="169.8" r="3"/>
+<circle class="f2" cx="707.6" cy="150.5" r="3"/>
+<circle class="f2" cx="798.4" cy="200.8" r="3"/>
+<circle class="f2" cx="889.2" cy="293.3" r="3"/>
+<circle class="f2" cx="980.0" cy="277.9" r="3"/>
 <line class="s1" stroke-width="2" x1="72" x2="94" y1="404" y2="404"/>
 <text class="ax" x="100" y="408">malloc p50</text>
 <line class="s1" stroke-width="2" stroke-dasharray="6 4" x1="182" x2="204" y1="404" y2="404"/>

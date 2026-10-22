@@ -52,6 +52,10 @@ The six with the biggest x86 vs ARM differences and the clearest hints.
 
 ## Standard tier: second batch
 
+- [x] **Instruction-level parallelism / loop unrolling**: 1 to 16 independent
+  dependency chains of integer multiply, double add/multiply, L1 loads and DRAM
+  loads; how many accumulators a loop needs and how many cache misses overlap
+
 - [ ] **SIMD payoff**: scalar vs auto-vectorised vs intrinsics (AVX2/AVX-512,
   NEON/SVE) from L1 to DRAM, with the x86 frequency-licence caveat
 - [ ] **memcpy/memset by size**: loop vs memcpy vs `rep movsb`, aligned and not,

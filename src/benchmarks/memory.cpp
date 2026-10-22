@@ -21,6 +21,7 @@
 #include "olt/benchmark.hpp"
 #include "olt/hal/arch.h"
 #include "olt/hal/os.h"
+#include "mem_util.hpp"
 
 namespace {
 
@@ -42,26 +43,6 @@ std::string size_label(size_t bytes)
 }
 
 // Largest cache visible to `cpu`, 0 if unknown.
-uint64_t largest_cache(int cpu)
-{
-    olt_cache_level_t levels[16];
-    const int n = olt_os_cache_topology(cpu >= 0 ? cpu : 0, levels, 16);
-    uint64_t m = 0;
-    for (int i = 0; i < n; ++i) m = std::max<uint64_t>(m, levels[i].size_bytes);
-    return m;
-}
-
-size_t resolve_max_bytes(const olt::Config& cfg)
-{
-    if (cfg.mem_max_bytes) return cfg.mem_max_bytes;
-    // 4x the largest cache so the DRAM plateau is clearly visible, at least
-    // 64 MiB, at most 512 MiB and a quarter of RAM (small boards).
-    uint64_t want = std::max<uint64_t>(largest_cache(cfg.main_cpu) * 4, uint64_t(64) << 20);
-    want = std::min<uint64_t>(want, uint64_t(512) << 20);
-    if (const uint64_t ram = olt_os_physical_memory()) want = std::min<uint64_t>(want, ram / 4);
-    return static_cast<size_t>(want);
-}
-
 // Geometric size series, steps_per_octave points per doubling, rounded to whole lines.
 std::vector<size_t> sweep_sizes(size_t lo, size_t hi, unsigned steps_per_octave, size_t line)
 {
@@ -74,22 +55,6 @@ std::vector<size_t> sweep_sizes(size_t lo, size_t hi, unsigned steps_per_octave,
         if (sizes.empty() || rounded != sizes.back()) sizes.push_back(rounded);
     }
     return sizes;
-}
-
-// Links the first `n` lines of `buf` into one random cycle (Sattolo's
-// algorithm), each line's first word pointing at the next line.
-void build_chase(char* buf, size_t n, size_t line, std::mt19937_64& rng)
-{
-    std::vector<uint32_t> order(n);
-    for (size_t i = 0; i < n; ++i) order[i] = static_cast<uint32_t>(i);
-    for (size_t i = n - 1; i > 0; --i) {
-        std::uniform_int_distribution<size_t> pick(0, i - 1);
-        std::swap(order[i], order[pick(rng)]);
-    }
-    for (size_t i = 0; i < n; ++i) {
-        void** slot = reinterpret_cast<void**>(buf + size_t(order[i]) * line);
-        *slot = buf + size_t(order[(i + 1) % n]) * line;
-    }
 }
 
 double chase_sample(void*& p)
@@ -155,7 +120,7 @@ OLT_BENCHMARK("mem.cache_sweep",
 {
     const olt::Config& cfg = ctx.config();
     const size_t line = std::max<size_t>(olt_cache_line_size(), sizeof(void*));
-    const size_t max_bytes = std::max(resolve_max_bytes(cfg), 2 * line);
+    const size_t max_bytes = std::max(olt::resolve_max_bytes(cfg), 2 * line);
     const std::vector<size_t> sizes = sweep_sizes(cfg.mem_min_bytes, max_bytes, cfg.sweep_steps_per_octave, line);
 
     char* buf = static_cast<char*>(olt_os_alloc_buffer(sizes.back(), cfg.hugepages ? 1 : 0));
@@ -170,7 +135,7 @@ OLT_BENCHMARK("mem.cache_sweep",
     for (size_t size : sizes) {
         const olt::Params params{{"size", size_label(size)}, {"bytes", std::to_string(size)}, {"pages", pages}};
 
-        build_chase(buf, size / line, line, rng);
+        olt::build_chase(buf, size / line, line, rng);
         void* p = buf;
         chase_sample(p);  // warm-up: bring the working set into cache
         std::vector<double> lat;

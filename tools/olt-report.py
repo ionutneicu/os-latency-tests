@@ -116,6 +116,29 @@ def safe_padding(fs):
     return ok
 
 
+ILP_OPS = [("int_mul", "integer multiply"), ("fp_add", "double add"),
+           ("fp_mul", "double multiply"), ("load_l1", "load hitting L1"), ("load_mem", "load missing to DRAM")]
+
+
+def ilp_summary(results):
+    """{op: {"points": [(chains, p50)], "latency", "best", "speedup", "chains"}} from cpu.ilp results."""
+    pts = {}
+    for r in results:
+        prm = r.get("params", {})
+        if r["name"] == "cpu.ilp" and "chains" in prm and r["percentiles"].get("p50"):
+            pts.setdefault(prm["op"], []).append((int(prm["chains"]), r["percentiles"]["p50"]))
+    out = {}
+    for op, p in pts.items():
+        p.sort()
+        if p[0][0] != 1:
+            continue
+        lat = p[0][1]
+        best = min(v for _, v in p)
+        need = next(n for n, v in p if lat / v >= 0.9 * lat / best)
+        out[op] = {"points": p, "latency": lat, "best": best, "speedup": lat / best, "chains": need}
+    return out
+
+
 def percentile_sorted(v, p):
     if not v:
         return None
@@ -169,7 +192,7 @@ CHART_STYLE_LIGHT = """
 
 
 class Chart:
-    """Line chart on a log2-bytes or 'nines' (percentile) x axis."""
+    """Line chart on a log2-bytes, 'nines' (percentile) or linear 'count' x axis."""
 
     def __init__(self, cid, title, x_kind, y_log, y_label, unit, series, zones=(), markers=(), note="", x_title=None):
         self.cid, self.title, self.x_kind, self.y_log = cid, title, x_kind, y_log
@@ -181,11 +204,15 @@ class Chart:
     def xv(self, x):
         if self.x_kind == "bytes":
             return math.log2(x)
+        if self.x_kind == "count":
+            return x
         return -math.log10(max(1e-9, 1 - x / 100.0))  # nines: p50 -> 0.3, p99 -> 2, p99.9 -> 3
 
     def x_label(self, x):
         if self.x_kind == "bytes":
             return fmt_bytes(x)
+        if self.x_kind == "count":
+            return f"{x:g}"
         return "min" if x == 0 else f"p{x:g}"
 
     def y_fmt(self, v):
@@ -253,6 +280,8 @@ class Chart:
             stride = 1 if e1 - e0 <= 12 else 2
             ticks = [2 ** e for e in range(e0, e1 + 1) if (e - e0) % stride == 0]
             tick_label = lambda x: fmt_bytes(x, compact=True)
+        elif self.x_kind == "count":
+            ticks, tick_label = xs, self.x_label
         else:
             ticks = [p for p in (0, 50, 90, 99, 99.9, 99.99, 99.999) if xs[0] <= p <= xs[-1]]
             tick_label = self.x_label
@@ -497,6 +526,20 @@ def build_guidance(summary, caches, platform, results, cfg):
             tips.append(f"Where threads run matters: handing a cache line to another CPU costs {fmt_ns(v[0])} on the "
                         f"fastest pair but {fmt_ns(v[-1])} on the slowest ({v[-1] / v[0]:.0f}x). Keep communicating "
                         f"threads on nearby CPUs (see the core-to-core matrix).")
+
+    ilp = ilp_summary(results)
+    if "fp_add" in ilp and ilp["fp_add"]["speedup"] >= 1.5:
+        f = ilp["fp_add"]
+        tips.append(f"Loop unrolling: a floating-point sum with one accumulator runs at {fmt_ns(f['latency'])} per add "
+                    f"(the add latency); with {f['chains']} independent accumulators it reaches {fmt_ns(f['best'])} "
+                    f"({f['speedup']:.1f}x). Split reductions into {f['chains']} partial sums (the compiler does it "
+                    f"for integers, for floating point only with -ffast-math / -fassociative-math).")
+    if "load_mem" in ilp and ilp["load_mem"]["speedup"] >= 2:
+        m = ilp["load_mem"]
+        tips.append(f"Memory-level parallelism: one chain of dependent DRAM misses costs {fmt_ns(m['latency'])} per "
+                    f"load, but {m['chains']} independent chains overlap to {fmt_ns(m['best'])} ({m['speedup']:.0f}x). "
+                    f"Batch independent lookups (hash probes, tree searches, pointer chasing) {m['chains']} at a time, "
+                    f"or prefetch ahead, instead of finishing one before starting the next.")
 
     fs = false_sharing(results).get("atomic")
     pad = safe_padding(fs) if fs else None
@@ -755,6 +798,45 @@ def build_report(doc, src_path, charts_dir):
     if lat:
         mem_html.append(guide_link("memory.md", "memory hierarchy"))
     sections.append(("memory", "Memory hierarchy", "\n".join(mem_html)))
+
+    # ---- instruction-level parallelism
+    ilp = ilp_summary(results)
+    if ilp:
+        names = dict(ILP_OPS)
+        chains = sorted({n for d in ilp.values() for n, _ in d["points"]})
+
+        def speedup_chart(cid, title, ops):
+            series = [{"name": names[op], "slot": i + 1,
+                       "points": [(n, ilp[op]["latency"] / v) for n, v in ilp[op]["points"]]}
+                      for i, op in enumerate(o for o in ops if o in ilp)]
+            if not series:
+                return ""
+            top = max(p[1] for s in series for p in s["points"])
+            series.append({"name": "perfect overlap", "slot": 5, "dash": True,
+                           "points": [(n, n) for n in chains if n <= top * 1.2]})
+            return chart_block(Chart(cid, title, "count", False, "speed-up vs one chain", "x", series,
+                                     x_title="independent dependency chains in the loop"))
+
+        body = ("<p class='sub'>A loop runs N independent dependency chains of the same operation (N accumulators, "
+                "N pointer chases). With one chain every step waits for the previous result, so it runs at the "
+                "operation's latency; with more chains the out-of-order core overlaps them until an execution "
+                "port, the load units or the miss buffers are saturated. Where a curve flattens is how far to "
+                "unroll such a loop on this core. Dashed: perfect overlap.</p>")
+        body += speedup_chart("cpu-ilp-alu", "Instruction-level parallelism: arithmetic",
+                              ["int_mul", "fp_add", "fp_mul"])
+        body += speedup_chart("cpu-ilp-mem", "Instruction-level parallelism: loads",
+                              ["load_l1", "load_mem"])
+        body += ("<div class='table-wrap'><table><tr><th>operation</th><th>one chain (latency)</th>"
+                 "<th>best per op</th><th>speed-up</th><th>chains to get 90% of it</th></tr>"
+                 + "".join(f"<tr><td>{e(names[op])}</td><td>{fmt_ns(d['latency'])}</td><td>{fmt_ns(d['best'])}</td>"
+                           f"<td>{d['speedup']:.1f}x</td><td>{d['chains']}</td></tr>"
+                           for op, d in ((o, ilp[o]) for o, _ in ILP_OPS if o in ilp))
+                 + "</table></div>")
+        body += ("<p class='note'>Curves can drop again at high chain counts: once accumulators outnumber the registers "
+                 "(16 general-purpose and 16 vector registers on x86-64, 32 of each on AArch64) the compiler spills "
+                 "them to the stack. More chains is not always better.</p>")
+        body += guide_link("ilp.md", "instruction-level parallelism")
+        sections.append(("cpu", "Instruction-level parallelism", body))
 
     # ---- latency distributions, one chart per benchmark group
     groups = {}

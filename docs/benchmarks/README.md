@@ -15,6 +15,7 @@ each section to its page.
 | [Blocking wake-up](sync.md) | `sync.mutex_wakeup`, `sync.condvar_wakeup` | What does it cost to block and be woken? |
 | [Heap allocator](alloc.md) | `alloc.malloc_free` | How expensive is `malloc`/`new` on the hot path? |
 | [Memory hierarchy](memory.md) | `mem.cache_sweep` | How big can my working set be before it gets slow? |
+| [Instruction-level parallelism](ilp.md) | `cpu.ilp` | How far should I unroll; how many independent lookups at once? |
 | [Container memory](pattern-alloc.md) | `pattern.alloc` | Default allocator, `reserve()`, or a pmr arena? |
 | [SPSC queues](pattern-spsc.md) | `pattern.spsc` | Mutex, spinlock or lock-free queue between two threads? |
 | [Core-to-core latency](c2c.md) | `multicore.c2c` | Which CPUs should communicating threads run on? |

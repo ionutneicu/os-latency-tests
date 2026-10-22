@@ -244,6 +244,7 @@ Installed packages provide it as `olt-report`.
 | `mem.latency_random` | dependent loads along a random cycle of cache lines (pointer chase) in a buffer of each size: load-to-use latency of the level the working set fits in |
 | `mem.read_seq`, `mem.write_seq` | sequential read / write of the same buffer, cost per cache line (GB/s = line size / value) |
 | `multicore.c2c_latency` | one-way cache-line hand-off between every pair of CPUs (atomic ping-pong), drawn as a heatmap |
+| `cpu.ilp` | ns per operation with 1 to 16 independent dependency chains (integer multiply, double add/multiply, L1 loads, DRAM loads): how far to unroll and how many cache misses overlap |
 | `multicore.false_sharing` | cost per increment when two cores update counters 8 to 512 bytes apart (plain `++` and atomic `fetch_add`), vs one core alone: the padding this CPU needs |
 | `pattern.*` | design-pattern comparisons, see [Design patterns](#design-patterns) |
 | `alloc.malloc`, `alloc.free` | `malloc()`/`free()` of one block, 16 B to 16 MiB, allocator best case (block reused, memory untouched) |

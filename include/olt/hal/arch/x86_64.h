@@ -40,6 +40,8 @@ static inline void olt_mb(void)  { _mm_mfence(); }
 static inline void olt_rmb(void) { olt_compiler_barrier(); }
 static inline void olt_wmb(void) { olt_compiler_barrier(); }
 static inline void olt_cpu_relax(void) { _mm_pause(); }
+static inline void olt_opaque_u64(uint64_t* v) { __asm__ __volatile__("" : "+r"(*v)); }
+static inline void olt_opaque_f64(double* v)   { __asm__ __volatile__("" : "+x"(*v)); }
 
 static inline void olt_cache_flush_line(const void* p)
 {
