@@ -23,6 +23,7 @@ import csv
 import html
 import json
 import math
+import re
 import statistics
 import sys
 from pathlib import Path
@@ -598,6 +599,41 @@ GROUP_TITLES = {
 }
 
 
+def md_cell(text):
+    return text.replace("|", "\\|").replace("\n", " ")
+
+
+def html_to_markdown(body):
+    """Converts the small HTML subset used in report sections to GitHub Markdown."""
+    body = re.sub(r"<!--md:(.*?)-->.*?<!--/md-->", lambda m: "\n\n" + m.group(1) + "\n\n",
+                  body, flags=re.S)
+
+    def table(m):
+        rows = []
+        for tr in re.findall(r"<tr>(.*?)</tr>", m.group(0), flags=re.S):
+            cells = [md_cell(inline(c)) for c in re.findall(r"<t[hd][^>]*>(.*?)</t[hd]>", tr, flags=re.S)]
+            rows.append("| " + " | ".join(cells) + " |")
+        if rows:
+            rows.insert(1, "|" + "---|" * rows[0].count(" | ") + "---|")
+        return "\n\n" + "\n".join(rows) + "\n\n"
+
+    def inline(t):
+        t = re.sub(r"</?code>", "`", t)
+        t = re.sub(r"</?b>", "**", t)
+        t = re.sub(r"<a href='([^']*)'>(.*?)</a>", r"[\2](\1)", t)
+        t = re.sub(r"<br\s*/?>", " ", t)
+        return html.unescape(re.sub(r"<[^>]+>", "", t)).strip()
+
+    body = re.sub(r"<table>.*?</table>", table, body, flags=re.S)
+    body = re.sub(r"<h3>(.*?)</h3>", lambda m: f"\n\n### {inline(m.group(1))}\n\n", body, flags=re.S)
+    body = re.sub(r"<li>(.*?)</li>", lambda m: f"\n- {inline(m.group(1))}", body, flags=re.S)
+    body = re.sub(r"<p class='(note|missing)'>(.*?)</p>",
+                  lambda m: f"\n\n> {inline(m.group(2))}\n\n", body, flags=re.S)
+    body = re.sub(r"<p[^>]*>(.*?)</p>", lambda m: f"\n\n{inline(m.group(1))}\n\n", body, flags=re.S)
+    body = re.sub(r"</?(div|ul)[^>]*>", "\n", body)
+    return re.sub(r"\n{3,}", "\n\n", body).strip() + "\n"
+
+
 def build_report(doc, src_path, charts_dir):
     plat = doc["platform"]
     cfg = doc.get("config", {})
@@ -612,8 +648,10 @@ def build_report(doc, src_path, charts_dir):
 
     def chart_block(ch):
         charts.append(ch)
-        return (f"<div class='chart'>{ch.render()}</div>"
-                f"<div class='dl'><a href='{e(charts_dir.name)}/{e(ch.cid)}.svg'>{e(ch.cid)}.svg</a></div>")
+        # the <!--md:...--> marker tells html_to_markdown() to use the SVG file instead
+        return (f"<!--md:![{e(ch.title)}]({e(charts_dir.name)}/{e(ch.cid)}.svg)-->"
+                f"<div class='chart'>{ch.render()}</div>"
+                f"<div class='dl'><a href='{e(charts_dir.name)}/{e(ch.cid)}.svg'>{e(ch.cid)}.svg</a></div><!--/md-->")
 
     # ---- memory hierarchy
     lat = sweep_series(results, "mem.latency_random")
@@ -846,7 +884,20 @@ def build_report(doc, src_path, charts_dir):
     out.append(f"<p class='note'>Generated from {e(src_path.name)} by tools/olt-report.py. "
                f"Charts are also saved as standalone SVG files in {e(charts_dir.name)}/.</p>")
     out.append(f"<script>{JS}</script></main></body></html>")
-    return "\n".join(out), charts
+
+    # ---- Markdown twin: same content, charts as linked SVG files, renders on GitHub
+    md = [f"# Latency report\n\n{plat.get('cpu_model', '')}{board} · {plat.get('arch', '')} · "
+          f"Linux {plat.get('kernel_release', '')} [{plat.get('preempt_model', '')}]\n",
+          "| | |\n|---|---|\n" + "".join(f"| {k} | {md_cell(str(v))} |\n" for k, v in rows)]
+    if doc.get("warnings"):
+        md.append("> **⚠ Pre-flight warnings: results may be noisy**\n>\n"
+                  + "".join(f"> - {w}\n" for w in doc["warnings"]))
+    md.append("".join(f"- [{t}](#{a})\n" for a, t, _ in sections))
+    for a, t, body in sections:
+        md.append(f'<a id="{a}"></a>\n\n## {t}\n\n{html_to_markdown(body)}')
+    md.append(f"*Generated from {src_path.name} by tools/olt-report.py. An interactive version with hover "
+              f"details is in report.html next to this file.*\n")
+    return "\n".join(out), "\n".join(md), charts
 
 
 def main():
@@ -862,16 +913,17 @@ def main():
         sys.exit(f"error: cannot read {src}: {ex}")
     out = Path(args.output) if args.output else src.with_name("report.html")
     charts_dir = out.with_name("charts")
-    page, charts = build_report(doc, src, charts_dir)
+    page, md, charts = build_report(doc, src, charts_dir)
     try:
         charts_dir.mkdir(parents=True, exist_ok=True)
         for ch in charts:
             (charts_dir / f"{ch.cid}.svg").write_text(ch.render(standalone=True))
         out.write_text(page)
+        out.with_suffix(".md").write_text(md)
     except PermissionError:
         sys.exit(f"error: cannot write {out} (directory created by a sudo run?). "
                  f"Fix with: sudo chown -R $USER: {out.parent}  or pass -o ~/report.html")
-    print(f"report written to {out} ({len(charts)} charts, SVGs in {charts_dir}/)")
+    print(f"report written to {out} and {out.with_suffix('.md').name} ({len(charts)} charts, SVGs in {charts_dir}/)")
 
 
 if __name__ == "__main__":

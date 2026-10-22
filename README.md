@@ -14,6 +14,12 @@ sits behind a small hardware abstraction layer (see [Architecture](#architecture
 so other architectures and operating systems can be added without touching the
 benchmarks.
 
+**[See a sample report](docs/sample-report/report.md)**: graphs, tables and
+design hints from a full run on a 4-vCPU cloud VM (Xeon, 48 KiB L1, 2 MiB L2,
+260 MiB L3). The interactive HTML version of the same run, with hover details,
+is [docs/sample-report/report.html](docs/sample-report/report.html) (download
+it and open it in a browser).
+
 ## Prerequisites
 
 | What | Why | Debian/Ubuntu | Fedora | Arch |
@@ -61,7 +67,8 @@ One command builds, runs every benchmark and opens the report (install the
 ./run-all.sh --quick    # ~20 s smoke run; --no-sudo for an unprivileged run
 ```
 
-Results go to `results/<host>-<timestamp>/`: `report.html`, every chart as a
+Results go to `results/<host>-<timestamp>/`: `report.html`, the same report as
+`report.md` (renders on GitHub/GitLab, handy for sharing), every chart as a
 standalone SVG in `charts/`, `results.json` and raw samples in `raw/`.
 
 Step by step:
@@ -70,7 +77,7 @@ Step by step:
 cmake -S . -B build
 cmake --build build -j
 ./build/os-latency-tests                       # all benchmarks, about a minute
-python3 tools/olt-report.py olt-results/results.json   # -> olt-results/report.html
+python3 tools/olt-report.py olt-results/results.json   # -> olt-results/report.html + report.md
 ```
 
 Open `olt-results/report.html` in a browser for the graphs.
@@ -184,7 +191,10 @@ board) turns a `results.json` into one self-contained HTML file:
 * a percentile table for every other benchmark.
 
 Every chart is also written as a standalone SVG file to `charts/` next to the
-report, for slides and documents.
+report, for slides and documents. A Markdown twin, `report.md`, carries the same
+text and tables and links those SVGs, so a results directory pushed to GitHub or
+GitLab (or pasted into a wiki) reads as a report without opening the HTML. See
+[docs/sample-report/](docs/sample-report/report.md) for an example.
 
 ```sh
 python3 tools/olt-report.py olt-results/results.json -o report.html

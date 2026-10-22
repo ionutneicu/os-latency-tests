@@ -7,7 +7,7 @@
 #   ./run-all.sh --no-sudo    unprivileged run (default scheduling, idle allowed)
 #   ./run-all.sh -- ARGS...   extra os-latency-tests options, e.g. -- --hugepages
 #
-# Results land in results/<host>-<timestamp>/ (results.json, raw/, report.html, charts/).
+# Results land in results/<host>-<timestamp>/ (results.json, raw/, report.html, report.md, charts/).
 set -eu
 
 cd "$(dirname "$0")"
@@ -59,7 +59,7 @@ if command -v python3 >/dev/null 2>&1; then
     if [ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ] && command -v xdg-open >/dev/null 2>&1; then
         xdg-open "$out/report.html" >/dev/null 2>&1 &
     fi
-    echo "==> open $out/report.html (charts as SVG in $out/charts/)"
+    echo "==> open $out/report.html (also report.md; charts as SVG in $out/charts/)"
 else
     echo "python3 not found: copy $out to a machine with Python 3 and run tools/olt-report.py there" >&2
 fi
