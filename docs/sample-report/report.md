@@ -64,6 +64,8 @@ Streaming read and write over the same buffer: prefetchers are effective, so the
 | L3 | 3 MiB – 195 MiB | 158 ns | 20.2 GB/s | 16.8 GB/s |
 | DRAM | > 390 MiB | 259 ns | 11.6 GB/s | 6.19 GB/s |
 
+Benchmark guide: [memory hierarchy](https://github.com/ionutneicu/os-latency-tests/blob/main/docs/benchmarks/memory.md), what is measured and how to apply the result in C++.
+
 <a id="sync"></a>
 
 ## Blocking wake-up latency
@@ -71,6 +73,8 @@ Streaming read and write over the same buffer: prefetchers are effective, so the
 Time from one thread releasing a mutex / signalling a condition variable to the blocked thread running again. The curve reads left to right from the fastest sample to the tail: the further right it rises, the rarer but costlier the outliers. Percentiles with fewer than ~10 samples beyond them are not drawn.
 
 ![Blocking wake-up latency: latency by percentile](charts/sync-percentiles.svg)
+
+Benchmark guide: [blocking wake-up](https://github.com/ionutneicu/os-latency-tests/blob/main/docs/benchmarks/sync.md), what is measured and how to apply the result in C++.
 
 <a id="thread"></a>
 
@@ -80,6 +84,8 @@ Cost of starting a new thread and of joining a finished one. The curve reads lef
 
 ![Thread lifecycle: latency by percentile](charts/thread-percentiles.svg)
 
+Benchmark guide: [threads: spawn or pool](https://github.com/ionutneicu/os-latency-tests/blob/main/docs/benchmarks/threads.md), what is measured and how to apply the result in C++.
+
 <a id="alloc"></a>
 
 ## Heap allocator
@@ -87,6 +93,8 @@ Cost of starting a new thread and of joining a finished one. The curve reads lef
 Cost of one `malloc()` and one `free()` per block size, in the allocator's best case (the block is reused every iteration and never touched). Solid: p50, dashed: p99.
 
 ![malloc / free latency vs block size](charts/alloc-size.svg)
+
+Benchmark guide: [heap allocator](https://github.com/ionutneicu/os-latency-tests/blob/main/docs/benchmarks/alloc.md), what is measured and how to apply the result in C++.
 
 <a id="multicore"></a>
 
@@ -98,6 +106,8 @@ Two threads pinned to a pair of CPUs ping-pong one value through a `std::atomic`
 
 > Fastest pair: CPU 2 ↔ 3 (55.8 ns); slowest: CPU 1 ↔ 2 (87.5 ns); median 77.3 ns. Pin threads that talk a lot (producer/consumer pairs) to a fast pair with `--cpus A,B` or in your application.
 
+Benchmark guide: [core-to-core latency](https://github.com/ionutneicu/os-latency-tests/blob/main/docs/benchmarks/c2c.md), what is measured and how to apply the result in C++.
+
 ### False sharing: how far apart must per-thread data be?
 
 Threads on CPU 3 and CPU 0 (different physical cores) each increment their own counter; the counters sit the given distance apart. While both share a cache line, every write pulls the line away from the other core. Atomic read-modify-writes pay each transfer; plain stores hide most of it in the store buffer, so the penalty there is smaller but not zero. Dashed: the same loop on one core alone. Band: min to p90.
@@ -105,6 +115,8 @@ Threads on CPU 3 and CPU 0 (different physical cores) each increment their own c
 ![False sharing: cost per increment vs distance between counters](charts/multicore-false-sharing.svg)
 
 > On this CPU, counters written by different threads need at least 64 bytes between them (vertical line: the 64-byte cache line).
+
+Benchmark guide: [false sharing](https://github.com/ionutneicu/os-latency-tests/blob/main/docs/benchmarks/false-sharing.md), what is measured and how to apply the result in C++.
 
 <a id="patterns"></a>
 
@@ -118,6 +130,8 @@ Build and destroy a 256-element container; cost per element (p50, shorter is bet
 
 ![std::list&lt;int&gt;, 256 push_back: ns per element](charts/pattern-alloc-list.svg)
 
+Benchmark guide: [container memory](https://github.com/ionutneicu/os-latency-tests/blob/main/docs/benchmarks/pattern-alloc.md), what is measured and how to apply the result in C++.
+
 ### Single producer / single consumer: mutex vs spinlock vs lock-free
 
 The same bounded ring hand-off synchronised five ways. Latency is half a ping-pong round trip; throughput streams 256 Ki items through one queue.
@@ -129,6 +143,8 @@ The same bounded ring hand-off synchronised five ways. Latency is half a ping-po
 What it costs: CPU time burnt by producer plus consumer during the latency test, divided by wall time. 2.0 means both threads kept a core fully busy (polling); low values mean they slept while waiting.
 
 ![SPSC CPU usage while handing off](charts/pattern-spsc-cpu.svg)
+
+Benchmark guide: [SPSC queues](https://github.com/ionutneicu/os-latency-tests/blob/main/docs/benchmarks/pattern-spsc.md), what is measured and how to apply the result in C++.
 
 <a id="table"></a>
 

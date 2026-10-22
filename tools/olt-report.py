@@ -611,6 +611,7 @@ ul.tips li { margin: 4px 0; }
 .warn { border: 1px solid var(--grid); border-left: 4px solid #eda100; border-radius: 6px; padding: 8px 12px; margin: 12px 0; }
 .warn ul { margin: 4px 0 0; padding-left: 20px; }
 .caution { border: 1px solid var(--grid); border-left: 4px solid var(--s1); border-radius: 6px; padding: 8px 12px; margin: 12px 0; color: var(--text-2); }
+.guide { margin: 4px 0 18px; font-size: 14px; }
 .missing { color: var(--text-2); border: 1px dashed var(--grid); border-radius: 6px; padding: 8px 12px; }
 """
 
@@ -648,6 +649,16 @@ HOT_PATH_WARNING = (
     "portability for nanoseconds. Apply them only to the measured hot path of ultra-low-latency or "
     "high-performance code, after profiling shows it matters, and keep the rest simple and portable. The numbers "
     "are for this machine; re-measure on each target.")
+
+
+GUIDE_URL = "https://github.com/ionutneicu/os-latency-tests/blob/main/docs/benchmarks/"
+GUIDES = {"thread": ("threads.md", "threads: spawn or pool"), "sync": ("sync.md", "blocking wake-up")}
+
+
+def guide_link(page, what):
+    """Link to the benchmark's page: goal, what is measured, how to apply it in C++."""
+    return (f"<p class='guide'>Benchmark guide: <a href='{GUIDE_URL}{page}'>{html.escape(what)}</a>, what is "
+            f"measured and how to apply the result in C++.</p>")
 
 
 def md_cell(text):
@@ -741,6 +752,8 @@ def build_report(doc, src_path, charts_dir):
         mem_html.append("<p class='missing'>The memory sweep was not part of this run. Run "
                         "<code>os-latency-tests</code> without <code>-t</code> (or with <code>-t 'mem.*'</code>) "
                         "to get the cache graphs.</p>")
+    if lat:
+        mem_html.append(guide_link("memory.md", "memory hierarchy"))
     sections.append(("memory", "Memory hierarchy", "\n".join(mem_html)))
 
     # ---- latency distributions, one chart per benchmark group
@@ -760,6 +773,8 @@ def build_report(doc, src_path, charts_dir):
                 f"samples beyond them are not drawn.</p>")
         body += chart_block(Chart(f"{g}-percentiles", f"{title}: latency by percentile", "nines", True,
                                   "latency (log)", "ns", series))
+        if g in GUIDES:
+            body += guide_link(*GUIDES[g])
         sections.append((g, title, body))
 
     # ---- allocator
@@ -775,6 +790,7 @@ def build_report(doc, src_path, charts_dir):
                                    {"name": "malloc p99", "slot": 1, "dash": True, "points": pts("alloc.malloc", "p99")},
                                    {"name": "free p50", "slot": 2, "points": pts("alloc.free", "p50")},
                                    {"name": "free p99", "slot": 2, "dash": True, "points": pts("alloc.free", "p99")}]))
+        body += guide_link("alloc.md", "heap allocator")
         sections.append(("alloc", "Heap allocator", body))
 
     # ---- design patterns: variants of one task side by side
@@ -806,6 +822,7 @@ def build_report(doc, src_path, charts_dir):
         if al:
             pat_html.append(chart_block(BarChart("pattern-alloc-list", "std::list<int>, 256 push_back: ns per element",
                                                  "ns per element (p50)", bar_rows(al))))
+        pat_html.append(guide_link("pattern-alloc.md", "container memory"))
     sl, st = variants("pattern.spsc_latency"), variants("pattern.spsc_throughput")
     if sl or st:
         pat_html.append("<h3>Single producer / single consumer: mutex vs spinlock vs lock-free</h3>"
@@ -837,6 +854,7 @@ def build_report(doc, src_path, charts_dir):
             pat_html.append(chart_block(BarChart("pattern-spsc-cpu", "SPSC CPU usage while handing off",
                                                  "CPU cores busy (producer + consumer)", cpu_rows,
                                                  best_label="least CPU", ratio_word="more CPU")))
+        pat_html.append(guide_link("pattern-spsc.md", "SPSC queues"))
     c2c = {}
     for r in results:
         if r["name"] == "multicore.c2c_latency" and "cpu_a" in r["params"] and r["percentiles"].get("p50"):
@@ -870,6 +888,7 @@ def build_report(doc, src_path, charts_dir):
         if pad:
             fs_html += (f"<p class='note'>On this CPU, counters written by different threads need at least "
                         f"{pad} bytes between them (vertical line: the {line}-byte cache line).</p>")
+        fs_html += guide_link("false-sharing.md", "false sharing")
     if c2c:
         cpus = sorted({c for k in c2c for c in k})
         vals = sorted(c2c.values())
@@ -885,6 +904,7 @@ def build_report(doc, src_path, charts_dir):
                  f"{slow[0]} ↔ {slow[1]} ({fmt_ns(c2c[slow])}); median {fmt_ns(statistics.median(vals))}. Pin "
                  f"threads that talk a lot (producer/consumer pairs) to a fast pair with <code>--cpus A,B</code> "
                  f"or in your application.</p>")
+        body += guide_link("c2c.md", "core-to-core latency")
         sections.append(("multicore", "Multicore communication", body + fs_html))
     elif fs_html:
         sections.append(("multicore", "Multicore communication", fs_html))

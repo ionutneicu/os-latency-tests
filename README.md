@@ -46,7 +46,8 @@ sits behind a small hardware abstraction layer (see [Architecture](#architecture
 so other architectures and operating systems can be added without touching the
 benchmarks.
 
-Plans and next measurements: [docs/ROADMAP.md](docs/ROADMAP.md). Tuning
+What each benchmark measures and how to apply its result in C++, with code:
+[docs/benchmarks/](docs/benchmarks/README.md). Plans and next measurements: [docs/ROADMAP.md](docs/ROADMAP.md). Tuning
 beyond a stock kernel (isolated cores, PREEMPT_RT, boot options, kernel
 bypass), with what to expect: [docs/expert-setup.md](docs/expert-setup.md).
 
@@ -462,3 +463,6 @@ OLT_BENCHMARK("mem.example", "What is measured, precisely")
 ```
 
 Add the file to the `os-latency-tests` target in `CMakeLists.txt`.
+Then add a page to [docs/benchmarks/](docs/benchmarks/README.md) (goal, what
+is measured, how to read the result, how to apply it in C++) and link it from
+the report section with `guide_link()` in `tools/olt-report.py`.
