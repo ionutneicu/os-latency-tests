@@ -1,6 +1,7 @@
 // olt/report.hpp - result output: console table, JSON summary, raw CSV.
 #pragma once
 
+#include <cstdint>
 #include <ostream>
 #include <string>
 #include <vector>
@@ -18,6 +19,9 @@ struct SummarizedResult {
 
 // "1.23 us"-style formatting with 3 significant digits.
 std::string format_ns(double ns);
+
+// "48K", "1.25M"-style size with up to 3 significant digits.
+std::string format_bytes(uint64_t bytes);
 
 // Short "key=value,key=value" form of benchmark parameters.
 std::string format_params(const Params& params);

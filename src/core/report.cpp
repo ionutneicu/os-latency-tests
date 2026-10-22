@@ -77,6 +77,16 @@ std::string sanitize_filename(const std::string& s)
 
 }  // namespace
 
+std::string format_bytes(uint64_t bytes)
+{
+    char buf[32];
+    if (bytes >= (uint64_t(1) << 30)) std::snprintf(buf, sizeof(buf), "%.3gG", double(bytes) / double(uint64_t(1) << 30));
+    else if (bytes >= (uint64_t(1) << 20)) std::snprintf(buf, sizeof(buf), "%.3gM", double(bytes) / double(uint64_t(1) << 20));
+    else if (bytes >= 1024) std::snprintf(buf, sizeof(buf), "%.3gK", double(bytes) / 1024.0);
+    else std::snprintf(buf, sizeof(buf), "%lluB", static_cast<unsigned long long>(bytes));
+    return buf;
+}
+
 std::string format_ns(double ns)
 {
     if (!std::isfinite(ns)) return "n/a";
@@ -117,8 +127,7 @@ void print_platform(std::ostream& os, const PlatformInfo& p, const Config& cfg)
     os << "  caches         :";
     for (const auto& c : p.caches)
         os << " L" << c.level << (c.type[0] == 'D' ? "d" : c.type[0] == 'I' ? "i" : "") << "="
-           << (c.size_bytes >= (1u << 20) ? std::to_string(c.size_bytes >> 20) + "M"
-                                          : std::to_string(c.size_bytes >> 10) + "K");
+           << format_bytes(c.size_bytes);
     os << " (line " << p.cache_line_size << " B)\n";
     os << "  cycle counter  : " << std::fixed << std::setprecision(3) << p.ticks.ticks_per_ns * 1e3
        << " MHz" << (p.ticks.from_hardware ? " (reported)" : " (calibrated)") << std::defaultfloat << "\n";
