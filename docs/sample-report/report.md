@@ -57,7 +57,7 @@ Dependent loads in random order through a buffer of the given size, so hardware 
 
 > Base pages were used, so latency past the TLB reach also includes page walks. Re-run with `--hugepages` to separate TLB misses from cache misses.
 
-Sequential read and write over the same buffer with AVX512 vector loads and stores: prefetchers are effective, so the drops are smaller than for random access and show each level's bandwidth (log scale: equal steps are equal ratios). A normal store must first read its line in, so each written line crosses the bus twice: read for ownership, then write-back. Dashed curve: streaming (non-temporal) stores, which skip that read and the caches: slow while the data would fit in cache, faster beyond it. Narrower vectors (scalar or SSE code) cannot reach the L1 and L2 figures: those levels deliver as many bytes per cycle as the core can request.
+Sequential read and write over the same buffer with AVX-512 vector loads and stores: prefetchers are effective, so the drops are smaller than for random access and show each level's bandwidth (log scale: equal steps are equal ratios). A normal store must first read its line in, so each written line crosses the bus twice: read for ownership, then write-back. Dashed curve: streaming (non-temporal) stores, which skip that read and the caches: slow while the data would fit in cache, faster beyond it. Narrower vectors (scalar or SSE code) cannot reach the L1 and L2 figures: those levels deliver as many bytes per cycle as the core can request.
 
 ![Sequential bandwidth vs working set](charts/mem-bandwidth.svg)
 

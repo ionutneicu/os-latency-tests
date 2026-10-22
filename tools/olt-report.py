@@ -116,6 +116,9 @@ def safe_padding(fs):
     return ok
 
 
+# mem.read_seq / mem.write_seq param "isa" (olt/hal/stream.h) -> display name
+ISA_NAMES = {"avx512": "AVX-512", "avx2": "AVX2", "sse2": "SSE2", "neon": "NEON", "generic": "16-byte"}
+
 ILP_OPS = [("int_mul", "integer multiply"), ("fp_add", "double add"),
            ("fp_mul", "double multiply"), ("load_l1", "load hitting L1"), ("load_mem", "load missing to DRAM")]
 
@@ -803,7 +806,7 @@ def build_report(doc, src_path, charts_dir):
         isa = next((r["params"].get("isa") for r in results
                     if r["name"] == "mem.read_seq" and r.get("params", {}).get("isa")), None)
         mem_html.append("<p class='sub'>Sequential read and write over the same buffer"
-                        + (f" with {e(isa.upper())} vector loads and stores" if isa else "")
+                        + (f" with {e(ISA_NAMES.get(isa, isa))} vector loads and stores" if isa else "")
                         + ": prefetchers are effective, so the drops are smaller than for random "
                         "access and show each level's bandwidth (log scale: equal steps are equal ratios). A normal store must first read its line in, so "
                         "each written line crosses the bus twice: read for ownership, then write-back."
