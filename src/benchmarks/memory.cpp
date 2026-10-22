@@ -18,10 +18,10 @@
 //                      misses overlap: this is store throughput per level, not
 //                      latency. Unit: ns per store.
 //
-// Sequential read and write use 16-byte vectors (SSE2 / NEON, the baseline of
-// both architectures), two per loop iteration, so the loop itself is not the
-// bottleneck. Code built for AVX2/AVX-512 can move up to 2-4x more per cycle
-// in L1 and L2; from L3 outwards the memory, not the instruction width, limits.
+// Sequential read and write use the widest vectors the CPU has (olt/hal/
+// stream.h: AVX-512, AVX2 or SSE2 on x86-64, NEON on AArch64), so in L1 and L2
+// the cache, not the instruction width, sets the pace. The ISA is recorded in
+// the results (param isa).
 
 #include <algorithm>
 #include <cmath>
@@ -34,6 +34,7 @@
 #include "olt/benchmark.hpp"
 #include "olt/hal/arch.h"
 #include "olt/hal/os.h"
+#include "olt/hal/stream.h"
 #include "mem_util.hpp"
 
 namespace {
@@ -41,10 +42,6 @@ namespace {
 constexpr size_t k_chase_accesses = size_t(1) << 17;  // loads per latency sample
 constexpr size_t k_stream_bytes = size_t(32) << 20;   // bytes touched per bandwidth sample
 constexpr size_t k_random_stores = size_t(1) << 17;   // stores per random-write sample
-
-// 16-byte vector of two u64 (GCC/Clang vector extension: SSE2 on x86-64, NEON
-// on AArch64); may_alias because it is laid over a char buffer.
-typedef uint64_t v2u64 __attribute__((vector_size(16), may_alias));
 
 std::string size_label(size_t bytes)
 {
@@ -93,45 +90,23 @@ double chase_sample(void*& p)
 
 double read_sample(const char* buf, size_t size, size_t line)
 {
-    const size_t passes = std::max<size_t>(1, k_stream_bytes / size);
-    const v2u64* v = reinterpret_cast<const v2u64*>(buf);
-    const size_t vecs = size / sizeof(v2u64);
-    // two accumulators so the loop is bound by load throughput, not by the
-    // latency of one add chain (sizes are whole lines, lines >= 32 B)
-    v2u64 s0 = {0, 0}, s1 = {0, 0};
+    const size_t bytes = size / 64 * 64;  // the kernels work in 64-byte blocks
+    const size_t passes = std::max<size_t>(1, k_stream_bytes / bytes);
     const uint64_t t0 = olt::now_ns();
-    for (size_t p = 0; p < passes; ++p) {
-        for (size_t i = 0; i < vecs; i += 2) {
-            s0 += v[i];
-            s1 += v[i + 1];
-        }
-        olt_compiler_barrier();  // keep passes from being merged
-    }
+    const uint64_t sum = olt_stream_read(buf, bytes, passes);
     const uint64_t t1 = olt::now_ns();
-    const v2u64 s = s0 + s1;
-    olt::do_not_optimize(s[0] + s[1]);
-    return double(t1 - t0) / (double(passes) * double(size) / double(line));
+    olt::do_not_optimize(sum);
+    return double(t1 - t0) / (double(passes) * double(bytes) / double(line));
 }
 
 double write_sample(char* buf, size_t size, size_t line)
 {
-    const size_t passes = std::max<size_t>(1, k_stream_bytes / size);
-    v2u64* v = reinterpret_cast<v2u64*>(buf);
-    const size_t vecs = size / sizeof(v2u64);
+    const size_t bytes = size / 64 * 64;
+    const size_t passes = std::max<size_t>(1, k_stream_bytes / bytes);
     const uint64_t t0 = olt::now_ns();
-    for (size_t p = 0; p < passes; ++p) {
-        // a value the compiler cannot see, so the loop cannot become memset
-        uint64_t x = p + 1;
-        olt_opaque_u64(&x);
-        const v2u64 val = {x, ~x};
-        for (size_t i = 0; i < vecs; i += 2) {
-            v[i] = val;
-            v[i + 1] = val;
-        }
-        olt_compiler_barrier();
-    }
+    olt_stream_write(buf, bytes, passes, 0x9E3779B97F4A7C15ull);
     const uint64_t t1 = olt::now_ns();
-    return double(t1 - t0) / (double(passes) * double(size) / double(line));
+    return double(t1 - t0) / (double(passes) * double(bytes) / double(line));
 }
 
 double write_nt_sample(char* buf, size_t size, size_t line)
@@ -203,13 +178,15 @@ OLT_BENCHMARK("mem.cache_sweep",
         read_sample(buf, size, line);
         std::vector<double> rd;
         for (size_t s = 0; s < cfg.sweep_samples; ++s) rd.push_back(read_sample(buf, size, line));
-        ctx.add_result("mem.read_seq", params, std::move(rd));
+        olt::Params vparams = params;
+        vparams.emplace_back("isa", olt_stream_isa());
+        ctx.add_result("mem.read_seq", vparams, std::move(rd));
         ctx.results().back().unit = "ns/line";
 
         write_sample(buf, size, line);
         std::vector<double> wr;
         for (size_t s = 0; s < cfg.sweep_samples; ++s) wr.push_back(write_sample(buf, size, line));
-        ctx.add_result("mem.write_seq", params, std::move(wr));
+        ctx.add_result("mem.write_seq", vparams, std::move(wr));
         ctx.results().back().unit = "ns/line";
 
         write_nt_sample(buf, size, line);

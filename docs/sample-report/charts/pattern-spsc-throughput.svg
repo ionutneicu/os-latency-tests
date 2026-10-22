@@ -8,20 +8,20 @@
 </style><rect class="bg" width="1000" height="228"/>
 <text class="title" x="170" y="18">SPSC streaming throughput</text><g transform="translate(0,24)">
 <text class="ax" x="160" y="25.0" text-anchor="end">mutex_condvar</text>
-<rect class="f1" x="170" y="10" width="33.5" height="22" rx="4"/>
-<text class="ax" x="211.5" y="25.0">4.39 M items/s (228 ns/item)  (14.9x slower)</text>
+<rect class="f1" x="170" y="10" width="38.6" height="22" rx="4"/>
+<text class="ax" x="216.6" y="25.0">4.95 M items/s (202 ns/item)  (12.9x slower)</text>
 <text class="ax" x="160" y="57.0" text-anchor="end">mutex_poll</text>
-<rect class="f1" x="170" y="42" width="32.4" height="22" rx="4"/>
-<text class="ax" x="210.4" y="57.0">4.24 M items/s (236 ns/item)  (15.5x slower)</text>
+<rect class="f1" x="170" y="42" width="29.9" height="22" rx="4"/>
+<text class="ax" x="207.9" y="57.0">3.83 M items/s (261 ns/item)  (16.7x slower)</text>
 <text class="ax" x="160" y="89.0" text-anchor="end">spinlock</text>
-<rect class="f1" x="170" y="74" width="61.1" height="22" rx="4"/>
-<text class="ax" x="239.1" y="89.0">8.01 M items/s (125 ns/item)  (8.2x slower)</text>
+<rect class="f1" x="170" y="74" width="58.7" height="22" rx="4"/>
+<text class="ax" x="236.7" y="89.0">7.53 M items/s (133 ns/item)  (8.5x slower)</text>
 <text class="ax" x="160" y="121.0" text-anchor="end">lockfree</text>
 <rect class="f1" x="170" y="106" width="500.0" height="22" rx="4"/>
-<text class="ax" x="678.0" y="121.0">65.5 M items/s (15.3 ns/item)  (fastest)</text>
+<text class="ax" x="678.0" y="121.0">64.1 M items/s (15.6 ns/item)  (fastest)</text>
 <text class="ax" x="160" y="153.0" text-anchor="end">lockfree_cached</text>
-<rect class="f1" x="170" y="138" width="136.1" height="22" rx="4"/>
-<text class="ax" x="314.1" y="153.0">17.8 M items/s (56.1 ns/item)  (3.7x slower)</text>
+<rect class="f1" x="170" y="138" width="93.6" height="22" rx="4"/>
+<text class="ax" x="271.6" y="153.0">12 M items/s (83.4 ns/item)  (5.3x slower)</text>
 <text class="ax" x="170" y="196">million items per second (p50 run)</text>
 </g>
 </svg>

@@ -242,7 +242,7 @@ Installed packages provide it as `olt-report`.
 | `sync.mutex_wakeup` | worker `unlock()` until the blocked main thread's `lock()` returns |
 | `sync.condvar_wakeup` | worker sets the predicate (then unlocks and `notify_one()`) until `wait()` returns |
 | `mem.latency_random` | dependent loads along a random cycle of cache lines (pointer chase) in a buffer of each size: load-to-use latency of the level the working set fits in |
-| `mem.read_seq`, `mem.write_seq` | sequential read / write of the same buffer with 16-byte vectors, cost per cache line (GB/s = line size / value) |
+| `mem.read_seq`, `mem.write_seq` | sequential read / write of the same buffer with the widest vectors the CPU has (AVX-512 / AVX2 / SSE2, NEON), cost per cache line (GB/s = line size / value) |
 | `mem.write_nt` | sequential non-temporal (streaming) write: stores that bypass the caches, cost per cache line |
 | `mem.write_random` | independent 8-byte stores to random cache lines of the buffer: store throughput per level when every miss must fetch its line |
 | `multicore.c2c_latency` | one-way cache-line hand-off between every pair of CPUs (atomic ping-pong), drawn as a heatmap |
@@ -435,6 +435,8 @@ include/olt/hal/arch.h        CPU primitives: cycle counter, prefetch (L1/L2/L3/
   arch/generic.h              compiler-builtin fallback
 include/olt/hal/os.h          OS services (C API): monotonic clock, affinity, SCHED_FIFO,
   src/hal/linux/os_linux.c    mlockall, cache topology, CPU/board/kernel/preempt info
+include/olt/hal/stream.h      bulk read/write kernels at the CPU's widest vector width
+  src/hal/stream.c            (AVX-512 / AVX2 / SSE2 picked at run time, NEON, generic)
 include/olt/hal/perf.h        optional counters
   src/hal/linux/perf_linux.c  perf_event_open backend
   src/hal/stub/perf_stub.c    no-counter stub

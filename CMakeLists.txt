@@ -54,6 +54,7 @@ find_package(Threads REQUIRED)
 add_library(olt_core STATIC
   ${OLT_OS_SOURCES}
   ${OLT_PERF_SOURCES}
+  src/hal/stream.c
   src/core/benchmark.cpp
   src/core/clock.cpp
   src/core/platform.cpp

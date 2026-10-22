@@ -9,13 +9,13 @@
 <text class="title" x="170" y="18">std::list&lt;int&gt;, 256 push_back: ns per element</text><g transform="translate(0,24)">
 <text class="ax" x="160" y="25.0" text-anchor="end">new_delete</text>
 <rect class="f1" x="170" y="10" width="500.0" height="22" rx="4"/>
-<text class="ax" x="678.0" y="25.0">p50 30.5 ns, p99 76.3 ns  (3.2x slower)</text>
+<text class="ax" x="678.0" y="25.0">p50 30.8 ns, p99 71.1 ns  (3.9x slower)</text>
 <text class="ax" x="160" y="57.0" text-anchor="end">pmr_monotonic</text>
-<rect class="f1" x="170" y="42" width="154.3" height="22" rx="4"/>
-<text class="ax" x="332.3" y="57.0">p50 9.41 ns, p99 11.3 ns  (fastest)</text>
+<rect class="f1" x="170" y="42" width="127.0" height="22" rx="4"/>
+<text class="ax" x="305.0" y="57.0">p50 7.82 ns, p99 11.4 ns  (fastest)</text>
 <text class="ax" x="160" y="89.0" text-anchor="end">pmr_pool</text>
-<rect class="f1" x="170" y="74" width="340.2" height="22" rx="4"/>
-<text class="ax" x="518.2" y="89.0">p50 20.7 ns, p99 69.5 ns  (2.2x slower)</text>
+<rect class="f1" x="170" y="74" width="314.2" height="22" rx="4"/>
+<text class="ax" x="492.2" y="89.0">p50 19.4 ns, p99 37.4 ns  (2.5x slower)</text>
 <text class="ax" x="170" y="132">ns per element (p50)</text>
 </g>
 </svg>
