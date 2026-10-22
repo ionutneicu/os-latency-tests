@@ -46,6 +46,8 @@ static inline void olt_mb(void)  { __asm__ __volatile__("dmb ish" ::: "memory");
 static inline void olt_rmb(void) { __asm__ __volatile__("dmb ishld" ::: "memory"); }
 static inline void olt_wmb(void) { __asm__ __volatile__("dmb ishst" ::: "memory"); }
 static inline void olt_cpu_relax(void) { __asm__ __volatile__("yield" ::: "memory"); }
+static inline void olt_opaque_u64(uint64_t* v) { __asm__ __volatile__("" : "+r"(*v)); }
+static inline void olt_opaque_f64(double* v)   { __asm__ __volatile__("" : "+w"(*v)); }
 
 static inline void olt_cache_flush_line(const void* p)
 {

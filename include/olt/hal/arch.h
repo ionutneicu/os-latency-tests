@@ -24,6 +24,10 @@
  *   void olt_wmb(void);                 store-store barrier
  *   void olt_cpu_relax(void);           spin-wait hint (pause / yield)
  *
+ *   void olt_opaque_u64(uint64_t*);     make the optimiser forget what it knows about a value
+ *   void olt_opaque_f64(double*);       while keeping it in a register (no memory clobber), so
+ *                                       benchmark loops cannot be folded, vectorised or reassociated
+ *
  *   void   olt_cache_flush_line(const void*);  write back + invalidate the line holding the address
  *   size_t olt_cache_line_size(void);          data cache line size in bytes
  *

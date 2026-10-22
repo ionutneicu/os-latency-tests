@@ -38,6 +38,9 @@ static inline void olt_mb(void)  { __atomic_thread_fence(__ATOMIC_SEQ_CST); }
 static inline void olt_rmb(void) { __atomic_thread_fence(__ATOMIC_ACQUIRE); }
 static inline void olt_wmb(void) { __atomic_thread_fence(__ATOMIC_RELEASE); }
 static inline void olt_cpu_relax(void) { olt_compiler_barrier(); }
+/* Generic: integers stay in registers, doubles may round-trip through memory. */
+static inline void olt_opaque_u64(uint64_t* v) { __asm__ __volatile__("" : "+r"(*v)); }
+static inline void olt_opaque_f64(double* v)   { __asm__ __volatile__("" : "+m"(*v)); }
 
 static inline void olt_cache_flush_line(const void* p) { (void)p; olt_mb(); }
 

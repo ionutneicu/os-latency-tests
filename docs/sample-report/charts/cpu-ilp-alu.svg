@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 444" role="img" aria-label="Instruction-level parallelism: arithmetic">
+<style>
+  .bg{fill:#fcfcfb} .ax{fill:#52514e;font:12px system-ui,sans-serif} .title{fill:#0b0b0b;font:600 15px system-ui,sans-serif}
+  .grid{stroke:#e4e3df} .zone-a{fill:#f3f2ef} .zone-b{fill:#fcfcfb} .marker{stroke:#8a8984}
+  .zlabel{fill:#8a8984;font:600 12px system-ui,sans-serif} .hit{fill:transparent}
+  .s1{stroke:#2a78d6} .s2{stroke:#eb6834} .s3{stroke:#1baf7a} .s4{stroke:#6250d6} .s5{stroke:#e87ba4}
+  .f1{fill:#2a78d6} .f2{fill:#eb6834} .f3{fill:#1baf7a} .f4{fill:#6250d6} .f5{fill:#e87ba4}
+</style>
+<rect class="bg" width="1000" height="444"/>
+<text class="title" x="72" y="18">Instruction-level parallelism: arithmetic</text>
+<g transform="translate(0,24)">
+<line class="grid" x1="72" x2="980" y1="342.0" y2="342.0"/>
+<text class="ax" x="64" y="346.0" text-anchor="end">0</text>
+<line class="grid" x1="72" x2="980" y1="273.3" y2="273.3"/>
+<text class="ax" x="64" y="277.3" text-anchor="end">2</text>
+<line class="grid" x1="72" x2="980" y1="204.6" y2="204.6"/>
+<text class="ax" x="64" y="208.6" text-anchor="end">4</text>
+<line class="grid" x1="72" x2="980" y1="135.9" y2="135.9"/>
+<text class="ax" x="64" y="139.9" text-anchor="end">6</text>
+<line class="grid" x1="72" x2="980" y1="67.2" y2="67.2"/>
+<text class="ax" x="64" y="71.2" text-anchor="end">8</text>
+<text class="ax" x="72.0" y="360" text-anchor="middle">1</text>
+<text class="ax" x="132.5" y="360" text-anchor="middle">2</text>
+<text class="ax" x="193.1" y="360" text-anchor="middle">3</text>
+<text class="ax" x="253.6" y="360" text-anchor="middle">4</text>
+<text class="ax" x="374.7" y="360" text-anchor="middle">6</text>
+<text class="ax" x="495.7" y="360" text-anchor="middle">8</text>
+<text class="ax" x="616.8" y="360" text-anchor="middle">10</text>
+<text class="ax" x="737.9" y="360" text-anchor="middle">12</text>
+<text class="ax" x="980.0" y="360" text-anchor="middle">16</text>
+<text class="ax" x="526.0" y="382" text-anchor="middle">independent dependency chains in the loop</text>
+<text class="ax" x="16" y="186.0" transform="rotate(-90 16 186.0)" text-anchor="middle">speed-up vs one chain</text>
+<polyline class="s1" fill="none" stroke-width="2" stroke-linejoin="round" points="72.0,307.6 132.5,273.3 193.1,238.9 253.6,238.9 374.7,229.0 495.7,229.4 616.8,236.7 737.9,240.0 980.0,241.9"/>
+<circle class="f1" cx="72.0" cy="307.6" r="3"/>
+<circle class="f1" cx="132.5" cy="273.3" r="3"/>
+<circle class="f1" cx="193.1" cy="238.9" r="3"/>
+<circle class="f1" cx="253.6" cy="238.9" r="3"/>
+<circle class="f1" cx="374.7" cy="229.0" r="3"/>
+<circle class="f1" cx="495.7" cy="229.4" r="3"/>
+<circle class="f1" cx="616.8" cy="236.7" r="3"/>
+<circle class="f1" cx="737.9" cy="240.0" r="3"/>
+<circle class="f1" cx="980.0" cy="241.9" r="3"/>
+<polyline class="s2" fill="none" stroke-width="2" stroke-linejoin="round" points="72.0,307.6 132.5,267.9 193.1,231.4 253.6,230.6 374.7,204.6 495.7,204.6 616.8,206.2 737.9,206.1 980.0,224.9"/>
+<circle class="f2" cx="72.0" cy="307.6" r="3"/>
+<circle class="f2" cx="132.5" cy="267.9" r="3"/>
+<circle class="f2" cx="193.1" cy="231.4" r="3"/>
+<circle class="f2" cx="253.6" cy="230.6" r="3"/>
+<circle class="f2" cx="374.7" cy="204.6" r="3"/>
+<circle class="f2" cx="495.7" cy="204.6" r="3"/>
+<circle class="f2" cx="616.8" cy="206.2" r="3"/>
+<circle class="f2" cx="737.9" cy="206.1" r="3"/>
+<circle class="f2" cx="980.0" cy="224.9" r="3"/>
+<polyline class="s3" fill="none" stroke-width="2" stroke-linejoin="round" points="72.0,307.6 132.5,273.3 193.1,239.2 253.6,204.6 374.7,129.5 495.7,67.2 616.8,58.4 737.9,77.2 980.0,86.6"/>
+<circle class="f3" cx="72.0" cy="307.6" r="3"/>
+<circle class="f3" cx="132.5" cy="273.3" r="3"/>
+<circle class="f3" cx="193.1" cy="239.2" r="3"/>
+<circle class="f3" cx="253.6" cy="204.6" r="3"/>
+<circle class="f3" cx="374.7" cy="129.5" r="3"/>
+<circle class="f3" cx="495.7" cy="67.2" r="3"/>
+<circle class="f3" cx="616.8" cy="58.4" r="3"/>
+<circle class="f3" cx="737.9" cy="77.2" r="3"/>
+<circle class="f3" cx="980.0" cy="86.6" r="3"/>
+<polyline class="s5" fill="none" stroke-width="2" stroke-linejoin="round" stroke-dasharray="6 4" points="72.0,307.6 132.5,273.3 193.1,238.9 253.6,204.6 374.7,135.9 495.7,67.2"/>
+<circle class="f5" cx="72.0" cy="307.6" r="3"/>
+<circle class="f5" cx="132.5" cy="273.3" r="3"/>
+<circle class="f5" cx="193.1" cy="238.9" r="3"/>
+<circle class="f5" cx="253.6" cy="204.6" r="3"/>
+<circle class="f5" cx="374.7" cy="135.9" r="3"/>
+<circle class="f5" cx="495.7" cy="67.2" r="3"/>
+<line class="s1" stroke-width="2" x1="72" x2="94" y1="404" y2="404"/>
+<text class="ax" x="100" y="408">integer multiply</text>
+<line class="s2" stroke-width="2" x1="224" x2="246" y1="404" y2="404"/>
+<text class="ax" x="252" y="408">double add</text>
+<line class="s3" stroke-width="2" x1="334" x2="356" y1="404" y2="404"/>
+<text class="ax" x="362" y="408">double multiply</text>
+<line class="s5" stroke-width="2" stroke-dasharray="6 4" x1="479" x2="501" y1="404" y2="404"/>
+<text class="ax" x="507" y="408">perfect overlap</text>
+</g>
+</svg>

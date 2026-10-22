@@ -9,20 +9,20 @@
 <rect class="bg" width="1000" height="464"/>
 <text class="title" x="72" y="18">False sharing: cost per increment vs distance between counters</text>
 <g transform="translate(0,24)">
-<line class="grid" x1="72" x2="980" y1="303.4" y2="303.4"/>
-<text class="ax" x="64" y="307.4" text-anchor="end">0.5 ns</text>
-<line class="grid" x1="72" x2="980" y1="265.9" y2="265.9"/>
-<text class="ax" x="64" y="269.9" text-anchor="end">1 ns</text>
-<line class="grid" x1="72" x2="980" y1="228.4" y2="228.4"/>
-<text class="ax" x="64" y="232.4" text-anchor="end">2 ns</text>
-<line class="grid" x1="72" x2="980" y1="178.8" y2="178.8"/>
-<text class="ax" x="64" y="182.8" text-anchor="end">5 ns</text>
-<line class="grid" x1="72" x2="980" y1="141.3" y2="141.3"/>
-<text class="ax" x="64" y="145.3" text-anchor="end">10 ns</text>
-<line class="grid" x1="72" x2="980" y1="103.8" y2="103.8"/>
-<text class="ax" x="64" y="107.8" text-anchor="end">20 ns</text>
-<line class="grid" x1="72" x2="980" y1="54.2" y2="54.2"/>
-<text class="ax" x="64" y="58.2" text-anchor="end">50 ns</text>
+<line class="grid" x1="72" x2="980" y1="298.6" y2="298.6"/>
+<text class="ax" x="64" y="302.6" text-anchor="end">0.5 ns</text>
+<line class="grid" x1="72" x2="980" y1="258.2" y2="258.2"/>
+<text class="ax" x="64" y="262.2" text-anchor="end">1 ns</text>
+<line class="grid" x1="72" x2="980" y1="217.8" y2="217.8"/>
+<text class="ax" x="64" y="221.8" text-anchor="end">2 ns</text>
+<line class="grid" x1="72" x2="980" y1="164.4" y2="164.4"/>
+<text class="ax" x="64" y="168.4" text-anchor="end">5 ns</text>
+<line class="grid" x1="72" x2="980" y1="124.1" y2="124.1"/>
+<text class="ax" x="64" y="128.1" text-anchor="end">10 ns</text>
+<line class="grid" x1="72" x2="980" y1="83.7" y2="83.7"/>
+<text class="ax" x="64" y="87.7" text-anchor="end">20 ns</text>
+<line class="grid" x1="72" x2="980" y1="30.3" y2="30.3"/>
+<text class="ax" x="64" y="34.3" text-anchor="end">50 ns</text>
 <text class="ax" x="72.0" y="360" text-anchor="middle">8</text>
 <text class="ax" x="223.3" y="360" text-anchor="middle">16</text>
 <text class="ax" x="374.7" y="360" text-anchor="middle">32</text>
@@ -33,40 +33,40 @@
 <line class="marker" x1="526.0" x2="526.0" y1="30" y2="342" stroke-dasharray="4 3"/>
 <text class="ax" x="526.0" y="382" text-anchor="middle">distance between the two counters</text>
 <text class="ax" x="16" y="186.0" transform="rotate(-90 16 186.0)" text-anchor="middle">ns per increment (log)</text>
-<polygon class="f1" opacity="0.15" points="72.0,52.0 223.3,47.8 374.7,42.1 526.0,169.1 677.3,163.3 828.7,157.6 980.0,141.6 980.0,169.6 828.7,173.8 677.3,171.8 526.0,172.7 374.7,66.7 223.3,100.5 72.0,104.0"/>
-<polyline class="s1" fill="none" stroke-width="2" stroke-linejoin="round" points="72.0,60.3 223.3,60.3 374.7,52.2 526.0,172.1 677.3,168.6 828.7,170.5 980.0,162.0"/>
-<circle class="f1" cx="72.0" cy="60.3" r="3"/>
-<circle class="f1" cx="223.3" cy="60.3" r="3"/>
-<circle class="f1" cx="374.7" cy="52.2" r="3"/>
-<circle class="f1" cx="526.0" cy="172.1" r="3"/>
-<circle class="f1" cx="677.3" cy="168.6" r="3"/>
-<circle class="f1" cx="828.7" cy="170.5" r="3"/>
-<circle class="f1" cx="980.0" cy="162.0" r="3"/>
-<polyline class="s1" fill="none" stroke-width="2" stroke-linejoin="round" stroke-dasharray="6 4" points="72.0,172.4 223.3,172.4 374.7,172.4 526.0,172.4 677.3,172.4 828.7,172.4 980.0,172.4"/>
-<circle class="f1" cx="72.0" cy="172.4" r="3"/>
-<circle class="f1" cx="223.3" cy="172.4" r="3"/>
-<circle class="f1" cx="374.7" cy="172.4" r="3"/>
-<circle class="f1" cx="526.0" cy="172.4" r="3"/>
-<circle class="f1" cx="677.3" cy="172.4" r="3"/>
-<circle class="f1" cx="828.7" cy="172.4" r="3"/>
-<circle class="f1" cx="980.0" cy="172.4" r="3"/>
-<polygon class="f2" opacity="0.15" points="72.0,312.1 223.3,311.7 374.7,321.6 526.0,305.5 677.3,318.8 828.7,326.4 980.0,304.2 980.0,329.9 828.7,329.7 677.3,329.9 526.0,329.9 374.7,326.7 223.3,326.7 72.0,326.7"/>
-<polyline class="s2" fill="none" stroke-width="2" stroke-linejoin="round" points="72.0,323.9 223.3,326.2 374.7,326.0 526.0,329.7 677.3,329.7 828.7,329.7 980.0,329.6"/>
-<circle class="f2" cx="72.0" cy="323.9" r="3"/>
-<circle class="f2" cx="223.3" cy="326.2" r="3"/>
-<circle class="f2" cx="374.7" cy="326.0" r="3"/>
-<circle class="f2" cx="526.0" cy="329.7" r="3"/>
-<circle class="f2" cx="677.3" cy="329.7" r="3"/>
-<circle class="f2" cx="828.7" cy="329.7" r="3"/>
-<circle class="f2" cx="980.0" cy="329.6" r="3"/>
-<polyline class="s2" fill="none" stroke-width="2" stroke-linejoin="round" stroke-dasharray="6 4" points="72.0,329.9 223.3,329.9 374.7,329.9 526.0,329.9 677.3,329.9 828.7,329.9 980.0,329.9"/>
-<circle class="f2" cx="72.0" cy="329.9" r="3"/>
-<circle class="f2" cx="223.3" cy="329.9" r="3"/>
-<circle class="f2" cx="374.7" cy="329.9" r="3"/>
-<circle class="f2" cx="526.0" cy="329.9" r="3"/>
-<circle class="f2" cx="677.3" cy="329.9" r="3"/>
-<circle class="f2" cx="828.7" cy="329.9" r="3"/>
-<circle class="f2" cx="980.0" cy="329.9" r="3"/>
+<polygon class="f1" opacity="0.15" points="72.0,57.3 223.3,45.1 374.7,43.0 526.0,136.2 677.3,84.1 828.7,156.5 980.0,145.1 980.0,159.9 828.7,160.8 677.3,155.7 526.0,146.0 374.7,54.0 223.3,104.2 72.0,86.2"/>
+<polyline class="s1" fill="none" stroke-width="2" stroke-linejoin="round" points="72.0,65.0 223.3,52.7 374.7,47.7 526.0,141.7 677.3,137.3 828.7,158.6 980.0,151.9"/>
+<circle class="f1" cx="72.0" cy="65.0" r="3"/>
+<circle class="f1" cx="223.3" cy="52.7" r="3"/>
+<circle class="f1" cx="374.7" cy="47.7" r="3"/>
+<circle class="f1" cx="526.0" cy="141.7" r="3"/>
+<circle class="f1" cx="677.3" cy="137.3" r="3"/>
+<circle class="f1" cx="828.7" cy="158.6" r="3"/>
+<circle class="f1" cx="980.0" cy="151.9" r="3"/>
+<polyline class="s1" fill="none" stroke-width="2" stroke-linejoin="round" stroke-dasharray="6 4" points="72.0,158.8 223.3,158.8 374.7,158.8 526.0,158.8 677.3,158.8 828.7,158.8 980.0,158.8"/>
+<circle class="f1" cx="72.0" cy="158.8" r="3"/>
+<circle class="f1" cx="223.3" cy="158.8" r="3"/>
+<circle class="f1" cx="374.7" cy="158.8" r="3"/>
+<circle class="f1" cx="526.0" cy="158.8" r="3"/>
+<circle class="f1" cx="677.3" cy="158.8" r="3"/>
+<circle class="f1" cx="828.7" cy="158.8" r="3"/>
+<circle class="f1" cx="980.0" cy="158.8" r="3"/>
+<polygon class="f2" opacity="0.15" points="72.0,290.6 223.3,264.9 374.7,279.7 526.0,307.1 677.3,297.3 828.7,237.7 980.0,263.6 980.0,329.0 828.7,326.7 677.3,323.5 526.0,321.6 374.7,311.9 223.3,311.8 72.0,311.8"/>
+<polyline class="s2" fill="none" stroke-width="2" stroke-linejoin="round" points="72.0,311.6 223.3,311.1 374.7,311.1 526.0,316.6 677.3,318.5 828.7,322.0 980.0,324.0"/>
+<circle class="f2" cx="72.0" cy="311.6" r="3"/>
+<circle class="f2" cx="223.3" cy="311.1" r="3"/>
+<circle class="f2" cx="374.7" cy="311.1" r="3"/>
+<circle class="f2" cx="526.0" cy="316.6" r="3"/>
+<circle class="f2" cx="677.3" cy="318.5" r="3"/>
+<circle class="f2" cx="828.7" cy="322.0" r="3"/>
+<circle class="f2" cx="980.0" cy="324.0" r="3"/>
+<polyline class="s2" fill="none" stroke-width="2" stroke-linejoin="round" stroke-dasharray="6 4" points="72.0,319.7 223.3,319.7 374.7,319.7 526.0,319.7 677.3,319.7 828.7,319.7 980.0,319.7"/>
+<circle class="f2" cx="72.0" cy="319.7" r="3"/>
+<circle class="f2" cx="223.3" cy="319.7" r="3"/>
+<circle class="f2" cx="374.7" cy="319.7" r="3"/>
+<circle class="f2" cx="526.0" cy="319.7" r="3"/>
+<circle class="f2" cx="677.3" cy="319.7" r="3"/>
+<circle class="f2" cx="828.7" cy="319.7" r="3"/>
+<circle class="f2" cx="980.0" cy="319.7" r="3"/>
 <line class="s1" stroke-width="2" x1="72" x2="94" y1="404" y2="404"/>
 <text class="ax" x="100" y="408">atomic fetch_add, two cores</text>
 <line class="s1" stroke-width="2" stroke-dasharray="6 4" x1="301" x2="323" y1="404" y2="404"/>
