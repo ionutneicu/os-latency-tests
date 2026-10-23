@@ -31,7 +31,7 @@ machine, but each one has a cost, and most applications never need them.
 | `mitigations=off` | syscall and context-switch overhead | syscalls and switches can get noticeably cheaper on affected CPUs | **removes Spectre/Meltdown-class protections** | isolated, trusted, single-tenant machines only |
 | `idle=poll` / C-states off in BIOS | idle exits on all cores | similar to `--no-idle`, always on | cores never sleep: high power | when you cannot hold `/dev/cpu_dma_latency` open |
 | Reserved huge pages at boot | TLB misses, fragmentation | fewer page walks on large working sets | memory reserved permanently | big tables or buffers on the hot path |
-| SMT (Hyper-Threading) off | sibling thread stealing core resources | steadier per-core timing | half the hardware threads | latency matters more than throughput |
+| SMT (Hyper-Threading) off | sibling thread stealing core resources and L1/L2 | 10-40% faster and steadier hot loops when the sibling would be busy; nothing if it stays idle | half the hardware threads; throughput work loses 15-30% | latency matters more than throughput; or isolate both siblings instead |
 | Kernel-bypass networking | kernel network stack cost | packet round trips down to a few us | dedicated NICs/cores, new APIs | trading, telecom, packet processing |
 
 The "typical effect" column is a direction, not a promise: it depends on the
@@ -111,6 +111,40 @@ can be small. The syscall benchmark (roadmap) lists the active mitigations from
 
 **Costs.** This is a security decision, not a tuning knob. Only on isolated,
 single-tenant machines that run only trusted code.
+
+## SMT (Hyper-Threading) on or off
+
+**What it changes.** With SMT one physical core runs two hardware threads
+(logical CPUs) that share its L1 and L2 caches, TLBs, branch predictors and
+execution units. Linux lists the pairs in
+`/sys/devices/system/cpu/cpu*/topology/thread_siblings_list`.
+
+**What to expect.** A thread whose sibling is busy loses part of the core: a
+latency-sensitive loop typically runs 10 to 40% slower and its tail gets
+worse, because the other thread evicts its L1 lines and competes for the same
+ports. A thread whose sibling is *idle* loses almost nothing; modern cores give
+it the whole core back. So the rule for low latency is one busy hardware thread
+per physical core, not necessarily SMT off: isolating both siblings of a core
+and pinning only one thread there gets nearly all of the benefit and keeps SMT
+for the rest of the machine. Turning SMT off guarantees it machine-wide, and
+also closes the cross-thread side channels (L1TF, MDS) that otherwise require
+mitigations. Throughput work (builds, many independent requests) loses 15 to
+30% with SMT off.
+
+**How.**
+
+* At run time, until reboot (root):
+  `echo off > /sys/devices/system/cpu/smt/control` (`on` to restore;
+  `cat /sys/devices/system/cpu/smt/active` to check).
+* At boot: the `nosmt` kernel parameter (`nosmt=force` prevents turning it
+  back on).
+* In firmware: "Hyper-Threading" or "SMT" in the BIOS/UEFI setup.
+
+**Measure it.** Run once with SMT on and once off and compare the two
+results.json (see Recording what you changed). The planned standard-tier SMT
+benchmark measures the sibling effect directly without turning SMT off.
+
+**Costs.** Half the hardware threads; on SMT-off machines `nproc` halves.
 
 ## Idle states: `idle=poll`, `intel_idle.max_cstate`, BIOS C-states
 

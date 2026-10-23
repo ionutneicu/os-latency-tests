@@ -9,6 +9,8 @@ each section to its page.
 > high-performance code. They trade readability, maintainability and
 > portability for nanoseconds; everywhere else, write the simple version.
 
+Unfamiliar term? See the [glossary](../GLOSSARY.md).
+
 | Page | Benchmarks | Question |
 |---|---|---|
 | [Threads](threads.md) | `thread.create` | Spawn a thread per task, or keep a pool? |

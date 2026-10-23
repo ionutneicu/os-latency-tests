@@ -50,6 +50,8 @@ What each benchmark measures and how to apply its result in C++, with code:
 [docs/benchmarks/](docs/benchmarks/README.md). Plans and next measurements: [docs/ROADMAP.md](docs/ROADMAP.md). Tuning
 beyond a stock kernel (isolated cores, PREEMPT_RT, boot options, kernel
 bypass), with what to expect: [docs/expert-setup.md](docs/expert-setup.md).
+Terms used in the reports (cache line, TLB, AVX-512, read for ownership, p99,
+SCHED_FIFO, ...) are explained in [docs/GLOSSARY.md](docs/GLOSSARY.md).
 
 ## Prerequisites
 

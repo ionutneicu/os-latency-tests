@@ -51,6 +51,15 @@ The six with the biggest x86 vs ARM differences and the clearest hints.
   CPU vulnerability mitigations listed in the report
 - [ ] **OS jitter on the measurement core**: tight timestamp loop recording gaps
   (osnoise style); interruptions per second and worst gap
+- [ ] **SMT siblings: logical vs physical cores**: the report's platform block
+  shows the topology (which logical CPUs share a physical core and its L1/L2)
+  and warns when two benchmark threads land on siblings. A new benchmark runs
+  a latency-sensitive loop (L1-resident pointer chase, ALU chain, SPSC
+  round trip) alone, with a busy thread on its SMT sibling (ALU-heavy, then
+  cache-thrashing), and with the same thread on another physical core; plus
+  two communicating threads on siblings vs separate cores (siblings are
+  fastest for hand-offs, since they share L1). Hint: how much a busy sibling
+  costs on this CPU, and whether to keep one hot thread per physical core
 
 ## Standard tier: second batch
 
@@ -92,8 +101,82 @@ The six with the biggest x86 vs ARM differences and the clearest hints.
 - [ ] **Integer division**, **denormals and FTZ/DAZ**
 - [ ] **MPSC/MPMC queues** and **read-mostly patterns** (`shared_mutex`, seqlock,
   RCU-style pointer swap)
-- [ ] **Exceptions vs error codes** (`std::expected`), **small-buffer
-  optimisation thresholds**, **bounds checks**
+
+## Standard tier: compiler and language choices
+
+How build flags and C++ constructs change the speed of the same hot code. The
+harness stays C++17; these kernels build with the newest `-std` the compiler
+supports (C++20/23 for `[[likely]]`, `[[assume]]`, `std::expected`,
+`std::unreachable`) and report n/a where a feature is missing. Every item
+reports speed and code size next to the plain `-O2` version, for GCC and Clang.
+
+- [ ] **Build-variant harness** (needed by the items below): the same kernel
+  sources compiled several times with different flags into one binary (one
+  namespace per variant, set up by CMake), so one run compares them side by
+  side. Whole-program options (LTO, PGO, static linking, `-fno-exceptions`
+  everywhere) need separate builds: those use the multi-report comparison view
+  (see Platforms). Kernels, small and representative: hash-map lookup, sort,
+  dot product and small matrix multiply, byte parser (state machine), virtual
+  dispatch loop, SPSC ring push/pop
+- [ ] **Optimisation level and target CPU**: `-O0` to `-O3`, `-Os`/`-Oz`;
+  `-march` baseline vs x86-64-v2/v3/v4 and `native` (ARM: `armv8-a` vs
+  `armv8.2-a` and later, `-mcpu=native`); GCC vs Clang on the same kernels.
+  Hint: which kernels gain from `-O3` or a newer `-march`, at what code-size
+  cost, and the portability catch (a `-march=native` binary dies with SIGILL on
+  older CPUs; runtime dispatch or `target_clones` instead)
+- [ ] **LTO and PGO**: `-flto` (full and thin) and profile-guided optimisation
+  (two-pass `-fprofile-generate` / `-fprofile-use`): cross-file inlining,
+  devirtualisation, hot/cold code layout. BOLT and AutoFDO are in the expert
+  tier
+- [ ] **Floating-point flags**: `-ffast-math` and its parts (`-fassociative-math`,
+  `-fno-math-errno`, `-ffinite-math-only`, `-ffp-contract=fast` for FMA): the
+  speed-up next to the change in the result (in ULPs), so the trade is visible.
+  Ties in with the ILP unrolling hint
+- [ ] **Hardening and distribution defaults**: `_FORTIFY_SOURCE=3`,
+  `_GLIBCXX_ASSERTIONS` (bounds-checked `operator[]`) and the libc++ hardening
+  modes, `at()` vs `operator[]`, `-fstack-protector-strong`,
+  `-fstack-clash-protection`, `-fcf-protection` (Intel CET),
+  `-mbranch-protection=standard` (ARM PAC/BTI), `-ftrivial-auto-var-init=zero`,
+  frame pointers (on by default in Ubuntu 24.04 and Fedora 38 packages). What
+  each costs on the hot kernels: distribution packages, ours included, are built
+  with most of them
+- [ ] **Linking and calls**: static vs dynamic, PIE vs non-PIE, PLT vs
+  `-fno-plt`, `-fvisibility=hidden` and `-fno-semantic-interposition`; a call
+  into a shared library vs the same call inside the executable; `thread_local`
+  access from an executable vs a shared library (TLS models, `__tls_get_addr`);
+  function-local `static` guard checks and `-fno-threadsafe-statics`
+- [ ] **Exceptions and RTTI**:
+  - happy path: the same loop built with exceptions and with `-fno-exceptions`,
+    callees `noexcept` or not (speed and code size)
+  - throw cost: throw-to-catch latency vs unwind depth (1 to 100 frames) and vs
+    threads throwing at once (unwinder scalability, glibc 2.35+
+    `_dl_find_object` vs older)
+  - error handling at error rates of 0, 0.1, 1 and 10%: exceptions, error
+    codes, `std::optional`, `std::expected` (C++23, or `tl::expected` on C++17)
+  - `new` vs `new (std::nothrow)`; `noexcept` move constructors in
+    `std::vector` growth (without `noexcept` the vector copies instead of
+    moving)
+  - `-fno-rtti`: `dynamic_cast` and `typeid` vs a stored type tag
+  Hint: when exceptions are free, when they are not, and the error rate where
+  `std::expected` wins
+- [ ] **Optimiser hints**: `[[likely]]`/`[[unlikely]]` and `__builtin_expect`
+  (code layout, not prediction); `[[assume(expr)]]` (C++23; `__builtin_assume`
+  in Clang, the `if (!x) __builtin_unreachable()` idiom in older GCC) and
+  `std::unreachable()`; `std::assume_aligned` / `__builtin_assume_aligned`;
+  `__restrict`; `[[gnu::always_inline]]`, `noinline`, `flatten`, `hot`, `cold`;
+  `final`. Each on a kernel where it should help (an assumed multiple of 8 drops
+  the remainder loop, `__restrict` lets a loop vectorise, `final` lets a virtual
+  call inline), with ns and instruction count next to the plain version and a
+  note when the compiler already does it alone. A false `[[assume]]` is
+  undefined behaviour: the guide says so
+- [ ] **Zero-cost abstractions, checked**: small types by value vs `const&`,
+  `std::string_view` and `std::span` by value, types with a non-trivial
+  destructor such as `std::unique_ptr` (passed through memory on the Itanium
+  ABI); type punning with `std::bit_cast` / `memcpy` vs `reinterpret_cast`;
+  signed vs unsigned loop indices; `constexpr` tables vs runtime computation
+- [ ] **Standard library on the hot path**: number formatting and parsing
+  (`std::to_chars` / `from_chars` vs `snprintf` / `strtod` vs iostreams vs
+  `std::format`); `std::string` and `std::function` small-buffer thresholds
 
 ## Standard tier: network (kernel stack)
 
@@ -123,7 +206,13 @@ Opt-in, documented in [expert-setup.md](expert-setup.md).
   machine, several results.json)
 - [ ] Mitigations on vs off (`mitigations=off`): syscall and context-switch cost
 - [ ] `idle=poll` / C-states disabled in BIOS vs `/dev/cpu_dma_latency`
+- [ ] SMT on vs off (`/sys/devices/system/cpu/smt/control`, `nosmt`, BIOS):
+  the full suite in both states, compared side by side, against "SMT on, both
+  siblings isolated, one thread pinned"
 - [ ] Reserved huge pages at boot (`hugepagesz=1G hugepages=N`)
+- [ ] Post-link and sampling-based optimisation (BOLT, AutoFDO): needs branch
+  records (Intel LBR, AMD BRS, ARM BRBE or SPE), `perf record -b` and the LLVM
+  tools; compared with the PGO build from the standard tier
 - [ ] **Kernel bypass networking**: DPDK, NXP DPAA/DPAA2, AF_XDP, RDMA/verbs,
   Solarflare/Onload class, as transport back ends with the same report charts
 
