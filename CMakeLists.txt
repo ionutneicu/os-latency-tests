@@ -146,6 +146,7 @@ target_compile_options(olt_core PUBLIC
 add_executable(os-latency-tests
   src/main.cpp
   src/benchmarks/alloc.cpp
+  src/benchmarks/branch.cpp
   src/benchmarks/ilp.cpp
   src/benchmarks/memory.cpp
   src/benchmarks/multicore.cpp
@@ -156,9 +157,10 @@ add_executable(os-latency-tests
   src/benchmarks/threads.cpp
 )
 target_link_libraries(os-latency-tests PRIVATE olt_core)
-# cpu.ilp measures how many independent chains the core overlaps: the compiler
-# must not pack those chains into SIMD instructions.
-set_source_files_properties(src/benchmarks/ilp.cpp PROPERTIES COMPILE_OPTIONS
+# cpu.ilp measures how many independent chains the core overlaps, and
+# cpu.branch compares scalar branchy and branchless code: the compiler must not
+# turn either into SIMD instructions.
+set_source_files_properties(src/benchmarks/ilp.cpp src/benchmarks/branch.cpp PROPERTIES COMPILE_OPTIONS
   "$<$<CXX_COMPILER_ID:GNU>:-fno-tree-vectorize>;$<$<CXX_COMPILER_ID:Clang,AppleClang>:-fno-vectorize;-fno-slp-vectorize>")
 
 include(GNUInstallDirs)

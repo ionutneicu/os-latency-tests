@@ -142,6 +142,49 @@ def ilp_summary(results):
     return out
 
 
+def branch_summary(results):
+    """cpu.branch: {"curves": {code: [(taken %, p50, branch misses or None)]}, "sorted": {code: (p50, misses)},
+    "penalty": ns per mispredict, "crossover": taken % where branchless starts winning (or None),
+    "ternary_branches": True if the compiler made the ternary a branch} or None."""
+    curves, srt = {}, {}
+    for r in results:
+        prm, p50 = r.get("params", {}), r["percentiles"].get("p50")
+        if not p50:
+            continue
+        m = r.get("metrics", {}).get("branch_misses")
+        if r["name"] == "cpu.branch" and "taken" in prm:
+            curves.setdefault(prm["code"], []).append((int(prm["taken"]), p50, m))
+        elif r["name"] == "cpu.branch_sorted":
+            srt[prm["code"]] = (p50, m)
+    for c in curves.values():
+        c.sort()
+    by = curves.get("branchy")
+    if not by or by[-1][0] != 50 or "branchy" not in srt:
+        return None
+    t50, m50 = by[-1][1], by[-1][2]
+    s50, ms = srt["branchy"]
+    # random vs sorted at 50% passing: the same work, about half the branches mispredicted vs none
+    misses = (m50 - ms) if m50 is not None and ms is not None and m50 - ms > 0.05 else 0.5
+    out = {"curves": curves, "sorted": srt, "penalty": max(0.0, t50 - s50) / misses, "crossover": None,
+           "ternary_branches": None, "measured_misses": misses != 0.5}
+    bl = dict((p, v) for p, v, _ in curves.get("branchless", []))
+    prev = None
+    for p, v, _ in by:
+        if p in bl and v > bl[p]:
+            if prev is None:
+                out["crossover"] = 0.0
+            else:  # interpolate between the last point where the branch won and this one
+                (p0, d0), d1 = prev, v - bl[p]
+                out["crossover"] = p0 + (p - p0) * (-d0) / (d1 - d0) if d1 != d0 else float(p)
+            break
+        if p in bl:
+            prev = (p, v - bl[p])
+    tern = curves.get("ternary")
+    if tern and tern[0][0] == 0 and tern[-1][0] == 50:
+        out["ternary_branches"] = tern[-1][1] > 1.5 * tern[0][1]
+    return out
+
+
 def percentile_sorted(v, p):
     if not v:
         return None
@@ -609,6 +652,17 @@ def build_guidance(summary, caches, platform, results, cfg):
         worst = max(thr.items(), key=lambda kv: kv[1]["percentiles"]["p50"])
         tips.append(f"Streaming between two threads: {best[0]} moves {1e3 / best[1]['percentiles']['p50']:.3g} M items/s, "
                     f"{worst[1]['percentiles']['p50'] / best[1]['percentiles']['p50']:.1f}x more than {worst[0]}.")
+    br = branch_summary(results)
+    if br and br["penalty"] > 0:
+        cross, worst = br["crossover"], br["curves"]["branchy"][-1][1]
+        bl = dict((p, v) for p, v, _ in br["curves"].get("branchless", []))
+        gain = f" (at 50% the branchless loop is {worst / bl[50]:.1f}x faster)" if bl.get(50) else ""
+        rule = (f"keep the branch when the condition goes the same way more than {100 - cross:.0f}% of the time, "
+                f"go branchless (masks, cmov, min/max) when it is less predictable{gain}"
+                if cross else f"branchless code won at every predictability in this test{gain}")
+        tips.append(f"Branches: a mispredict costs about {fmt_ns(br['penalty'])} on this core. For a few cycles of "
+                    f"work per element, {rule}. "
+                    f"Sorting or partitioning the data first makes any branch predictable.")
     dm, d1 = by_param("pattern.dispatch_mixed"), by_param("pattern.dispatch_one_type")
     if "virtual" in dm and "template" in dm:
         v, t = dm["virtual"]["percentiles"]["p50"], dm["template"]["percentiles"]["p50"]
@@ -968,6 +1022,39 @@ def build_report(doc, src_path, charts_dir):
                  "them to the stack. More chains is not always better.</p>")
         body += guide_link("ilp.md", "instruction-level parallelism", named("cpu.ilp"), plat)
         sections.append(("cpu", "Instruction-level parallelism", body))
+
+    # ---- branch misprediction
+    br = branch_summary(results)
+    if br:
+        names = {"branchy": "branch (if)", "branchless": "branchless (mask)", "ternary": "ternary (compiler's choice)"}
+        series = [{"name": names.get(code, code), "slot": i + 1, "points": [(p, v) for p, v, _ in pts]}
+                  for i, (code, pts) in enumerate(br["curves"].items())]
+        body = ("<p class='sub'>A loop sums a few cycles of work for the elements that pass a test, at random "
+                "positions. Few passing elements: the branch is predictable and skips the work; towards 50% "
+                "the core guesses wrong about every other time and flushes its pipeline. The branchless form "
+                "always does the work and masks it, so it costs the same whatever the data.</p>")
+        body += chart_block(Chart("cpu-branch", "Branchy vs branchless: cost per element vs share of passing "
+                                  "elements (random order)", "count", False, "ns per element (p50)", "ns", series,
+                                  x_title="elements passing the test, % (random positions)"))
+        rows = "".join(f"<tr><td>{e(names.get(c, c))}</td><td>{fmt_ns(pts[0][1])}</td><td>{fmt_ns(pts[-1][1])}</td>"
+                       f"<td>{fmt_ns(br['sorted'][c][0]) if c in br['sorted'] else '-'}</td></tr>"
+                       for c, pts in br["curves"].items())
+        body += ("<div class='table-wrap'><table><tr><th>code</th><th>0% passing</th><th>50% random</th>"
+                 "<th>50% sorted</th></tr>" + rows + "</table></div>")
+        how = "measured branch misses" if br["measured_misses"] else "about one miss per two elements"
+        cross = br["crossover"]
+        body += (f"<p class='note'>A mispredicted branch costs about {fmt_ns(br['penalty'])} here (50% random vs "
+                 f"50% sorted, {how}). "
+                 + ("The branchless form is faster even when nothing passes. " if cross == 0 else
+                    f"The branch wins while fewer than about {cross:.0f}% of the elements go the unlikely way; "
+                    f"above that, branchless wins. " if cross is not None else
+                    "The branch won at every share measured. ")
+                 + ("For the ternary the compiler emitted a branch." if br["ternary_branches"] else
+                    "For the ternary the compiler emitted branchless code (cmov/csel)."
+                    if br["ternary_branches"] is not None else "")
+                 + "</p>")
+        body += guide_link("branch.md", "branch misprediction", named("cpu.branch"), plat)
+        sections.append(("branch", "Branch misprediction", body))
 
     # ---- latency distributions, one chart per benchmark group
     groups = {}
