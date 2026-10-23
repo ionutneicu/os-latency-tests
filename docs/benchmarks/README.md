@@ -24,6 +24,7 @@ Unfamiliar term? See the [glossary](../GLOSSARY.md).
 | [Dispatch](pattern-dispatch.md) | `pattern.dispatch` | Virtual, `std::function`, `std::variant` or templates? |
 | [Core-to-core latency](c2c.md) | `multicore.c2c` | Which CPUs should communicating threads run on? |
 | [False sharing](false-sharing.md) | `multicore.false_sharing` | How far apart must per-thread data be? |
+| [Atomics](atomics.md) | `multicore.atomic_contention`, `multicore.atomic_order` | Shared atomic or per-thread counters? Which memory order? |
 
 Every benchmark runs under the same harness: warm-up iterations first, then
 `--samples` timed iterations (or `--sweep-samples` for batch measurements),

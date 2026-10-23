@@ -21,7 +21,6 @@
 
 #include <atomic>
 #include <cstdint>
-#include <cstdlib>
 #include <memory>
 #include <new>
 #include <string>
@@ -31,6 +30,7 @@
 #include "olt/benchmark.hpp"
 #include "olt/hal/arch.h"
 #include "olt/hal/os.h"
+#include "topo_util.hpp"
 
 namespace {
 
@@ -107,31 +107,11 @@ struct alignas(4096) Page {
     unsigned char bytes[4096];
 };
 
-// Parses a sysfs CPU list such as "0,4" or "0-3,8".
-std::vector<int> parse_cpu_list(const char* s)
-{
-    std::vector<int> out;
-    while (*s) {
-        char* end;
-        const long a = std::strtol(s, &end, 10);
-        if (end == s) break;
-        long b = a;
-        if (*end == '-') b = std::strtol(end + 1, &end, 10);
-        for (long c = a; c <= b; ++c) out.push_back(static_cast<int>(c));
-        s = (*end == ',') ? end + 1 : end;
-    }
-    return out;
-}
-
 // Second CPU for the false-sharing pair: one that does not share an L1 with
 // `a` (an SMT sibling shares the line and would hide the effect), or -1.
 int other_core(int a, const std::vector<int>& cpus)
 {
-    olt_cache_level_t levels[16];
-    std::vector<int> siblings{a};
-    const int n = olt_os_cache_topology(a, levels, 16);
-    for (int i = 0; i < n; ++i)
-        if (levels[i].level == 1 && levels[i].type[0] != 'I') siblings = parse_cpu_list(levels[i].shared_cpus);
+    const std::vector<int> siblings = olt::l1_siblings(a);
     for (int c : cpus) {
         bool shared = c == a;
         for (int s : siblings) shared = shared || s == c;
