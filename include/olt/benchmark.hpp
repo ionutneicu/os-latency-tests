@@ -55,6 +55,18 @@ struct Config {
 
 using Params = std::vector<std::pair<std::string, std::string>>;
 
+// Where a result's code lives, so the report can link to it. OLT_HERE marks the
+// current line; a benchmark that compares variants sets each result's source
+// to its variant's code (e.g. a static member `source = OLT_HERE` in each class).
+struct SourceLine {
+    const char* file = nullptr;  // as the compiler saw it (__FILE__)
+    int line = 0;
+};
+#define OLT_HERE (::olt::SourceLine{__FILE__, __LINE__})
+
+// Path of a source file relative to the source tree ("src/benchmarks/x.cpp").
+std::string source_path(const char* file);
+
 struct Result {
     std::string name;
     Params params;
@@ -62,6 +74,7 @@ struct Result {
     std::vector<double> samples;
     std::string note;  // caveats shown next to the result
     std::vector<std::pair<std::string, double>> metrics;  // extra per-result figures, e.g. cpu_cores
+    SourceLine source;  // the code measured; defaults to the benchmark's OLT_BENCHMARK line
 };
 
 class Context {
@@ -92,26 +105,31 @@ public:
 
     void add_result(std::string name, Params params, std::vector<double> samples, std::string note = {});
 
+    // Source of the benchmark now running: the default for its results.
+    void set_benchmark_source(SourceLine s) { source_ = s; }
+
     std::vector<Result>& results() { return results_; }
 
 private:
     const Config& config_;
     const TickCalibration& cal_;
     std::vector<Result> results_;
+    SourceLine source_;
 };
 
 struct BenchmarkInfo {
     std::string name;
     std::string description;
     std::function<void(Context&)> run;
+    SourceLine source;
 };
 
 std::vector<BenchmarkInfo>& registry();
 
 struct Registrar {
-    Registrar(const char* name, const char* description, void (*fn)(Context&))
+    Registrar(const char* name, const char* description, void (*fn)(Context&), SourceLine source)
     {
-        registry().push_back({name, description, fn});
+        registry().push_back({name, description, fn, source});
     }
 };
 
@@ -125,5 +143,5 @@ bool glob_match(const std::string& pattern, const std::string& text);
 #define OLT_BENCHMARK(name, description)                                                       \
     static void OLT_CONCAT(olt_bench_fn_, __LINE__)(::olt::Context & ctx);                     \
     static ::olt::Registrar OLT_CONCAT(olt_bench_reg_, __LINE__)(name, description,            \
-                                                                 &OLT_CONCAT(olt_bench_fn_, __LINE__)); \
+                                                                 &OLT_CONCAT(olt_bench_fn_, __LINE__), OLT_HERE); \
     static void OLT_CONCAT(olt_bench_fn_, __LINE__)(::olt::Context & ctx)

@@ -42,6 +42,8 @@ struct PlatformInfo {
     std::string compiler;
     std::string build_type;
     BuildOptimization optimized;
+    std::string git_commit;  // commit the sources were built from, "" if unknown
+    bool git_dirty = false;  // built with uncommitted changes to tracked files
     TickCalibration ticks;
     TimerOverhead timer;
 };

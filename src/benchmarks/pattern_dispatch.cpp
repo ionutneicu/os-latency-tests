@@ -144,6 +144,7 @@ struct Objects {
 // order[] is the call order: in sequence for one type, a fresh random
 // permutation per sample for mixed types, so the branch predictor cannot learn
 // the sequence of targets (it would, for a fixed order repeated 10000 times).
+constexpr olt::SourceLine at_virtual = OLT_HERE;  // linked from the report
 uint64_t sum_virtual(const Objects& o, const uint32_t* order)
 {
     uint64_t s = 0;
@@ -153,6 +154,7 @@ uint64_t sum_virtual(const Objects& o, const uint32_t* order)
     }
     return s;
 }
+constexpr olt::SourceLine at_function = OLT_HERE;  // linked from the report
 uint64_t sum_function(const Objects& o, const uint32_t* order)
 {
     uint64_t s = 0;
@@ -162,6 +164,7 @@ uint64_t sum_function(const Objects& o, const uint32_t* order)
     }
     return s;
 }
+constexpr olt::SourceLine at_fptr = OLT_HERE;  // linked from the report
 uint64_t sum_fptr(const Objects& o, const uint32_t* order)
 {
     uint64_t s = 0;
@@ -171,6 +174,7 @@ uint64_t sum_fptr(const Objects& o, const uint32_t* order)
     }
     return s;
 }
+constexpr olt::SourceLine at_switch = OLT_HERE;  // linked from the report
 uint64_t sum_switch(const Objects& o, const uint32_t* order)
 {
     uint64_t s = 0;
@@ -180,6 +184,7 @@ uint64_t sum_switch(const Objects& o, const uint32_t* order)
     }
     return s;
 }
+constexpr olt::SourceLine at_variant = OLT_HERE;  // linked from the report
 uint64_t sum_variant(const Objects& o, const uint32_t* order)
 {
     uint64_t s = 0;
@@ -189,8 +194,9 @@ uint64_t sum_variant(const Objects& o, const uint32_t* order)
     }
     return s;
 }
+constexpr olt::SourceLine at_template = OLT_HERE;  // linked from the report
 template <class Op>
-uint64_t sum_group(const Group<Op>& g)  // the type is known here: eval() inlines, the loop can vectorise
+uint64_t sum_group(const Group<Op>& g)  // the type is known here: eval() inlines, nothing is left to predict
 {
     uint64_t s = 0;
     for (size_t j = 0; j < g.ops.size(); ++j) s += g.ops[j].eval(g.idx[j]);
@@ -222,7 +228,7 @@ void measure(olt::Context& ctx, const char* name, const Objects& o, bool shuffle
     std::mt19937 rng(7);
     uint64_t want = 0;
     for (size_t p = 0; p < k_passes; ++p) want += sum_switch(o, order.data());
-    auto one = [&](const char* impl, auto sum) {
+    auto one = [&](const char* impl, auto sum, olt::SourceLine at) {
         uint64_t got = want;
         std::vector<double> v = ctx.run_samples([&] {
             if (shuffle) std::shuffle(order.begin(), order.end(), rng);  // not timed
@@ -233,13 +239,14 @@ void measure(olt::Context& ctx, const char* name, const Objects& o, bool shuffle
         });
         ctx.add_result(name, {{"impl", impl}}, std::move(v), got == want ? "" : "self-check failed: wrong sum");
         ctx.results().back().unit = "ns/call";
+        ctx.results().back().source = at;
     };
-    one("virtual", sum_virtual);
-    one("std_function", sum_function);
-    one("function_ptr", sum_fptr);
-    one("switch", sum_switch);
-    one("variant", sum_variant);
-    one("template", sum_template);
+    one("virtual", sum_virtual, at_virtual);
+    one("std_function", sum_function, at_function);
+    one("function_ptr", sum_fptr, at_fptr);
+    one("switch", sum_switch, at_switch);
+    one("variant", sum_variant, at_variant);
+    one("template", sum_template, at_template);
 }
 
 }  // namespace

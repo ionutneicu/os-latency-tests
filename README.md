@@ -236,6 +236,12 @@ board) turns a `results.json` into one self-contained HTML file:
   DRAM miss to an L1 hit and the working-set sizes to aim for);
 * a percentile table for every other benchmark.
 
+Under each section, **code links** point to the exact lines that were measured
+(one link per variant, e.g. `mutex_condvar` vs `lockfree`), on GitHub at the
+commit the binary was built from. They stay correct when the code changes
+later, because they never point at `main`. A build with local changes says so
+next to the links; a build without git (a source tarball) links to `main`.
+
 Every chart is also written as a standalone SVG file to `charts/` next to the
 report, for slides and documents. A Markdown twin, `report.md`, carries the same
 text and tables and links those SVGs, so a results directory pushed to GitHub or
@@ -506,4 +512,16 @@ OLT_BENCHMARK("mem.example", "What is measured, precisely")
 Add the file to the `os-latency-tests` target in `CMakeLists.txt`.
 Then add a page to [docs/benchmarks/](docs/benchmarks/README.md) (goal, what
 is measured, how to read the result, how to apply it in C++) and link it from
-the report section with `guide_link()` in `tools/olt-report.py`.
+the report section with `guide_link()` in `tools/olt-report.py`, passing the
+section's results so the report links their code. Each result links to its
+`OLT_BENCHMARK` line by default; when a benchmark compares variants, point each
+result at its variant's code:
+
+```cpp
+struct LockFreeQueue {
+    static constexpr olt::SourceLine source = OLT_HERE;  // this line
+    // ...
+};
+ctx.add_result("pattern.spsc_latency", {{"queue", "lockfree"}}, std::move(samples));
+ctx.results().back().source = LockFreeQueue::source;
+```

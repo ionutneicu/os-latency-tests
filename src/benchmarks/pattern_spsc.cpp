@@ -71,6 +71,7 @@ private:
 };
 
 struct MutexCondvarQueue {
+    static constexpr olt::SourceLine source = OLT_HERE;  // linked from the report
     static constexpr const char* name = "mutex_condvar";
     std::mutex m;
     std::condition_variable not_empty, not_full;
@@ -95,6 +96,7 @@ struct MutexCondvarQueue {
 };
 
 struct MutexPollQueue {
+    static constexpr olt::SourceLine source = OLT_HERE;  // linked from the report
     static constexpr const char* name = "mutex_poll";
     std::mutex m;
     Ring ring;
@@ -132,6 +134,7 @@ private:
 };
 
 struct SpinlockQueue {
+    static constexpr olt::SourceLine source = OLT_HERE;  // linked from the report
     static constexpr const char* name = "spinlock";
     Spinlock lock;
     Ring ring;
@@ -154,6 +157,7 @@ struct SpinlockQueue {
 };
 
 struct LockFreeQueue {
+    static constexpr olt::SourceLine source = OLT_HERE;  // linked from the report
     static constexpr const char* name = "lockfree";
     alignas(k_cache_line) std::atomic<size_t> head{0};  // written by the consumer only
     alignas(k_cache_line) std::atomic<size_t> tail{0};  // written by the producer only
@@ -177,6 +181,7 @@ struct LockFreeQueue {
 };
 
 struct LockFreeCachedQueue {
+    static constexpr olt::SourceLine source = OLT_HERE;  // linked from the report
     static constexpr const char* name = "lockfree_cached";
     alignas(k_cache_line) std::atomic<size_t> head{0};
     size_t tail_cache = 0;  // consumer's copy of tail
@@ -239,6 +244,7 @@ void measure(olt::Context& ctx)
         echo.join();
         const uint64_t wall = olt::now_ns() - wall0;
         ctx.add_result("pattern.spsc_latency", params, std::move(lat));
+        ctx.results().back().source = Q::source;
         ctx.results().back().metrics.push_back({"cpu_cores", double(main_cpu + echo_cpu) / double(wall)});
     }
 
@@ -272,6 +278,7 @@ void measure(olt::Context& ctx)
             }
         }
         ctx.add_result("pattern.spsc_throughput", params, std::move(per_item));
+        ctx.results().back().source = Q::source;
         ctx.results().back().unit = "ns/item";
         ctx.results().back().metrics.push_back({"cpu_cores", double(cpu_total) / double(wall_total)});
     }

@@ -119,11 +119,19 @@ add_library(olt_core STATIC
   src/core/report.cpp
   src/core/stats.cpp
 )
-target_include_directories(olt_core PUBLIC include)
+target_include_directories(olt_core PUBLIC include PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/generated)
+# The git commit of the sources, refreshed at every build (cmake/git_commit.cmake)
+add_custom_target(olt_git_commit
+  COMMAND ${CMAKE_COMMAND} "-DSRC=${CMAKE_CURRENT_SOURCE_DIR}" "-DOUT=${CMAKE_CURRENT_BINARY_DIR}/generated/olt_git.h"
+          -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/git_commit.cmake
+  BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/generated/olt_git.h
+  COMMENT "Reading the git commit")
+add_dependencies(olt_core olt_git_commit)
 target_link_libraries(olt_core PUBLIC Threads::Threads)
 target_compile_definitions(olt_core PUBLIC
   OLT_VERSION="${PROJECT_VERSION}"
   OLT_BUILD_TYPE="${CMAKE_BUILD_TYPE}"
+  OLT_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/"
   $<$<BOOL:${OLT_FORCE_GENERIC_ARCH}>:OLT_FORCE_GENERIC_ARCH>
 )
 target_compile_options(olt_core PUBLIC

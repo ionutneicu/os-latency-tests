@@ -8,6 +8,15 @@
 
 namespace olt {
 
+std::string source_path(const char* file)
+{
+    if (!file) return {};
+    std::string f = file;
+    const std::string root = OLT_SOURCE_DIR;
+    if (f.compare(0, root.size(), root) == 0) f.erase(0, root.size());
+    return f;
+}
+
 std::vector<BenchmarkInfo>& registry()
 {
     static std::vector<BenchmarkInfo> r;
@@ -49,6 +58,7 @@ void Context::add_result(std::string name, Params params, std::vector<double> sa
     r.params = std::move(params);
     r.samples = std::move(samples);
     r.note = std::move(note);
+    r.source = source_;
     results_.push_back(std::move(r));
 }
 
