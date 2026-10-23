@@ -41,9 +41,9 @@ The six with the biggest x86 vs ARM differences and the clearest hints.
   fields at 8 to 256 B; shows whether this CPU needs 64 or 128 B padding
 - [ ] **Atomic RMW and memory ordering**: fetch_add/CAS vs thread count, sharded
   counters; seq_cst vs acq_rel vs relaxed (extends the multicore section)
-- [ ] **Branch misprediction and branchless crossover**: sorted vs random data,
+- [x] **Branch misprediction and branchless crossover**: sorted vs random data,
   branchy vs cmov/mask; ns per mispredict and the predictability where
-  branchless wins
+  branchless wins (`cpu.branch`)
 - [x] **Dynamic dispatch**: virtual, `std::function`, function pointer,
   `switch`, `std::variant` + visit vs compile-time templates (CRTP);
   one type vs mixed types at the call site (`pattern.dispatch`)

@@ -267,6 +267,7 @@ Installed packages provide it as `olt-report`.
 | `mem.write_nt` | sequential non-temporal (streaming) write: stores that bypass the caches, cost per cache line |
 | `mem.write_random` | independent 8-byte stores to random cache lines of the buffer: store throughput per level when every miss must fetch its line |
 | `multicore.c2c_latency` | one-way cache-line hand-off between every pair of CPUs (atomic ping-pong), drawn as a heatmap |
+| `cpu.branch`, `cpu.branch_sorted` | ns per element of a conditional sum, 0 to 50% of elements passing at random positions or sorted, as a branch, a branchless mask and a ternary: the cost of a mispredict and where branchless code wins (branch misses per element when perf counters are available) |
 | `cpu.ilp` | ns per operation with 1 to 16 independent dependency chains (integer multiply, double add/multiply, L1 loads, DRAM loads): how far to unroll and how many cache misses overlap |
 | `multicore.false_sharing` | cost per increment when two cores update counters 8 to 512 bytes apart (plain `++` and atomic `fetch_add`), vs one core alone: the padding this CPU needs |
 | `pattern.*` | design-pattern comparisons, see [Design patterns](#design-patterns) |
