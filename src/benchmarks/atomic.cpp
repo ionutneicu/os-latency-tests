@@ -118,11 +118,13 @@ OLT_BENCHMARK("multicore.atomic_contention",
               "std::atomic (fetch_add, compare-exchange loop) vs one counter per thread (sharded)")
 {
     const olt::Config& cfg = ctx.config();
-    std::vector<int> cores = olt::one_per_core(cfg.allowed_cpus);
-    if (cfg.main_cpu >= 0) {  // start with the main benchmark CPU so 1 thread runs where the others do
-        auto it = std::find(cores.begin(), cores.end(), cfg.main_cpu);
-        if (it != cores.end()) std::rotate(cores.begin(), it, it + 1);
-    }
+    // The main benchmark CPU goes first, so the 1-thread case runs there (as
+    // with --cpus) and its SMT sibling is the one skipped.
+    std::vector<int> order;
+    if (cfg.main_cpu >= 0) order.push_back(cfg.main_cpu);
+    for (int c : cfg.allowed_cpus)
+        if (c != cfg.main_cpu) order.push_back(c);
+    const std::vector<int> cores = olt::one_per_core(order);
     if (cores.empty()) {
         ctx.add_result("multicore.atomic_contention", {}, {}, "no allowed CPUs");
         return;
