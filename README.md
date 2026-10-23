@@ -98,6 +98,7 @@ One command builds, runs every benchmark and opens the report (install the
 ```sh
 ./run-all.sh            # full run, asks for sudo (RT priority, mlock, deep idle blocked)
 ./run-all.sh --quick    # ~20 s smoke run; --no-sudo for an unprivileged run
+./run-all.sh -y         # never stop to ask when pre-flight checks warn (scripts, cron)
 ```
 
 Results go to `results/<host>-<timestamp>/`: `report.html`, the same report as
@@ -235,6 +236,12 @@ board) turns a `results.json` into one self-contained HTML file:
   DRAM miss to an L1 hit and the working-set sizes to aim for);
 * a percentile table for every other benchmark.
 
+Under each section, **code links** point to the exact lines that were measured
+(one link per variant, e.g. `mutex_condvar` vs `lockfree`), on GitHub at the
+commit the binary was built from. They stay correct when the code changes
+later, because they never point at `main`. A build with local changes says so
+next to the links; a build without git (a source tarball) links to `main`.
+
 Every chart is also written as a standalone SVG file to `charts/` next to the
 report, for slides and documents. A Markdown twin, `report.md`, carries the same
 text and tables and links those SVGs, so a results directory pushed to GitHub or
@@ -320,6 +327,24 @@ streams 256 Ki items through one queue. Each result also records
 polling variants are much faster but keep a core busy, and blocking variants
 pay the OS wake-up cost (which grows with deep idle states, see `--no-idle`).
 Run with `--affinity same` to see what happens when both threads share a CPU.
+
+### Dispatch (`pattern.dispatch_one_type`, `pattern.dispatch_mixed`)
+
+1024 small objects of four types each compute a one-cycle operation; the
+result is ns per call. The same objects are called six ways:
+
+| Variant | How the code is chosen | When |
+|---|---|---|
+| `virtual` | vtable, `std::unique_ptr<Base>` | run time, open set of types |
+| `std_function` | `std::function` holding a small lambda | run time, any callable |
+| `function_ptr` | function pointer + state | run time, C interfaces |
+| `switch` | enum tag + `switch` | run time, closed set |
+| `variant` | `std::variant` + `std::visit` | run time, closed set, objects stored inline |
+| `template` | function template per type; mixed objects kept in one vector per type | compile time (templates, CRTP, policy classes) |
+
+`dispatch_one_type` has a single type at the call site, so the branch predictor
+always guesses the target; `dispatch_mixed` calls the four types in a new
+random order every sample, so it misses most of the time.
 
 ## Multicore communication
 
@@ -487,4 +512,16 @@ OLT_BENCHMARK("mem.example", "What is measured, precisely")
 Add the file to the `os-latency-tests` target in `CMakeLists.txt`.
 Then add a page to [docs/benchmarks/](docs/benchmarks/README.md) (goal, what
 is measured, how to read the result, how to apply it in C++) and link it from
-the report section with `guide_link()` in `tools/olt-report.py`.
+the report section with `guide_link()` in `tools/olt-report.py`, passing the
+section's results so the report links their code. Each result links to its
+`OLT_BENCHMARK` line by default; when a benchmark compares variants, point each
+result at its variant's code:
+
+```cpp
+struct LockFreeQueue {
+    static constexpr olt::SourceLine source = OLT_HERE;  // this line
+    // ...
+};
+ctx.add_result("pattern.spsc_latency", {{"queue", "lockfree"}}, std::move(samples));
+ctx.results().back().source = LockFreeQueue::source;
+```

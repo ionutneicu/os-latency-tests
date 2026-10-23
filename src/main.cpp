@@ -274,6 +274,7 @@ int main(int argc, char** argv)
         std::cerr << "running " << b->name << " ...\r" << std::flush;
         const size_t first = ctx.results().size();
         ctx.warm_cpus();
+        ctx.set_benchmark_source(b->source);
         b->run(ctx);
         std::cerr << std::string(b->name.size() + 12, ' ') << "\r" << std::flush;
         for (size_t i = first; i < ctx.results().size(); ++i) {

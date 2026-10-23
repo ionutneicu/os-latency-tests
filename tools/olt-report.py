@@ -609,6 +609,18 @@ def build_guidance(summary, caches, platform, results, cfg):
         worst = max(thr.items(), key=lambda kv: kv[1]["percentiles"]["p50"])
         tips.append(f"Streaming between two threads: {best[0]} moves {1e3 / best[1]['percentiles']['p50']:.3g} M items/s, "
                     f"{worst[1]['percentiles']['p50'] / best[1]['percentiles']['p50']:.1f}x more than {worst[0]}.")
+    dm, d1 = by_param("pattern.dispatch_mixed"), by_param("pattern.dispatch_one_type")
+    if "virtual" in dm and "template" in dm:
+        v, t = dm["virtual"]["percentiles"]["p50"], dm["template"]["percentiles"]["p50"]
+        one = (f" With a single type at the call site the virtual call costs only {fmt_ns(d1['virtual']['percentiles']['p50'])}: "
+               f"the target is predicted." if "virtual" in d1 else "")
+        alt = min((k for k in ("switch", "variant") if k in dm), key=lambda k: dm[k]["percentiles"]["p50"], default=None)
+        mid = (f" A {'std::variant' if alt == 'variant' else 'switch on a type tag'} sits between "
+               f"({fmt_ns(dm[alt]['percentiles']['p50'])})." if alt else "")
+        tips.append(f"Dispatch: calling through a virtual function on objects of mixed types costs {fmt_ns(v)} per call, "
+                    f"{v / t:.0f}x the {fmt_ns(t)} of the same work with the type known at compile time (templates, "
+                    f"objects grouped by type).{one}{mid} On a hot loop over mixed objects, keep one container per type "
+                    f"or sort by type.")
     lst = by_param("pattern.alloc_list")
     if "new_delete" in lst and "pmr_monotonic" in lst:
         a, b = lst["new_delete"]["percentiles"]["p50"], lst["pmr_monotonic"]["percentiles"]["p50"]
@@ -746,15 +758,51 @@ HOT_PATH_WARNING = (
     "are for this machine; re-measure on each target.")
 
 
-GUIDE_URL = "https://github.com/ionutneicu/os-latency-tests/blob/main/docs/benchmarks/"
+REPO_URL = "https://github.com/ionutneicu/os-latency-tests"
+GUIDE_URL = REPO_URL + "/blob/main/docs/benchmarks/"
 GLOSSARY_URL = "https://github.com/ionutneicu/os-latency-tests/blob/main/docs/GLOSSARY.md"
 GUIDES = {"thread": ("threads.md", "threads: spawn or pool"), "sync": ("sync.md", "blocking wake-up")}
 
 
-def guide_link(page, what):
-    """Link to the benchmark's page: goal, what is measured, how to apply it in C++."""
+def guide_link(page, what, rs=(), plat=None):
+    """Link to the benchmark's page (goal, what is measured, how to apply it in C++), and to the code
+    that produced the results rs."""
     return (f"<p class='guide'>Benchmark guide: <a href='{GUIDE_URL}{page}'>{html.escape(what)}</a>, what is "
-            f"measured and how to apply the result in C++.</p>")
+            f"measured and how to apply the result in C++.</p>" + source_links(rs, plat or {}))
+
+
+def source_url(src, plat):
+    """GitHub link to a result's source line, at the commit the binary was built from."""
+    commit = plat.get("git_commit") or ""
+    return f"{REPO_URL}/blob/{commit or 'main'}/{src['file']}" + (f"#L{src['line']}" if commit else "")
+
+
+def source_links(rs, plat):
+    """'Code measured: ...' line linking each variant (or the whole benchmark) to its source."""
+    links = {}
+    for r in rs:
+        src = r.get("source")
+        if not src or not src.get("file"):
+            continue
+        label = ", ".join(r["params"].values()) if len(r["params"]) == 1 else r["name"].split(".", 1)[-1]
+        links.setdefault(label, src)
+    if not links:
+        return ""
+    e = html.escape
+    srcs = {(v["file"], v["line"]) for v in links.values()}
+    if len(srcs) == 1:
+        src = next(iter(links.values()))
+        items = f"<a href='{e(source_url(src, plat))}'><code>{e(src['file'])}</code></a>"
+    else:
+        items = " · ".join(f"<a href='{e(source_url(src, plat))}'>{e(label)}</a>" for label, src in links.items())
+    commit = plat.get("git_commit") or ""
+    if not commit:
+        where = " (no git commit was recorded for this build: the links go to the current main branch)"
+    elif plat.get("git_dirty"):
+        where = f" at commit {e(commit[:7])}, built with local changes, so lines may differ"
+    else:
+        where = f" at commit {e(commit[:7])}"
+    return f"<p class='guide'>Code measured{where}: {items}</p>"
 
 
 def md_cell(text):
@@ -800,6 +848,9 @@ def build_report(doc, src_path, charts_dir):
     line = plat.get("cache_line_size") or 64
     caches = data_caches(plat)
     e = html.escape
+
+    def named(prefix):
+        return [r for r in results if r["name"].startswith(prefix)]
 
     sections = []      # (anchor, title, html)
     charts = []        # Chart objects, also written as standalone SVG
@@ -876,7 +927,7 @@ def build_report(doc, src_path, charts_dir):
                         "<code>os-latency-tests</code> without <code>-t</code> (or with <code>-t 'mem.*'</code>) "
                         "to get the cache graphs.</p>")
     if lat:
-        mem_html.append(guide_link("memory.md", "memory hierarchy"))
+        mem_html.append(guide_link("memory.md", "memory hierarchy", named("mem."), plat))
     sections.append(("memory", "Memory hierarchy", "\n".join(mem_html)))
 
     # ---- instruction-level parallelism
@@ -915,7 +966,7 @@ def build_report(doc, src_path, charts_dir):
         body += ("<p class='note'>Curves can drop again at high chain counts: once accumulators outnumber the registers "
                  "(16 general-purpose and 16 vector registers on x86-64, 32 of each on AArch64) the compiler spills "
                  "them to the stack. More chains is not always better.</p>")
-        body += guide_link("ilp.md", "instruction-level parallelism")
+        body += guide_link("ilp.md", "instruction-level parallelism", named("cpu.ilp"), plat)
         sections.append(("cpu", "Instruction-level parallelism", body))
 
     # ---- latency distributions, one chart per benchmark group
@@ -936,7 +987,7 @@ def build_report(doc, src_path, charts_dir):
         body += chart_block(Chart(f"{g}-percentiles", f"{title}: latency by percentile", "nines", True,
                                   "latency (log)", "ns", series))
         if g in GUIDES:
-            body += guide_link(*GUIDES[g])
+            body += guide_link(*GUIDES[g], rs, plat)
         sections.append((g, title, body))
 
     # ---- allocator
@@ -952,7 +1003,7 @@ def build_report(doc, src_path, charts_dir):
                                    {"name": "malloc p99", "slot": 1, "dash": True, "points": pts("alloc.malloc", "p99")},
                                    {"name": "free p50", "slot": 2, "points": pts("alloc.free", "p50")},
                                    {"name": "free p99", "slot": 2, "dash": True, "points": pts("alloc.free", "p99")}]))
-        body += guide_link("alloc.md", "heap allocator")
+        body += guide_link("alloc.md", "heap allocator", alloc, plat)
         sections.append(("alloc", "Heap allocator", body))
 
     # ---- design patterns: variants of one task side by side
@@ -984,7 +1035,7 @@ def build_report(doc, src_path, charts_dir):
         if al:
             pat_html.append(chart_block(BarChart("pattern-alloc-list", "std::list<int>, 256 push_back: ns per element",
                                                  "ns per element (p50)", bar_rows(al))))
-        pat_html.append(guide_link("pattern-alloc.md", "container memory"))
+        pat_html.append(guide_link("pattern-alloc.md", "container memory", av + al, plat))
     sl, st = variants("pattern.spsc_latency"), variants("pattern.spsc_throughput")
     if sl or st:
         pat_html.append("<h3>Single producer / single consumer: mutex vs spinlock vs lock-free</h3>"
@@ -1016,7 +1067,22 @@ def build_report(doc, src_path, charts_dir):
             pat_html.append(chart_block(BarChart("pattern-spsc-cpu", "SPSC CPU usage while handing off",
                                                  "CPU cores busy (producer + consumer)", cpu_rows,
                                                  best_label="least CPU", ratio_word="more CPU")))
-        pat_html.append(guide_link("pattern-spsc.md", "SPSC queues"))
+        pat_html.append(guide_link("pattern-spsc.md", "SPSC queues", sl + st, plat))
+    d1, dm = variants("pattern.dispatch_one_type"), variants("pattern.dispatch_mixed")
+    if d1 or dm:
+        pat_html.append("<h3>Dispatch: virtual vs std::function vs std::variant vs templates</h3>"
+                        "<p class='sub'>1024 small objects each compute a one-cycle operation; ns per call (p50, shorter "
+                        "is better). Run-time dispatch picks the code per object (vtable, function pointer, switch, "
+                        "variant); <code>template</code> fixes the type at compile time, so the call inlines away. "
+                        "With one type the branch predictor always guesses the target; with four types in random "
+                        "order it misses most of the time.</p>")
+        if d1:
+            pat_html.append(chart_block(BarChart("pattern-dispatch-one", "One type at the call site: ns per call",
+                                                 "ns per call (p50)", bar_rows(d1))))
+        if dm:
+            pat_html.append(chart_block(BarChart("pattern-dispatch-mixed", "Four types in random order: ns per call",
+                                                 "ns per call (p50)", bar_rows(dm))))
+        pat_html.append(guide_link("pattern-dispatch.md", "dispatch", d1 + dm, plat))
     c2c = {}
     for r in results:
         if r["name"] == "multicore.c2c_latency" and "cpu_a" in r["params"] and r["percentiles"].get("p50"):
@@ -1050,7 +1116,7 @@ def build_report(doc, src_path, charts_dir):
         if pad:
             fs_html += (f"<p class='note'>On this CPU, counters written by different threads need at least "
                         f"{pad} bytes between them (vertical line: the {line}-byte cache line).</p>")
-        fs_html += guide_link("false-sharing.md", "false sharing")
+        fs_html += guide_link("false-sharing.md", "false sharing", named("multicore.false_sharing"), plat)
     if c2c:
         cpus = sorted({c for k in c2c for c in k})
         vals = sorted(c2c.values())
@@ -1066,7 +1132,7 @@ def build_report(doc, src_path, charts_dir):
                  f"{slow[0]} ↔ {slow[1]} ({fmt_ns(c2c[slow])}); median {fmt_ns(statistics.median(vals))}. Pin "
                  f"threads that talk a lot (producer/consumer pairs) to a fast pair with <code>--cpus A,B</code> "
                  f"or in your application.</p>")
-        body += guide_link("c2c.md", "core-to-core latency")
+        body += guide_link("c2c.md", "core-to-core latency", named("multicore.c2c"), plat)
         sections.append(("multicore", "Multicore communication", body + fs_html))
     elif fs_html:
         sections.append(("multicore", "Multicore communication", fs_html))
@@ -1140,6 +1206,8 @@ def build_report(doc, src_path, charts_dir):
                      + (f", {unopt} NOT optimised" if unopt else
                         ", optimised" if all((plat.get("optimized") or {}).get(k) for k in ("c", "cxx")) else "")),
     ]
+    if plat.get("git_commit"):
+        rows.append(("Source", f"commit {plat['git_commit'][:12]}" + (" + local changes" if plat.get("git_dirty") else "")))
     out.append("<dl class='plat'>" + "".join(f"<dt>{e(k)}</dt><dd>{e(str(v))}</dd>" for k, v in rows) + "</dl>")
     # the unoptimised-build pre-flight warning gets its own box instead of the "noisy" list
     warnings = [w for w in doc.get("warnings", []) if not (unopt and w.startswith("This binary's"))]

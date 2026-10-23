@@ -20,6 +20,7 @@ Unfamiliar term? See the [glossary](../GLOSSARY.md).
 | [Instruction-level parallelism](ilp.md) | `cpu.ilp` | How far should I unroll; how many independent lookups at once? |
 | [Container memory](pattern-alloc.md) | `pattern.alloc` | Default allocator, `reserve()`, or a pmr arena? |
 | [SPSC queues](pattern-spsc.md) | `pattern.spsc` | Mutex, spinlock or lock-free queue between two threads? |
+| [Dispatch](pattern-dispatch.md) | `pattern.dispatch` | Virtual, `std::function`, `std::variant` or templates? |
 | [Core-to-core latency](c2c.md) | `multicore.c2c` | Which CPUs should communicating threads run on? |
 | [False sharing](false-sharing.md) | `multicore.false_sharing` | How far apart must per-thread data be? |
 

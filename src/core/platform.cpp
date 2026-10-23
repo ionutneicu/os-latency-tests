@@ -3,6 +3,7 @@
 #include "olt/hal/arch.h"
 #include "olt/hal/perf.h"
 #include "olt/hal/stream.h"
+#include "olt_git.h"
 
 #ifndef OLT_BUILD_TYPE
 #define OLT_BUILD_TYPE "unknown"
@@ -87,6 +88,8 @@ PlatformInfo collect_platform_info(int cpu, const TickCalibration& cal, const Ti
     p.compiler = compiler_id();
     p.build_type = OLT_BUILD_TYPE;
     p.optimized = build_optimization();
+    p.git_commit = OLT_GIT_COMMIT;
+    p.git_dirty = OLT_GIT_DIRTY != 0;
     p.ticks = cal;
     p.timer = timer;
     return p;

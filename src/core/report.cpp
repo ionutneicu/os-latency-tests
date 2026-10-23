@@ -160,8 +160,10 @@ void print_platform(std::ostream& os, const PlatformInfo& p, const Config& cfg)
         os << ")";
     }
     os << "\n";
-    os << "  build          : " << p.compiler << ", " << p.build_type << ", " << optimization_text(p.optimized)
-       << "\n";
+    os << "  build          : " << p.compiler << ", " << p.build_type << ", " << optimization_text(p.optimized);
+    if (!p.git_commit.empty())
+        os << ", commit " << p.git_commit.substr(0, 12) << (p.git_dirty ? " + local changes" : "");
+    os << "\n";
     os << "Config\n";
     os << "  samples/warmup : " << cfg.samples << " / " << cfg.warmup << " iterations, CPU warm-up "
        << cfg.cpu_warmup_ms << " ms per benchmark\n";
@@ -238,6 +240,7 @@ void write_json(const std::string& path, const PlatformInfo& p, const Config& cf
     f << "]},\n";
     f << "    \"compiler\": " << q(p.compiler) << ",\n";
     f << "    \"build_type\": " << q(p.build_type) << ",\n";
+    f << "    \"git_commit\": " << q(p.git_commit) << ", \"git_dirty\": " << (p.git_dirty ? "true" : "false") << ",\n";
     f << "    \"optimized\": {\"c\": " << json_tristate(p.optimized.c) << ", \"cxx\": "
       << json_tristate(p.optimized.cxx) << "},\n";
     f << "    \"cycle_counter\": {\"ticks_per_ns\": " << num(p.ticks.ticks_per_ns)
@@ -274,6 +277,8 @@ void write_json(const std::string& path, const PlatformInfo& p, const Config& cf
         for (size_t k = 0; k < r.params.size(); ++k)
             f << (k ? ", " : "") << q(r.params[k].first) << ": " << q(r.params[k].second);
         f << "},\n      \"unit\": " << q(r.unit) << ",\n";
+        if (r.source.file)
+            f << "      \"source\": {\"file\": " << q(source_path(r.source.file)) << ", \"line\": " << r.source.line << "},\n";
         if (!r.note.empty()) f << "      \"note\": " << q(r.note) << ",\n";
         if (!r.metrics.empty()) {
             f << "      \"metrics\": {";
