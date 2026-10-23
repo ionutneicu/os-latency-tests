@@ -2,6 +2,7 @@
 #pragma once
 
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "olt/clock.hpp"
@@ -32,6 +33,7 @@ struct PlatformInfo {
     std::string governor;       // of the main benchmark CPU
     std::string cpuidle_driver;
     std::string isolated_cpus;
+    std::vector<std::pair<std::string, std::string>> cpu_vulnerabilities;  // name, mitigation status
     std::string thp_mode;       // transparent huge pages policy
     uint64_t physical_memory = 0;
     int cpu_count = 0;

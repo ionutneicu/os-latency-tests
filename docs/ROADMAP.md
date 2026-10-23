@@ -48,9 +48,10 @@ The six with the biggest x86 vs ARM differences and the clearest hints.
 - [x] **Dynamic dispatch**: virtual, `std::function`, function pointer,
   `switch`, `std::variant` + visit vs compile-time templates (CRTP);
   one type vs mixed types at the call site (`pattern.dispatch`)
-- [ ] **Syscall, vDSO and timer accuracy**: no-op syscall, `clock_gettime` per
+- [x] **Syscall, vDSO and timer accuracy**: no-op syscall, `clock_gettime` per
   clock, rdtsc/cntvct; `nanosleep`/`timerfd`/epoll timeout overshoot; active
-  CPU vulnerability mitigations listed in the report
+  CPU vulnerability mitigations listed in the report (`os.call`,
+  `os.timer_overshoot`)
 - [ ] **OS jitter on the measurement core**: tight timestamp loop recording gaps
   (osnoise style); interruptions per second and worst gap
 - [ ] **SMT siblings: logical vs physical cores**: the report's platform block
