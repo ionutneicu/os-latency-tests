@@ -5,6 +5,7 @@
 #include "olt/hal/os.h"
 
 #include <ctype.h>
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <pthread.h>
@@ -544,4 +545,38 @@ void olt_os_cpuidle_driver(char* buf, size_t len)
 void olt_os_isolated_cpus(char* buf, size_t len)
 {
     if (read_line("/sys/devices/system/cpu/isolated", buf, len) != 0) copy_str(buf, len, "");
+}
+
+static int cmp_str(const void* a, const void* b)
+{
+    return strcmp(*(const char* const*)a, *(const char* const*)b);
+}
+
+void olt_os_cpu_vulnerabilities(char* buf, size_t len)
+{
+    const char* dir_path = "/sys/devices/system/cpu/vulnerabilities";
+    copy_str(buf, len, "");
+    DIR* d = opendir(dir_path);
+    if (!d) return;
+    char names[64][64];
+    char* sorted[64];
+    int n = 0;
+    struct dirent* e;
+    while ((e = readdir(d)) != NULL && n < 64) {
+        if (e->d_name[0] == '.') continue;
+        copy_str(names[n], sizeof(names[n]), e->d_name);
+        sorted[n] = names[n];
+        ++n;
+    }
+    closedir(d);
+    qsort(sorted, (size_t)n, sizeof(sorted[0]), cmp_str);
+    size_t used = 0;
+    for (int i = 0; i < n; ++i) {
+        char path[256], status[256];
+        snprintf(path, sizeof(path), "%s/%s", dir_path, sorted[i]);
+        if (read_line(path, status, sizeof(status)) != 0) continue;
+        const int w = snprintf(buf + used, len - used, "%s: %s\n", sorted[i], status);
+        if (w < 0 || (size_t)w >= len - used) break;
+        used += (size_t)w;
+    }
 }

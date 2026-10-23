@@ -670,6 +670,31 @@ def build_guidance(summary, caches, platform, results, cfg):
             tips.append(f"Memory order: a seq_cst atomic store (the default of std::atomic::store and operator=) "
                         f"costs {fmt_ns(a)}, a release store {fmt_ns(b)}. Publishing data to another thread only needs "
                         f"store(release) paired with load(acquire).")
+    oc = by_param("os.call")
+    if "syscall_getpid" in oc and "clock_monotonic" in oc:
+        sc, cm = oc["syscall_getpid"]["percentiles"]["p50"], oc["clock_monotonic"]["percentiles"]["p50"]
+        if cm > 0.6 * sc:
+            tips.append(f"clock_gettime(CLOCK_MONOTONIC) costs {fmt_ns(cm)}, about as much as a system call "
+                        f"({fmt_ns(sc)}): the vDSO fast path is not in use (unstable TSC or a clock source without vDSO "
+                        f"support, common in VMs). Check /sys/devices/system/clocksource/clocksource0/current_clocksource "
+                        f"and avoid timestamps on the hot path here.")
+        else:
+            tips.append(f"System calls: a kernel round trip costs {fmt_ns(sc)} here, reading CLOCK_MONOTONIC through the "
+                        f"vDSO {fmt_ns(cm)}. Take timestamps freely, but keep system calls (I/O, futex waits, "
+                        f"getpid-style queries) off the hot path or batch them (io_uring, sendmmsg, recvmmsg).")
+    ov = {}
+    for r in results:
+        prm = r.get("params", {})
+        if r["name"] == "os.timer_overshoot" and prm.get("request_us") == "100" and r["percentiles"].get("p50") is not None:
+            ov[prm["method"]] = r["percentiles"]
+    if "nanosleep" in ov:
+        a = ov["nanosleep"]
+        msg = (f"Timers: a 100 µs nanosleep wakes {fmt_ns(a['p50'])} late at p50 and {fmt_ns(a.get('p99'))} at p99")
+        if "nanosleep_slack1" in ov and ov["nanosleep_slack1"]["p50"] < 0.7 * a["p50"]:
+            msg += (f"; prctl(PR_SET_TIMERSLACK, 1) brings that to {fmt_ns(ov['nanosleep_slack1']['p50'])} "
+                    f"(real-time threads get this by default)")
+        tips.append(msg + ". Do not sleep for waits shorter than that: spin with a pause instruction, or block on "
+                    "the event itself.")
     br = branch_summary(results)
     if br and br["penalty"] > 0:
         cross, worst = br["crossover"], br["curves"]["branchy"][-1][1]
@@ -1275,6 +1300,43 @@ def build_report(doc, src_path, charts_dir):
                          "<p class='missing'>The core-to-core benchmark was not part of this run (run without "
                          "<code>-t</code> or with <code>-t 'multicore.*'</code>).</p>"))
 
+    # ---- system calls, clocks, timers
+    calls = variants("os.call")
+    over = {}
+    for r in results:
+        prm = r.get("params", {})
+        if r["name"] == "os.timer_overshoot" and "method" in prm and r["percentiles"].get("p50") is not None:
+            over.setdefault(prm["method"], {})[int(prm["request_us"])] = r
+    vulns = plat.get("cpu_vulnerabilities") or {}
+    if calls or over:
+        body = ""
+        if calls:
+            body += ("<p class='sub'>What crossing into the kernel costs (a raw <code>getpid</code> system call), "
+                     "what each clock costs to read (<code>clock_gettime</code> runs in user space through the vDSO "
+                     "for most clocks) and what a raw cycle-counter read costs.</p>")
+            body += chart_block(BarChart("os-call", "System call vs vDSO clock reads: ns per call",
+                                         "ns per call (p50)", bar_rows(calls)))
+        if over:
+            reqs = sorted({u for m in over.values() for u in m})
+            body += ("<p class='sub'>Timer accuracy: how much later than requested the thread runs again (p50, p99 in "
+                     "brackets). Normal threads get 50 µs of timer slack by default, which the kernel may add to "
+                     "let wake-ups coalesce; real-time threads (<code>-p</code>) get none.</p>")
+            head = "".join(f"<th>{u} µs</th>" for u in reqs)
+            rows = ""
+            for m, pts in over.items():
+                cells = "".join(f"<td>{fmt_ns(pts[u]['percentiles']['p50'])} ({fmt_ns(pts[u]['percentiles'].get('p99'))})</td>"
+                                if u in pts else "<td>-</td>" for u in reqs)
+                rows += f"<tr><td>{e(m)}</td>{cells}</tr>"
+            body += f"<div class='table-wrap'><table><tr><th>method \\ requested</th>{head}</tr>{rows}</table></div>"
+        if vulns:
+            body += ("<p class='sub'>CPU vulnerability mitigations enabled by this kernel. Many of them add work to "
+                     "every kernel entry and exit, so they set much of the system-call cost above.</p>")
+            body += ("<div class='table-wrap'><table><tr><th>vulnerability</th><th>state</th></tr>"
+                     + "".join(f"<tr><td>{e(k)}</td><td>{e(v)}</td></tr>" for k, v in vulns.items() if v != "Not affected")
+                     + "</table></div>")
+        body += guide_link("syscall.md", "system calls, clocks and timers", calls + [r for m in over.values() for r in m.values()], plat)
+        sections.append(("os", "System calls, clocks and timers", body))
+
     if pat_html:
         sections.append(("patterns", "Design patterns", "\n".join(pat_html)))
     else:
@@ -1340,6 +1402,12 @@ def build_report(doc, src_path, charts_dir):
                      + (f", {unopt} NOT optimised" if unopt else
                         ", optimised" if all((plat.get("optimized") or {}).get(k) for k in ("c", "cxx")) else "")),
     ]
+    vulns = plat.get("cpu_vulnerabilities") or {}
+    if vulns:
+        mit = sum(1 for v in vulns.values() if v.startswith("Mitigation"))
+        vul = sum(1 for v in vulns.values() if v.startswith("Vulnerable"))
+        rows.append(("CPU mitigations", f"{mit} active, {vul} vulnerable, "
+                                        f"{len(vulns) - mit - vul} not affected (listed under System calls)"))
     if plat.get("git_commit"):
         rows.append(("Source", f"commit {plat['git_commit'][:12]}" + (" + local changes" if plat.get("git_dirty") else "")))
     out.append("<dl class='plat'>" + "".join(f"<dt>{e(k)}</dt><dd>{e(str(v))}</dd>" for k, v in rows) + "</dl>")
