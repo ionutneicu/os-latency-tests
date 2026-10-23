@@ -1,4 +1,4 @@
-// Unit tests for the statistics, glob filter and HAL primitives.
+// Unit tests for the statistics, glob filter, HAL primitives and build checks.
 // Deliberately dependency-free so it builds on any target toolchain.
 
 #include <cmath>
@@ -11,6 +11,7 @@
 #include "olt/hal/arch.h"
 #include "olt/hal/os.h"
 #include "olt/hal/perf.h"
+#include "olt/platform.hpp"
 #include "olt/stats.hpp"
 
 static int g_failures = 0;
@@ -119,12 +120,30 @@ static void test_hal()
     }
 }
 
+static void test_build_optimization()
+{
+    // This file is built with the same C++ flags as the library, so they must agree.
+    const olt::BuildOptimization b = olt::build_optimization();
+#if defined(__OPTIMIZE__)
+    CHECK(b.cxx == 1);
+#elif defined(__GNUC__)
+    CHECK(b.cxx == 0);
+#endif
+    CHECK(b.c >= -1 && b.c <= 1);
+    CHECK(olt::unoptimised_languages({1, 1}).empty());
+    CHECK(olt::unoptimised_languages({-1, -1}).empty());
+    CHECK(olt::unoptimised_languages({1, 0}) == "C++");
+    CHECK(olt::unoptimised_languages({0, 1}) == "C");
+    CHECK(olt::unoptimised_languages({0, 0}) == "C++ and C");
+}
+
 int main()
 {
     test_percentiles();
     test_summary();
     test_glob();
     test_hal();
+    test_build_optimization();
     if (g_failures) {
         std::fprintf(stderr, "%d check(s) failed\n", g_failures);
         return EXIT_FAILURE;

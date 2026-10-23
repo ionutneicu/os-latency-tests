@@ -11,6 +11,63 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Build type" FORCE)
 endif()
 
+# ---- optimisation guard -------------------------------------------------------
+# Unoptimised code gives numbers that measure the compiler's stack traffic, not
+# the hardware (issue #12). Two ways it happens:
+# - CMake first ran before a compiler was installed. That configure fails but
+#   caches the compiler's build-type flags (CMAKE_<LANG>_FLAGS_<CONFIG>) empty,
+#   and every later configure keeps them, so that language builds at -O0.
+#   The defaults are put back, unless the general flags set a level of their own.
+# - The build type or the flags have no optimisation level at all: warn.
+
+function(olt_last_opt_level out flags)
+  string(REGEX MATCHALL " -O[^ ]*" levels " ${flags}")
+  set(level "")
+  if(levels)
+    list(GET levels -1 level)
+    string(STRIP "${level}" level)
+  endif()
+  set(${out} "${level}" PARENT_SCOPE)
+endfunction()
+
+function(olt_check_optimisation)
+  set(repaired "")
+  set(unoptimised "")
+  foreach(lang C CXX)
+    olt_last_opt_level(general "${CMAKE_${lang}_FLAGS}")
+    foreach(cfg RELEASE RELWITHDEBINFO MINSIZEREL)
+      set(var CMAKE_${lang}_FLAGS_${cfg})
+      string(STRIP "${CMAKE_${lang}_FLAGS_${cfg}_INIT}" init)
+      if("${${var}}" STREQUAL "" AND NOT init STREQUAL "" AND general STREQUAL "")
+        set(${var} "${init}" CACHE STRING "Flags used by the ${lang} compiler during ${cfg} builds." FORCE)
+        set(${var} "${init}")
+        list(APPEND repaired "${var}='${init}'")
+      endif()
+    endforeach()
+    if(CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+      string(TOUPPER "${CMAKE_BUILD_TYPE}" cfg)
+      string(STRIP "${CMAKE_${lang}_FLAGS} ${CMAKE_${lang}_FLAGS_${cfg}}" flags)
+      olt_last_opt_level(level "${flags}")
+      if(level STREQUAL "" OR level STREQUAL "-O0")
+        string(REPLACE "CXX" "C++" name "${lang}")
+        list(APPEND unoptimised "${name} (flags '${flags}')")
+      endif()
+    endif()
+  endforeach()
+  if(repaired)
+    string(REPLACE ";" ", " repaired "${repaired}")
+    message(WARNING "Optimisation flags were cached empty, probably because CMake first ran before the "
+                    "compiler was installed. Restored the defaults: ${repaired}.")
+  endif()
+  if(unoptimised)
+    string(REPLACE ";" " and " unoptimised "${unoptimised}")
+    message(WARNING "The ${unoptimised} code builds without optimisation (build type "
+                    "${CMAKE_BUILD_TYPE}). Benchmark numbers from such a build are wrong: use "
+                    "-DCMAKE_BUILD_TYPE=RelWithDebInfo or Release, without -O0 in the flags.")
+  endif()
+endfunction()
+olt_check_optimisation()
+
 # ---- feature options ---------------------------------------------------------
 # Optional features follow one pattern: OLT_WITH_<FEATURE> = AUTO | ON | OFF.
 # AUTO enables the feature when its dependencies are found, ON fails the
@@ -110,6 +167,11 @@ if(OLT_BUILD_TESTS)
   # End-to-end smoke run with few samples
   add_test(NAME smoke_run COMMAND os-latency-tests -n 200 -w 10 --park-us 20 --mem-max 1M --sweep-samples 3
                                   -o ${CMAKE_CURRENT_BINARY_DIR}/smoke-results)
+  # Flags cached empty by a configure that ran before the compiler was installed get repaired (#12)
+  add_test(NAME cmake_flag_repair
+           COMMAND ${CMAKE_COMMAND} "-DSRC=${CMAKE_CURRENT_SOURCE_DIR}" "-DBIN=${CMAKE_CURRENT_BINARY_DIR}/flag-repair"
+                   "-DGEN=${CMAKE_GENERATOR}" "-DCC=${CMAKE_C_COMPILER}" "-DCXX=${CMAKE_CXX_COMPILER}"
+                   "-DTOOLCHAIN=${CMAKE_TOOLCHAIN_FILE}" -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/cmake_flag_repair.cmake)
   find_package(Python3 COMPONENTS Interpreter QUIET)
   if(Python3_Interpreter_FOUND)
     add_test(NAME report COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/olt-report.py

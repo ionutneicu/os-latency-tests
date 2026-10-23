@@ -509,7 +509,11 @@ scheduled.
 **Optimisation levels (`-O0` to `-O3`, `-Os`, `-Oz`).** `-O2` is the usual
 release level. `-O3` adds more aggressive inlining, unrolling and vectorisation:
 sometimes faster, sometimes only bigger. `-Os` and `-Oz` optimise for size. This
-project builds as CMake's RelWithDebInfo by default (`-O2 -g -DNDEBUG`).
+project builds as CMake's RelWithDebInfo by default (`-O2 -g -DNDEBUG`). `-O0`
+(no optimisation, GCC's default) keeps every variable in memory and makes every
+small function a real call, so a timed loop measures loads and stores to the
+stack instead of the operation under test. The tool warns about such a build, and
+the report marks its results as not valid.
 
 **Auto-vectorisation.** The compiler turning loops into SIMD code. GCC does it at
 `-O2` since version 12 (only when clearly cheap) and fully at `-O3`; Clang does

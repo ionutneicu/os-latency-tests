@@ -115,6 +115,16 @@ python3 tools/olt-report.py olt-results/results.json   # -> olt-results/report.h
 
 Open `olt-results/report.html` in a browser for the graphs.
 
+Benchmark an optimised build only. The default build type is RelWithDebInfo
+(`-O2 -g`). Without optimisation the timed loops measure the compiler's stack
+traffic, not the hardware, and results come out up to several times too slow.
+CMake warns when the flags have no optimisation level. It also repairs a known
+trap: a configure that ran before `g++` was installed caches empty C++ flags,
+and later configures used to keep them and build the C++ code at `-O0`. The
+benchmark binary checks this too: it shows `optimised` on its `build` line,
+warns before running if it is not, and the report then marks the results as not
+valid.
+
 ### With conda
 
 If you prefer a conda environment for the tools (CMake, Ninja, Python and the
@@ -195,7 +205,8 @@ p99.99 needs 100 000).
 * **Console**: platform summary and one table row per result.
 * **`results.json`** (`schema: olt-results/1`): platform (CPU, board, kernel,
   preemption model, governor, isolated CPUs, cache hierarchy, cycle counter
-  frequency, timer overhead, available perf counters), run configuration, and
+  frequency, timer overhead, available perf counters, compiler, build type and
+  whether the C and C++ code was optimised), run configuration, and
   summary statistics per result: count, min, max, mean, standard deviation,
   median absolute deviation, percentiles, and which percentiles are unreliable.
 * **`raw/*.csv`**: every individual sample, for histograms, CDFs and your own
@@ -338,7 +349,10 @@ noisy and print a warning for each:
 * the benchmark CPUs (or the whole system) are already busy with other work,
   sampled from `/proc/stat` for 300 ms;
 * little memory is available (less than 10% of RAM, or less than the memory
-  sweep needs).
+  sweep needs);
+* the binary was compiled without optimisation (C++ or C code at `-O0`): its
+  numbers describe the compiler, not the machine, and the report marks them as
+  not valid.
 
 In an interactive terminal the tool then asks whether to continue anyway;
 `--yes` skips the question, and non-interactive runs (scripts, CI) continue.

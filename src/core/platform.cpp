@@ -2,6 +2,7 @@
 
 #include "olt/hal/arch.h"
 #include "olt/hal/perf.h"
+#include "olt/hal/stream.h"
 
 #ifndef OLT_BUILD_TYPE
 #define OLT_BUILD_TYPE "unknown"
@@ -31,6 +32,25 @@ std::string compiler_id()
 }
 
 }  // namespace
+
+BuildOptimization build_optimization()
+{
+    BuildOptimization b;
+    b.c = olt_stream_optimized();
+#if defined(__OPTIMIZE__)
+    b.cxx = 1;
+#elif defined(__GNUC__)
+    b.cxx = 0;
+#endif
+    return b;
+}
+
+std::string unoptimised_languages(const BuildOptimization& b)
+{
+    std::string s = b.cxx == 0 ? "C++" : "";
+    if (b.c == 0) s += s.empty() ? "C" : " and C";
+    return s;
+}
 
 PlatformInfo collect_platform_info(int cpu, const TickCalibration& cal, const TimerOverhead& timer)
 {
@@ -66,6 +86,7 @@ PlatformInfo collect_platform_info(int cpu, const TickCalibration& cal, const Ti
 
     p.compiler = compiler_id();
     p.build_type = OLT_BUILD_TYPE;
+    p.optimized = build_optimization();
     p.ticks = cal;
     p.timer = timer;
     return p;

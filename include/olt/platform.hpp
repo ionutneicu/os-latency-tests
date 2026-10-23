@@ -9,6 +9,18 @@
 
 namespace olt {
 
+// Whether this binary's C and C++ code was compiled with optimisation: 1 yes,
+// 0 no, -1 unknown (the compiler does not say). Unoptimised code measures the
+// compiler's stack traffic, not the hardware.
+struct BuildOptimization {
+    int c = -1;    // the C kernels (src/hal/stream.c)
+    int cxx = -1;  // the C++ harness and benchmarks
+};
+
+BuildOptimization build_optimization();
+// "C++", "C", "C++ and C" for the languages known to be unoptimised, "" if none.
+std::string unoptimised_languages(const BuildOptimization& b);
+
 struct PlatformInfo {
     std::string arch;
     std::string os;
@@ -29,6 +41,7 @@ struct PlatformInfo {
     std::vector<std::string> perf_events;   // counters that could actually be opened
     std::string compiler;
     std::string build_type;
+    BuildOptimization optimized;
     TickCalibration ticks;
     TimerOverhead timer;
 };
