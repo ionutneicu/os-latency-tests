@@ -24,7 +24,7 @@ machine, but each one has a cost, and most applications never need them.
 | Change | Helps with | Typical effect | Cost | Worth it when |
 |---|---|---|---|---|
 | Performance governor | frequency ramp-up delays | less variance, lower p50 on bursty loads | power, heat | almost always on a latency box (no reboot needed) |
-| `/dev/cpu_dma_latency` = 0 (`--no-idle`) | C-state exit latency | wake-ups from tens of us to a few us | power while held | already used by `run-all.sh`; first thing to try |
+| Idle limit (`--no-idle`, PM QoS) | C-state exit latency | wake-ups from tens of us to a few us | power while held | already used by `run-all.sh`; first thing to try |
 | `isolcpus` / `nohz_full` / `rcu_nocbs` | scheduler, timer tick and RCU noise on chosen cores | worst-case gaps from ~100 us down to a few us | those cores run only what you pin there | a dedicated hot thread per core |
 | IRQ affinity away from hot cores | interrupts landing on the hot core | removes the largest remaining spikes | needs per-device setup | after isolation, if jitter remains |
 | PREEMPT_RT kernel | long non-preemptible kernel sections | bounded worst case (p99.99/max) | lower throughput, different kernel | hard deadlines, control loops, audio |
@@ -151,10 +151,24 @@ benchmark measures the sibling effect directly without turning SMT off.
 **What it does.** Stops cores from entering deep sleep states, whose exit
 latency shows up as slow wake-ups.
 
-`--no-idle` (used by `run-all.sh`) already does this for the duration of a run
-by holding `/dev/cpu_dma_latency` at 0. Boot options make it permanent:
-`intel_idle.max_cstate=1` or `processor.max_cstate=1`, or `idle=poll` for
-always-spinning idle loops.
+`--no-idle` (used by `run-all.sh`) already does this for the duration of a run,
+on the benchmark CPUs only. It writes C1's exit latency to
+`/sys/devices/system/cpu/cpuN/power/pm_qos_resume_latency_us`, so those CPUs
+can still halt in C1 but not sleep deeper, while the other CPUs keep their
+normal idle states. The old values come back at exit, also on Ctrl-C or a
+crash. A `kill -9` leaves them until reboot; reset them with
+`echo 0 | sudo tee /sys/devices/system/cpu/cpu*/power/pm_qos_resume_latency_us`.
+Where per-CPU limits are not available, it holds `/dev/cpu_dma_latency` for all
+CPUs instead.
+
+`--idle-latency-us N` picks another limit. `0` allows only polling, like
+`idle=poll` on those CPUs: an idle CPU spins instead of halting. On a
+power-limited laptop the spinning uses up the power budget the measuring core
+needs for turbo, and a spinning SMT sibling takes execution resources from the
+measuring thread on the same core. Use it only to see what polling buys over C1.
+
+Boot options make the limit permanent: `intel_idle.max_cstate=1` or
+`processor.max_cstate=1`, or `idle=poll` for always-spinning idle loops.
 
 **What to expect.** On a laptop run, mutex wake-up p50 dropped from 15 us to
 2.2 us with `--no-idle`. The boot options give the same effect without needing

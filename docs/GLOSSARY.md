@@ -404,10 +404,14 @@ thread woken on a deeply idle core waits for that exit, and on laptops that is
 often most of a blocking hand-off: measured 15 µs on the i7-1165G7 against
 2.2 µs with deep idle blocked.
 
-**`/dev/cpu_dma_latency` (PM QoS).** Writing the longest acceptable wake-up
-latency here, and keeping the file open, stops the kernel from using idle
-states that take longer to exit. `--no-idle` writes 0. It needs root and
-applies to the whole system while held.
+**`/dev/cpu_dma_latency` and `pm_qos_resume_latency_us` (PM QoS).** Writing the
+longest acceptable wake-up latency to `/dev/cpu_dma_latency`, and keeping the
+file open, stops the kernel from using idle states that take longer to exit, on
+every CPU. The per-CPU file
+`/sys/devices/system/cpu/cpuN/power/pm_qos_resume_latency_us` does the same for
+one CPU and stays set after the process exits; `0` there means no limit and
+`n/a` means polling only. The kernel uses the stricter of the two. `--no-idle`
+sets C1's exit latency on the benchmark CPUs only. Both need root.
 
 **cpuidle driver.** The kernel component that chooses idle states: `intel_idle`,
 `acpi_idle`, `psci_idle` on ARM. The report lists it.

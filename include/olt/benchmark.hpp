@@ -22,6 +22,14 @@ namespace olt {
 
 enum class Affinity { None, SameCpu, DifferentCpus };
 
+// The idle-state limit --no-idle asked for, as the OS accepted it.
+struct IdleLimit {
+    bool applied = false;  // false: not requested, or the OS refused it (deep idle stays allowed)
+    int latency_us = -1;   // exit-latency limit, 0 = polling only
+    bool per_cpu = false;  // only the benchmark CPUs are limited (otherwise all CPUs are)
+    std::string states;    // idle states still allowed, e.g. "POLL C1"; "" if the OS lists none
+};
+
 struct Config {
     size_t samples = 10000;
     size_t warmup = 100;
@@ -31,7 +39,9 @@ struct Config {
     std::vector<int> allowed_cpus;  // CPUs the process may use, read before any pinning
     int rt_priority = 0;  // SCHED_FIFO priority, 0 = keep default policy
     bool lock_memory = false;
-    bool block_deep_idle = false;  // hold PM QoS cpu_dma_latency at 0 during the run
+    bool block_deep_idle = false;  // --no-idle: keep the benchmark CPUs out of deep idle states
+    int idle_latency_us = -1;      // their exit-latency limit; -1 = the shallowest halting state (C1)
+    IdleLimit idle_limit;          // what was applied, filled in at start-up
     unsigned park_us = 200;  // how long a signalling thread waits so the other side is truly blocked
     unsigned cpu_warmup_ms = 200;  // busy-spin main and worker CPUs before each benchmark (frequency ramp-up)
 

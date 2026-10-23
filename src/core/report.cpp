@@ -59,6 +59,17 @@ std::string optimization_text(const BuildOptimization& o)
     return off.empty() ? "optimisation unknown" : off + " NOT OPTIMISED, results are wrong";
 }
 
+std::string idle_text(const Config& cfg)
+{
+    if (!cfg.block_deep_idle) return "deep idle allowed";
+    const IdleLimit& l = cfg.idle_limit;
+    if (!l.applied) return "limit refused, deep idle allowed";
+    std::string s = "limited to " + std::to_string(l.latency_us) + " us exit latency on " +
+                    (l.per_cpu ? "the benchmark CPUs" : "all CPUs");
+    if (!l.states.empty()) s += " (allowed: " + l.states + ")";
+    return s;
+}
+
 std::string num(double v)
 {
     if (!std::isfinite(v)) return "null";
@@ -157,8 +168,8 @@ void print_platform(std::ostream& os, const PlatformInfo& p, const Config& cfg)
     os << "  affinity       : " << affinity_name(cfg.affinity) << " (main cpu " << cfg.main_cpu
        << ", worker cpu " << cfg.worker_cpu << ")\n";
     os << "  rt priority    : " << (cfg.rt_priority > 0 ? "SCHED_FIFO " + std::to_string(cfg.rt_priority) : "default")
-       << ", mlockall " << (cfg.lock_memory ? "on" : "off")
-       << ", deep idle " << (cfg.block_deep_idle ? "blocked" : "allowed") << "\n\n";
+       << ", mlockall " << (cfg.lock_memory ? "on" : "off") << "\n";
+    os << "  idle states    : " << idle_text(cfg) << "\n\n";
 }
 
 void print_table_header(std::ostream& os)
@@ -241,7 +252,14 @@ void write_json(const std::string& path, const PlatformInfo& p, const Config& cf
       << ", \"affinity\": " << q(affinity_name(cfg.affinity)) << ", \"main_cpu\": " << cfg.main_cpu
       << ", \"worker_cpu\": " << cfg.worker_cpu << ", \"rt_priority\": " << cfg.rt_priority
       << ", \"lock_memory\": " << (cfg.lock_memory ? "true" : "false")
-      << ", \"block_deep_idle\": " << (cfg.block_deep_idle ? "true" : "false") << ", \"park_us\": " << cfg.park_us
+      << ", \"block_deep_idle\": " << (cfg.block_deep_idle ? "true" : "false") << ", \"idle_limit\": ";
+    if (!cfg.block_deep_idle)
+        f << "null";
+    else
+        f << "{\"requested_us\": " << cfg.idle_latency_us << ", \"applied\": " << (cfg.idle_limit.applied ? "true" : "false")
+          << ", \"latency_us\": " << cfg.idle_limit.latency_us << ", \"per_cpu\": "
+          << (cfg.idle_limit.per_cpu ? "true" : "false") << ", \"states\": " << q(cfg.idle_limit.states) << "}";
+    f << ", \"park_us\": " << cfg.park_us
       << ", \"cpu_warmup_ms\": " << cfg.cpu_warmup_ms << ", \"sweep_samples\": " << cfg.sweep_samples << ", \"hugepages\": " << (cfg.hugepages ? "true" : "false")
       << "},\n";
 

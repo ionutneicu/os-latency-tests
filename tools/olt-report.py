@@ -487,6 +487,27 @@ def level_summary(lat, rd, wr, zones, line, nt=(), wrr=()):
     return rows
 
 
+def idle_text(cfg):
+    """How idle states were limited during the run, for the Power line."""
+    if "idle_limit" not in cfg:  # results.json from before per-CPU idle limits
+        return "deep idle " + ("blocked" if cfg.get("block_deep_idle") else "allowed") + " during run"
+    lim = cfg["idle_limit"]
+    if not lim:
+        return "deep idle allowed during run"
+    if not lim.get("applied"):
+        return "idle limit refused (needs root), deep idle allowed during run"
+    where = "the benchmark CPUs" if lim.get("per_cpu") else "all CPUs"
+    states = f" (allowed: {lim['states']})" if lim.get("states") else ""
+    return f"idle states limited to {lim.get('latency_us')} µs exit latency on {where}{states}"
+
+
+def deep_idle_limited(cfg):
+    """True when the run kept the benchmark CPUs out of deep idle states."""
+    if "idle_limit" not in cfg:
+        return bool(cfg.get("block_deep_idle"))
+    return bool(cfg["idle_limit"] and cfg["idle_limit"].get("applied"))
+
+
 def build_guidance(summary, caches, platform, results, cfg):
     tips = []
     by = {r["level"]: r for r in summary}
@@ -520,7 +541,7 @@ def build_guidance(summary, caches, platform, results, cfg):
     wake = named.get("sync.mutex_wakeup")
     if wake:
         p50, p99 = wake["percentiles"].get("p50"), wake["percentiles"].get("p99")
-        if p50 and wake["min"] and p50 > 3 * wake["min"] and not cfg.get("block_deep_idle"):
+        if p50 and wake["min"] and p50 > 3 * wake["min"] and not deep_idle_limited(cfg):
             tips.append(f"Blocking wake-up p50 ({fmt_ns(p50)}) is {p50 / wake['min']:.0f}x its minimum "
                         f"({fmt_ns(wake['min'])}): most of it is likely the sleeping core leaving a deep idle state. "
                         f"Compare with a --no-idle run; latency-critical threads should spin/poll or run with deep idle blocked.")
@@ -1110,8 +1131,8 @@ def build_report(doc, src_path, charts_dir):
         ("Cache line", f"{line} B"),
         ("Memory", fmt_bytes(plat["physical_memory"]) if plat.get("physical_memory") else "unknown"),
         ("Huge pages", f"THP {plat.get('thp_mode') or 'n/a'}; sweep used {'huge' if cfg.get('hugepages') else 'base'} pages"),
-        ("Power", f"governor {plat.get('governor') or 'n/a'}, cpuidle {plat.get('cpuidle_driver') or 'n/a'}, deep idle "
-                  f"{'blocked' if cfg.get('block_deep_idle') else 'allowed'} during run"),
+        ("Power", f"governor {plat.get('governor') or 'n/a'}, cpuidle {plat.get('cpuidle_driver') or 'n/a'}, "
+                  f"{idle_text(cfg)}"),
         ("Perf counters", f"{perf.get('backend', 'none')}: {', '.join(perf.get('events', [])) or 'none available'}"),
         ("Run", f"{cfg.get('samples')} samples, affinity {cfg.get('affinity')} (CPU {cfg.get('main_cpu')}/{cfg.get('worker_cpu')}), "
                 f"RT priority {cfg.get('rt_priority') or 'default'}, mlock {'on' if cfg.get('lock_memory') else 'off'}"),

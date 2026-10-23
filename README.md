@@ -189,7 +189,8 @@ p99.99 needs 100 000).
 | `--cpus MAIN[,WORKER]` | pin to explicit CPUs instead of the automatic choice (highest-numbered allowed CPUs, away from CPU 0's interrupt load) |
 | `-p, --rt-prio N` | run benchmark threads as `SCHED_FIFO` priority N (root or `CAP_SYS_NICE`) |
 | `-m, --mlock` | `mlockall()` to avoid page-fault latency |
-| `--no-idle` | keep CPUs out of deep idle (C-)states for the run via `/dev/cpu_dma_latency` (root); compare with and without to see how much wake-up latency comes from idle exit |
+| `--no-idle` | keep the benchmark CPUs out of deep idle (C-)states for the run (root): only states that wake as fast as C1 stay allowed. Set per CPU through `pm_qos_resume_latency_us`, so other CPUs keep sleeping and the old values come back at exit; where that is not available, for all CPUs through `/dev/cpu_dma_latency`. Compare with and without to see how much wake-up latency comes from idle exit |
+| `--idle-latency-us N` | with `--no-idle`, allow idle states that wake within N µs instead (implies `--no-idle`). `0` allows only polling: idle benchmark CPUs spin, which costs turbo headroom on power-limited CPUs and execution resources of the SMT sibling |
 | `--cpu-warmup-ms N` | busy-spin the main and worker CPUs for N ms before each benchmark so frequency scaling has ramped up (default 200, 0 = off) |
 | `--park-us N` | how long a signalling thread waits so its peer is really blocked in the kernel (default 200) |
 | `--mem-min BYTES`, `--mem-max BYTES` | buffer size range of the memory sweep (default 1K to 4x the largest cache, max 512M and RAM/4; `K`/`M`/`G` suffixes) |
