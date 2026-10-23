@@ -98,6 +98,7 @@ One command builds, runs every benchmark and opens the report (install the
 ```sh
 ./run-all.sh            # full run, asks for sudo (RT priority, mlock, deep idle blocked)
 ./run-all.sh --quick    # ~20 s smoke run; --no-sudo for an unprivileged run
+./run-all.sh -y         # never stop to ask when pre-flight checks warn (scripts, cron)
 ```
 
 Results go to `results/<host>-<timestamp>/`: `report.html`, the same report as
