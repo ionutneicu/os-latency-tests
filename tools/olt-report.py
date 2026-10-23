@@ -652,6 +652,24 @@ def build_guidance(summary, caches, platform, results, cfg):
         worst = max(thr.items(), key=lambda kv: kv[1]["percentiles"]["p50"])
         tips.append(f"Streaming between two threads: {best[0]} moves {1e3 / best[1]['percentiles']['p50']:.3g} M items/s, "
                     f"{worst[1]['percentiles']['p50'] / best[1]['percentiles']['p50']:.1f}x more than {worst[0]}.")
+    cont = {}
+    for r in results:
+        if r["name"] == "multicore.atomic_contention" and "threads" in r["params"] and r["percentiles"].get("p50"):
+            cont.setdefault(r["params"]["op"], {})[int(r["params"]["threads"])] = r["percentiles"]["p50"]
+    fa, sh = cont.get("fetch_add", {}), cont.get("sharded", {})
+    if fa and sh and max(fa) > 1 and 1 in fa:
+        n = max(fa)
+        tips.append(f"Shared atomic counters do not scale: with {n} cores incrementing one std::atomic, each increment "
+                    f"costs {fmt_ns(fa[n])} instead of {fmt_ns(fa[1])} on one core ({fa[n] / fa[1]:.0f}x), while a "
+                    f"counter per thread stays at {fmt_ns(sh.get(n, sh[min(sh)]))}. Give each thread its own counter "
+                    f"(padded to 128 bytes) and sum them when reading.")
+    od = by_param("multicore.atomic_order")
+    if "store_seq_cst" in od and "store_release" in od:
+        a, b = od["store_seq_cst"]["percentiles"]["p50"], od["store_release"]["percentiles"]["p50"]
+        if a > 2 * b:
+            tips.append(f"Memory order: a seq_cst atomic store (the default of std::atomic::store and operator=) "
+                        f"costs {fmt_ns(a)}, a release store {fmt_ns(b)}. Publishing data to another thread only needs "
+                        f"store(release) paired with load(acquire).")
     br = branch_summary(results)
     if br and br["penalty"] > 0:
         cross, worst = br["crossover"], br["curves"]["branchy"][-1][1]
@@ -1204,6 +1222,35 @@ def build_report(doc, src_path, charts_dir):
             fs_html += (f"<p class='note'>On this CPU, counters written by different threads need at least "
                         f"{pad} bytes between them (vertical line: the {line}-byte cache line).</p>")
         fs_html += guide_link("false-sharing.md", "false sharing", named("multicore.false_sharing"), plat)
+    cont = [r for r in results if r["name"] == "multicore.atomic_contention" and "threads" in r["params"]
+            and r["percentiles"].get("p50")]
+    order = variants("multicore.atomic_order")
+    if cont or order:
+        at_html = ("<h3>Atomics: shared counter vs sharded, and the cost of memory ordering</h3>"
+                   "<p class='sub'>1 to N threads, one per physical core, each increment a counter: one shared "
+                   "<code>std::atomic</code> (<code>fetch_add</code>, or a compare-exchange loop as lock-free code "
+                   "uses) or one counter per thread (sharded). Every increment of a shared counter pulls its cache "
+                   "line to the incrementing core, so the cost grows with the number of cores; sharded counters "
+                   "never move.</p>")
+        names = {"fetch_add": "shared, fetch_add", "cas": "shared, compare-exchange loop", "sharded": "sharded (one per thread)"}
+        series = []
+        for i, op in enumerate(("fetch_add", "cas", "sharded")):
+            pts = sorted((int(r["params"]["threads"]), r["percentiles"]["p50"]) for r in cont if r["params"]["op"] == op)
+            if pts:
+                series.append({"name": names[op], "slot": i + 1, "points": pts})
+        if series:
+            at_html += chart_block(Chart("multicore-atomic-contention", "Atomic increment: ns per increment vs "
+                                         "cores", "count", True, "ns per increment, each thread (log)", "ns", series,
+                                         x_title="threads, one per physical core"))
+        if order:
+            at_html += ("<p class='sub'>One thread, no contention: what each memory order costs per operation. On "
+                        "x86 loads and stores are already acquire/release, so only a seq_cst store (an "
+                        "<code>xchg</code>) and a fence cost extra; on ARM each order uses its own instructions.</p>")
+            at_html += chart_block(BarChart("multicore-atomic-order", "Memory ordering: ns per operation, one core",
+                                            "ns per operation (p50)", bar_rows(order)))
+        at_html += guide_link("atomics.md", "atomics and memory ordering", cont + order, plat)
+        fs_html += at_html
+
     if c2c:
         cpus = sorted({c for k in c2c for c in k})
         vals = sorted(c2c.values())

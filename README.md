@@ -367,6 +367,14 @@ the cost falls back to the single-core figure. On many x86 CPUs that is
 128 bytes, not 64, because the adjacent-line prefetcher fetches lines in pairs.
 Use that value in `alignas()` for per-thread counters, queue indices and locks.
 
+`multicore.atomic_contention` shows what a shared atomic costs as cores are
+added: 1 to N threads, one per physical core, increment one shared
+`std::atomic` (`fetch_add`, or a compare-exchange loop with
+`metrics.retries`) or one counter per thread (`sharded`), in ns per increment
+as each thread sees it. `multicore.atomic_order` measures each memory order on
+one core without contention: load, store and `fetch_add` with relaxed,
+acquire/release and seq_cst, plus a seq_cst fence.
+
 ## Measurement hygiene
 
 Before measuring, pre-flight checks look for conditions that make results

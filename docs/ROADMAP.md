@@ -39,8 +39,9 @@ The six with the biggest x86 vs ARM differences and the clearest hints.
 
 - [x] **False sharing vs padding distance**: two threads on adjacent vs padded
   fields at 8 to 256 B; shows whether this CPU needs 64 or 128 B padding
-- [ ] **Atomic RMW and memory ordering**: fetch_add/CAS vs thread count, sharded
-  counters; seq_cst vs acq_rel vs relaxed (extends the multicore section)
+- [x] **Atomic RMW and memory ordering**: fetch_add/CAS vs thread count, sharded
+  counters; seq_cst vs acq_rel vs relaxed (`multicore.atomic_contention`,
+  `multicore.atomic_order`)
 - [x] **Branch misprediction and branchless crossover**: sorted vs random data,
   branchy vs cmov/mask; ns per mispredict and the predictability where
   branchless wins (`cpu.branch`)
