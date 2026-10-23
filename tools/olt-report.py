@@ -1320,12 +1320,17 @@ def build_report(doc, src_path, charts_dir):
             reqs = sorted({u for m in over.values() for u in m})
             body += ("<p class='sub'>Timer accuracy: how much later than requested the thread runs again (p50, p99 in "
                      "brackets). Normal threads get 50 µs of timer slack by default, which the kernel may add to "
-                     "let wake-ups coalesce; real-time threads (<code>-p</code>) get none.</p>")
+                     "let wake-ups coalesce; real-time threads (<code>-p</code>) get none. "
+                     + ("This run used real-time priority, so plain nanosleep had no slack either."
+                        if cfg.get("rt_priority") else
+                        "This run used normal scheduling, so the nanosleep row includes the default slack.")
+                     + "</p>")
             head = "".join(f"<th>{u} µs</th>" for u in reqs)
             rows = ""
             for m, pts in over.items():
                 cells = "".join(f"<td>{fmt_ns(pts[u]['percentiles']['p50'])} ({fmt_ns(pts[u]['percentiles'].get('p99'))})</td>"
-                                if u in pts else "<td>-</td>" for u in reqs)
+                                if u in pts else ("<td>n/a (ms timeouts)</td>" if m == "epoll_wait" else "<td>-</td>")
+                                for u in reqs)
                 rows += f"<tr><td>{e(m)}</td>{cells}</tr>"
             body += f"<div class='table-wrap'><table><tr><th>method \\ requested</th>{head}</tr>{rows}</table></div>"
         if vulns:
