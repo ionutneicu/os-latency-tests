@@ -142,6 +142,7 @@ add_executable(os-latency-tests
   src/benchmarks/memory.cpp
   src/benchmarks/multicore.cpp
   src/benchmarks/pattern_alloc.cpp
+  src/benchmarks/pattern_dispatch.cpp
   src/benchmarks/pattern_spsc.cpp
   src/benchmarks/sync.cpp
   src/benchmarks/threads.cpp

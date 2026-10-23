@@ -322,6 +322,24 @@ polling variants are much faster but keep a core busy, and blocking variants
 pay the OS wake-up cost (which grows with deep idle states, see `--no-idle`).
 Run with `--affinity same` to see what happens when both threads share a CPU.
 
+### Dispatch (`pattern.dispatch_one_type`, `pattern.dispatch_mixed`)
+
+1024 small objects of four types each compute a one-cycle operation; the
+result is ns per call. The same objects are called six ways:
+
+| Variant | How the code is chosen | When |
+|---|---|---|
+| `virtual` | vtable, `std::unique_ptr<Base>` | run time, open set of types |
+| `std_function` | `std::function` holding a small lambda | run time, any callable |
+| `function_ptr` | function pointer + state | run time, C interfaces |
+| `switch` | enum tag + `switch` | run time, closed set |
+| `variant` | `std::variant` + `std::visit` | run time, closed set, objects stored inline |
+| `template` | function template per type; mixed objects kept in one vector per type | compile time (templates, CRTP, policy classes) |
+
+`dispatch_one_type` has a single type at the call site, so the branch predictor
+always guesses the target; `dispatch_mixed` calls the four types in a new
+random order every sample, so it misses most of the time.
+
 ## Multicore communication
 
 `multicore.c2c_latency` pins two threads to every pair of allowed CPUs and

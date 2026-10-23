@@ -609,6 +609,18 @@ def build_guidance(summary, caches, platform, results, cfg):
         worst = max(thr.items(), key=lambda kv: kv[1]["percentiles"]["p50"])
         tips.append(f"Streaming between two threads: {best[0]} moves {1e3 / best[1]['percentiles']['p50']:.3g} M items/s, "
                     f"{worst[1]['percentiles']['p50'] / best[1]['percentiles']['p50']:.1f}x more than {worst[0]}.")
+    dm, d1 = by_param("pattern.dispatch_mixed"), by_param("pattern.dispatch_one_type")
+    if "virtual" in dm and "template" in dm:
+        v, t = dm["virtual"]["percentiles"]["p50"], dm["template"]["percentiles"]["p50"]
+        one = (f" With a single type at the call site the virtual call costs only {fmt_ns(d1['virtual']['percentiles']['p50'])}: "
+               f"the target is predicted." if "virtual" in d1 else "")
+        alt = min((k for k in ("switch", "variant") if k in dm), key=lambda k: dm[k]["percentiles"]["p50"], default=None)
+        mid = (f" A {'std::variant' if alt == 'variant' else 'switch on a type tag'} sits between "
+               f"({fmt_ns(dm[alt]['percentiles']['p50'])})." if alt else "")
+        tips.append(f"Dispatch: calling through a virtual function on objects of mixed types costs {fmt_ns(v)} per call, "
+                    f"{v / t:.0f}x the {fmt_ns(t)} of the same work with the type known at compile time (templates, "
+                    f"objects grouped by type).{one}{mid} On a hot loop over mixed objects, keep one container per type "
+                    f"or sort by type.")
     lst = by_param("pattern.alloc_list")
     if "new_delete" in lst and "pmr_monotonic" in lst:
         a, b = lst["new_delete"]["percentiles"]["p50"], lst["pmr_monotonic"]["percentiles"]["p50"]
@@ -1017,6 +1029,21 @@ def build_report(doc, src_path, charts_dir):
                                                  "CPU cores busy (producer + consumer)", cpu_rows,
                                                  best_label="least CPU", ratio_word="more CPU")))
         pat_html.append(guide_link("pattern-spsc.md", "SPSC queues"))
+    d1, dm = variants("pattern.dispatch_one_type"), variants("pattern.dispatch_mixed")
+    if d1 or dm:
+        pat_html.append("<h3>Dispatch: virtual vs std::function vs std::variant vs templates</h3>"
+                        "<p class='sub'>1024 small objects each compute a one-cycle operation; ns per call (p50, shorter "
+                        "is better). Run-time dispatch picks the code per object (vtable, function pointer, switch, "
+                        "variant); <code>template</code> fixes the type at compile time, so the call inlines away. "
+                        "With one type the branch predictor always guesses the target; with four types in random "
+                        "order it misses most of the time.</p>")
+        if d1:
+            pat_html.append(chart_block(BarChart("pattern-dispatch-one", "One type at the call site: ns per call",
+                                                 "ns per call (p50)", bar_rows(d1))))
+        if dm:
+            pat_html.append(chart_block(BarChart("pattern-dispatch-mixed", "Four types in random order: ns per call",
+                                                 "ns per call (p50)", bar_rows(dm))))
+        pat_html.append(guide_link("pattern-dispatch.md", "dispatch"))
     c2c = {}
     for r in results:
         if r["name"] == "multicore.c2c_latency" and "cpu_a" in r["params"] and r["percentiles"].get("p50"):
