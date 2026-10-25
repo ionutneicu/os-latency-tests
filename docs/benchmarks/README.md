@@ -18,6 +18,7 @@ Unfamiliar term? See the [glossary](../GLOSSARY.md).
 | [Heap allocator](alloc.md) | `alloc.malloc_free` | How expensive is `malloc`/`new` on the hot path? |
 | [Memory hierarchy](memory.md) | `mem.cache_sweep` | How big can my working set be before it gets slow? |
 | [Instruction-level parallelism](ilp.md) | `cpu.ilp` | How far should I unroll; how many independent lookups at once? |
+| [System calls, clocks, timers](syscall.md) | `os.call`, `os.timer_overshoot` | What does a system call cost? Which clock is cheap? How late does a sleep wake up? |
 | [Branch misprediction](branch.md) | `cpu.branch` | Branch or branchless: when does each win? |
 | [Container memory](pattern-alloc.md) | `pattern.alloc` | Default allocator, `reserve()`, or a pmr arena? |
 | [SPSC queues](pattern-spsc.md) | `pattern.spsc` | Mutex, spinlock or lock-free queue between two threads? |

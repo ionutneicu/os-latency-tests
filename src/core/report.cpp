@@ -224,6 +224,10 @@ void write_json(const std::string& path, const PlatformInfo& p, const Config& cf
     f << "    \"governor\": " << q(p.governor) << ",\n";
     f << "    \"cpuidle_driver\": " << q(p.cpuidle_driver) << ",\n";
     f << "    \"isolated_cpus\": " << q(p.isolated_cpus) << ",\n";
+    f << "    \"cpu_vulnerabilities\": {";
+    for (size_t i = 0; i < p.cpu_vulnerabilities.size(); ++i)
+        f << (i ? ", " : "") << q(p.cpu_vulnerabilities[i].first) << ": " << q(p.cpu_vulnerabilities[i].second);
+    f << "},\n";
     f << "    \"thp_mode\": " << q(p.thp_mode) << ",\n";
     f << "    \"physical_memory\": " << p.physical_memory << ",\n";
     f << "    \"cache_line_size\": " << p.cache_line_size << ",\n";

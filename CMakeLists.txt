@@ -158,6 +158,9 @@ add_executable(os-latency-tests
   src/benchmarks/threads.cpp
 )
 target_link_libraries(os-latency-tests PRIVATE olt_core)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  target_sources(os-latency-tests PRIVATE src/benchmarks/syscall_linux.cpp)  # system calls, vDSO, timers
+endif()
 # cpu.ilp measures how many independent chains the core overlaps, and
 # cpu.branch compares scalar branchy and branchless code: the compiler must not
 # turn either into SIMD instructions.

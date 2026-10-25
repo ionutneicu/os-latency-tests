@@ -103,6 +103,9 @@ void olt_os_preempt_model(char* buf, size_t len);  /* "PREEMPT_RT", "PREEMPT_DYN
 void olt_os_cpu_governor(int cpu, char* buf, size_t len);
 void olt_os_cpuidle_driver(char* buf, size_t len);   /* e.g. "intel_idle", "psci_idle", "" */
 void olt_os_isolated_cpus(char* buf, size_t len);
+/* CPU vulnerabilities and their mitigation state, one "name: status" line per
+ * entry (Linux: /sys/devices/system/cpu/vulnerabilities), sorted; "" if unknown. */
+void olt_os_cpu_vulnerabilities(char* buf, size_t len);
 
 #ifdef __cplusplus
 }

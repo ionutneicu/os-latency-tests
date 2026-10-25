@@ -66,6 +66,18 @@ PlatformInfo collect_platform_info(int cpu, const TickCalibration& cal, const Ti
     const int topo_cpu = cpu >= 0 ? cpu : 0;
     p.governor = get_str<64>([topo_cpu](char* b, size_t l) { olt_os_cpu_governor(topo_cpu, b, l); });
     p.isolated_cpus = get_str<256>(olt_os_isolated_cpus);
+    {
+        const std::string all = get_str<8192>(olt_os_cpu_vulnerabilities);
+        size_t pos = 0;
+        while (pos < all.size()) {
+            const size_t end = all.find('\n', pos);
+            const std::string line = all.substr(pos, end == std::string::npos ? std::string::npos : end - pos);
+            const size_t colon = line.find(": ");
+            if (colon != std::string::npos) p.cpu_vulnerabilities.push_back({line.substr(0, colon), line.substr(colon + 2)});
+            if (end == std::string::npos) break;
+            pos = end + 1;
+        }
+    }
     p.cpuidle_driver = get_str<64>(olt_os_cpuidle_driver);
     p.thp_mode = get_str<64>(olt_os_thp_mode);
     p.physical_memory = olt_os_physical_memory();
