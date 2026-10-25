@@ -10,23 +10,36 @@ Topics are grouped as in the [roadmap](ROADMAP.md): hardware (HW), OS latency
 
 ## 1. Measure through C++ first
 
-- A benchmark times what a C++ or POSIX/libc call does: `std::atomic`,
-  `std::thread`, `std::mutex`, `clock_gettime`, `nanosleep`, `mmap` and so on.
-  The reader can reproduce it from the source without knowing the architecture.
-- Assembly is allowed only where C++ or the C library cannot express the thing
-  being measured, and only behind the HAL (`include/olt/hal/`):
-  - cycle counters (`rdtsc`, `cntvct_el0`);
-  - prefetch instructions;
-  - barriers and cache maintenance beyond `std::atomic_thread_fence`;
-  - reading a hardware detail such as an instruction's real latency, when the
-    compiler would otherwise fold the loop away.
-- Assembly used to probe hardware must be checked against a C++ version of the
-  same measurement (where one exists) and the report must say which
-  instructions were hand-written.
-- Compiler barriers should use standard C++ where it works
-  (`std::atomic_signal_fence`, `volatile` sinks). `__asm__ ("" ::: "memory")`
-  is a GNU extension. Existing uses are candidates to replace (see
-  `src/benchmarks/branch.cpp` and `src/hal/stream.c`).
+- A benchmark times what C++ or POSIX/libc gives: `std::atomic`, `std::thread`,
+  `std::mutex`, `std::chrono`, `clock_gettime`, `nanosleep`, `mmap`, allocators,
+  and `std::simd` where it is available. The reader can reproduce it from the
+  source without knowing the architecture.
+- Only the HAL (`include/olt/hal/arch/`, `src/hal/`) may contain intrinsics,
+  inline assembly or compiler builtins. Each use has a comment naming the
+  hardware fact that C++ cannot reach.
+- What the HAL may hold, because C++ has no equivalent:
+  - cycle counters (`rdtsc`, `cntvct_el0`), and the CPU identification
+    instructions (`cpuid`, `mrs ctr_el0`);
+  - prefetch (`prefetch`, `prfm`), and non-temporal stores (`movnt`, `stnp`)
+    with the fence they need after them (`sfence`, `dmb ishst`);
+  - cache maintenance (`clflush`, `dc civac`) and spin hints (`pause`, `yield`).
+- What the HAL may hold only while a standard form does not fit:
+  - barriers: `std::atomic_thread_fence` with the right order is the standard
+    form; keep the HAL's `mfence` or `dmb` only where a test needs the
+    instruction itself;
+  - SIMD bandwidth kernels: `std::simd` is the standard route once the target
+    compilers support it; the intrinsics stay as the fallback.
+- Compiler barriers use standard C++ where it works:
+  `std::atomic_signal_fence(std::memory_order_seq_cst)`. The "keep this value
+  opaque" idiom (`asm volatile("" : "+r"(v))`) has no standard equivalent, as
+  in Google Benchmark's `DoNotOptimize`, and stays. It lives in one place,
+  `clock.hpp`, and the `branch.cpp` use is the second exception.
+- Hand-written probes (hardware latencies the compiler would fold away) are
+  checked against a C++ version of the same measurement where one exists, and
+  the report says which instructions were hand-written.
+- A CI check enforces the rule: a grep of `src/benchmarks` and `src/core` for
+  `__asm__`, `asm volatile`, `_mm`, `__builtin_` fails the build. Today it
+  finds only the two opaque-value uses above.
 
 ## 2. Every result says what it measured
 
