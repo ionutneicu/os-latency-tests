@@ -56,7 +56,9 @@ def fmt_num(v):
 
 
 def fmt_count(v):
-    """Counts per second: 4792 -> '4,792', 0.5 -> '0.5'."""
+    """Counts per second: 4792 -> '4,792', 0.5 -> '0.5'. Missing values show as n/a."""
+    if v is None or (isinstance(v, float) and math.isnan(v)):
+        return "n/a"
     return f"{v:,.0f}" if v >= 10 else f"{v:.2g}"
 
 
@@ -654,7 +656,7 @@ def build_guidance(summary, caches, platform, results, cfg):
     ppad = safe_padding(fsp) if fsp else None
     if ppad and fsp["points"][0][1] > 1.5 * fsp["alone"]:
         worst = max(p[3] for p in fsp["points"] if p[3] is not None)
-        tips.append(f"False sharing with plain ++ stores: two cores pay up to {fmt_ns(worst)} per increment instead of "
+        tip(f"False sharing with plain ++ stores: two cores pay up to {fmt_ns(worst)} per increment instead of "
                     f"{fmt_ns(fsp['alone'])}, and the slow state comes and goes for several samples. Keep such counters "
                     f"at least {ppad} bytes apart on this CPU; the atomic figure above does not cover them.")
 
