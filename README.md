@@ -269,6 +269,7 @@ Installed packages provide it as `olt-report`.
 | `multicore.c2c_latency` | one-way cache-line hand-off between every pair of CPUs (atomic ping-pong), drawn as a heatmap |
 | `os.call` | ns per raw system call (`syscall(SYS_getpid)`), per `clock_gettime` for each clock (vDSO or system call) and per cycle-counter read (Linux) |
 | `os.timer_overshoot` | how late a thread wakes from `nanosleep` (default and 1 ns timer slack), a `timerfd` and `epoll_wait`, for 1 µs to 1 ms requests (Linux) |
+| `os.jitter_gap`, `os.jitter_rate` | OS jitter on the measurement core: the longest gap between consecutive clock reads in each 20 ms window, and how many gaps per second are longer than 1 and 10 µs (interrupts, timers, other tasks taking the CPU) |
 | `cpu.branch`, `cpu.branch_sorted` | ns per element of a conditional sum, 0 to 50% of elements passing at random positions or sorted, as a branch, a branchless mask and a ternary: the cost of a mispredict and where branchless code wins (branch misses per element when perf counters are available) |
 | `cpu.ilp` | ns per operation with 1 to 16 independent dependency chains (integer multiply, double add/multiply, L1 loads, DRAM loads): how far to unroll and how many cache misses overlap |
 | `multicore.false_sharing` | cost per increment when two cores update counters 8 to 512 bytes apart (plain `++` and atomic `fetch_add`), vs one core alone: the padding this CPU needs |

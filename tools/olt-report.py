@@ -55,6 +55,11 @@ def fmt_num(v):
     return f"{v:.3g}"
 
 
+def fmt_count(v):
+    """Counts per second: 4792 -> '4,792', 0.5 -> '0.5'."""
+    return f"{v:,.0f}" if v >= 10 else f"{v:.2g}"
+
+
 def parse_size_label(s):
     """'16', '4K', '1M' -> bytes."""
     mult = {"K": 1 << 10, "M": 1 << 20, "G": 1 << 30}
@@ -670,6 +675,15 @@ def build_guidance(summary, caches, platform, results, cfg):
             tips.append(f"Memory order: a seq_cst atomic store (the default of std::atomic::store and operator=) "
                         f"costs {fmt_ns(a)}, a release store {fmt_ns(b)}. Publishing data to another thread only needs "
                         f"store(release) paired with load(acquire).")
+    jg = next((r for r in results if r["name"] == "os.jitter_gap" and r["percentiles"].get("p50") is not None), None)
+    j1 = next((r for r in results if r["name"] == "os.jitter_rate" and r.get("params", {}).get("threshold_us") == "1"
+               and r["percentiles"].get("p50") is not None), None)
+    if jg and j1:
+        tips.append(f"OS jitter: the measurement core was taken away for more than 1 µs about {fmt_count(j1['mean'])} times a "
+                    f"second on average, and the longest gap in a 20 ms window is {fmt_ns(jg['percentiles']['p50'])} "
+                    f"typically and {fmt_ns(jg['percentiles'].get('p99'))} at p99. Budget deadlines above that tail, or "
+                    f"keep the latency-critical thread on a CPU the rest of the system does not use (isolated CPUs, "
+                    f"the expert tier in docs/expert-setup.md).")
     oc = by_param("os.call")
     if "syscall_getpid" in oc and "clock_monotonic" in oc:
         sc, cm = oc["syscall_getpid"]["percentiles"]["p50"], oc["clock_monotonic"]["percentiles"]["p50"]
@@ -1342,6 +1356,28 @@ def build_report(doc, src_path, charts_dir):
         body += guide_link("syscall.md", "system calls, clocks and timers", calls + [r for m in over.values() for r in m.values()], plat)
         sections.append(("os", "System calls, clocks and timers", body))
 
+    # ---- OS jitter on the measurement core
+    gap = next((r for r in results if r["name"] == "os.jitter_gap" and r["percentiles"].get("p50") is not None), None)
+    rates = {int(r["params"]["threshold_us"]): r for r in results
+             if r["name"] == "os.jitter_rate" and "threshold_us" in r.get("params", {})
+             and r["percentiles"].get("p50") is not None}
+    if gap or rates:
+        body = ("<p class='sub'>A tight loop reads the clock as fast as it can, in windows of 20 ms, and looks at the "
+                "gaps between reads. Undisturbed, a gap is one clock read (tens of nanoseconds). A longer gap means "
+                "this thread was not running: an interrupt, a timer, a kernel thread or another task had the CPU. "
+                "The chart shows the longest gap in each window (p50 is a typical window, p99 the worst 1%).</p>")
+        if gap:
+            body += chart_block(Chart("os-jitter-gap", "Longest gap per 20 ms window", "nines", True,
+                                      "gap (log)", "ns",
+                                      [{"name": "longest gap", "slot": 1, "points": distribution(gap, base)[0]}]))
+        if rates:
+            rows = "".join(f"<tr><td>longer than {t} µs</td><td>{fmt_count(r['mean'])}</td><td>{fmt_count(r['percentiles']['p50'])}</td>"
+                           f"<td>{fmt_count(r['percentiles'].get('p99'))}</td></tr>" for t, r in sorted(rates.items()))
+            body += ("<div class='table-wrap'><table><tr><th>gaps</th><th>mean per second</th><th>p50 window</th>"
+                     "<th>p99 window</th></tr>" + rows + "</table></div>")
+        body += guide_link("jitter.md", "OS jitter", [r for r in results if r["name"].startswith("os.jitter")], plat)
+        sections.append(("os-jitter", "OS jitter on the measurement core", body))
+
     if pat_html:
         sections.append(("patterns", "Design patterns", "\n".join(pat_html)))
     else:
@@ -1364,9 +1400,11 @@ def build_report(doc, src_path, charts_dir):
         for r in other:
             label = r["name"] + (" [" + ", ".join(f"{k}={v}" for k, v in r["params"].items()) + "]" if r["params"] else "")
             unrel = set(r.get("unreliable_percentiles", []))
-            cells = "".join(f"<td class='{'unrel' if c in unrel else ''}'>{fmt_ns(r['percentiles'].get(c))}</td>" for c in pcols)
-            rows.append(f"<tr><td>{e(label)}</td><td>{r['count']}</td><td>{fmt_ns(r['min'])}</td>{cells}"
-                        f"<td>{fmt_ns(r['max'])}</td></tr>")
+            # rates (per second) are counts, everything else in this table is a time
+            fmt = fmt_count if r.get("unit") == "per s" else fmt_ns
+            cells = "".join(f"<td class='{'unrel' if c in unrel else ''}'>{fmt(r['percentiles'].get(c))}</td>" for c in pcols)
+            rows.append(f"<tr><td>{e(label)}</td><td>{r['count']}</td><td>{fmt(r['min'])}</td>{cells}"
+                        f"<td>{fmt(r['max'])}</td></tr>")
         sections.append(("table", "All latency results",
                          "<p class='sub'>Grey values have fewer than ~10 samples beyond the percentile and are not "
                          "statistically reliable.</p><div class='table-wrap'><table><tr><th>benchmark</th><th>n</th>"
