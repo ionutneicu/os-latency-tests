@@ -30,7 +30,7 @@ Every item carries one tag. The tags also order the benchmark guide and the repo
 * **[OS] OS latency**: what the kernel and scheduler add when a thread waits,
   wakes, sleeps, spawns or is interrupted: wake-ups, thread creation, syscalls,
   timers, jitter, idle states, the network stack.
-* **[SW] Software patterns**: the C++ choices made in your own code: containers,
+* **[SW] Performance patterns**: the C++ choices made in your own code: containers,
   allocators, queues, dispatch, compile-time techniques, build flags and
   language features.
 

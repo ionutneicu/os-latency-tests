@@ -13,7 +13,7 @@ Unfamiliar term? See the [glossary](../GLOSSARY.md).
 
 Three groups. Hardware is what the CPU, caches and cores do to your code. OS
 latency is what the kernel and scheduler add when your thread waits, wakes,
-sleeps or is interrupted. Software is the C++ choices made in your own code:
+sleeps or is interrupted. Performance patterns are the C++ choices made in your own code:
 containers, allocators, queues and dispatch.
 
 ### Hardware
@@ -36,7 +36,7 @@ containers, allocators, queues and dispatch.
 | [System calls, clocks, timers](syscall.md) | `os.call`, `os.timer_overshoot` | What does a system call cost? Which clock is cheap? How late does a sleep wake up? |
 | [OS jitter](jitter.md) | `os.jitter` | How often and how long is my core taken away from my thread? |
 
-### Software: C++ patterns
+### Performance patterns (C++)
 
 | Page | Benchmarks | Question |
 |---|---|---|

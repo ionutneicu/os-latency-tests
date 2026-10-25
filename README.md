@@ -1,6 +1,6 @@
 # os-latency-tests
 
-Measures operating system and hardware latencies from user space and reports
+This suite measures hardware, OS latency and performance from user space and reports
 them as full distributions (p50, p90, p99, p99.9, p99.99, max), together with a
 description of the platform they were measured on.
 

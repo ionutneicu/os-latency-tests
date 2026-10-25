@@ -6,7 +6,7 @@ benchmark that cannot meet these is left out of the report, or shown as
 "not validated" with the reason.
 
 Topics are grouped as in the [roadmap](ROADMAP.md): hardware (HW), OS latency
-(OS) and software patterns (SW).
+(OS) and performance patterns (SW).
 
 ## 1. Measure through C++ first
 
