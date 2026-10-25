@@ -560,77 +560,85 @@ def deep_idle_limited(cfg):
 
 
 def build_guidance(summary, caches, platform, results, cfg):
-    tips = []
+    tips = []  # (group, text), group: "hw", "os" or "sw"
+    group = "hw"
+    def tip(text):
+        tips.append((group, text))
     by = {r["level"]: r for r in summary}
     l1 = next((c for c in caches if c["level"] == 1), None)
     l2 = next((c for c in caches if c["level"] == 2), None)
+    group = "hw"
     if l1 and by.get("L1", {}).get("latency") and by.get("DRAM", {}).get("latency"):
         ratio = by["DRAM"]["latency"] / by["L1"]["latency"]
-        tips.append(f"A random access that misses all caches costs about {ratio:.0f}x an L1 hit "
+        tip(f"A random access that misses all caches costs about {ratio:.0f}x an L1 hit "
                     f"({fmt_ns(by['DRAM']['latency'])} vs {fmt_ns(by['L1']['latency'])}). Keep the data a hot loop "
                     f"touches under ~{fmt_bytes(int(l1['size_bytes'] * 0.75))} per core where possible.")
     if l2 and by.get("L2", {}).get("latency"):
-        tips.append(f"Working sets up to ~{fmt_bytes(int(l2['size_bytes'] * 0.75))} still get L2 latency "
+        tip(f"Working sets up to ~{fmt_bytes(int(l2['size_bytes'] * 0.75))} still get L2 latency "
                     f"({fmt_ns(by['L2']['latency'])}): size per-thread buffers, lookup tables and queues to fit there.")
     if by.get("DRAM", {}).get("read_gbs") and by.get("DRAM", {}).get("latency"):
         line = platform.get("cache_line_size", 64)
-        tips.append(f"Beyond the last cache, sequential reads cost {fmt_ns(line / by['DRAM']['read_gbs'])} per "
+        tip(f"Beyond the last cache, sequential reads cost {fmt_ns(line / by['DRAM']['read_gbs'])} per "
                     f"{line}-byte line vs {fmt_ns(by['DRAM']['latency'])} per random access: prefer contiguous "
                     f"arrays and streaming over pointer-heavy structures.")
     dram = by.get("DRAM", {})
     if dram.get("store_ns") and dram.get("latency") and dram["latency"] > 2 * dram["store_ns"]:
-        tips.append(f"A store that misses to DRAM costs {fmt_ns(dram['store_ns'])} of throughput vs "
+        tip(f"A store that misses to DRAM costs {fmt_ns(dram['store_ns'])} of throughput vs "
                     f"{fmt_ns(dram['latency'])} for a dependent load: the store buffer lets the core move on and "
                     f"overlaps the misses. Scattered writes (histograms, scatter, logging) hurt far less than "
                     f"scattered reads; what stalls is reading the data back or filling the store buffer.")
     if dram.get("nt_gbs") and dram.get("write_gbs") and dram["nt_gbs"] > 1.3 * dram["write_gbs"]:
-        tips.append(f"Writing a buffer larger than the last cache: streaming (non-temporal) stores reach "
+        tip(f"Writing a buffer larger than the last cache: streaming (non-temporal) stores reach "
                     f"{dram['nt_gbs']:.3g} GB/s vs {dram['write_gbs']:.3g} GB/s for normal stores, which first read "
                     f"each line in. Use them for large output written once and not read again soon "
                     f"(_mm_stream_si128 / stnp, or a memcpy/memset that switches to them).")
+    group = "os"
     named = {r["name"]: r for r in results if not r.get("params")}
     wake = named.get("sync.mutex_wakeup")
     if wake:
         p50, p99 = wake["percentiles"].get("p50"), wake["percentiles"].get("p99")
         if p50 and wake["min"] and p50 > 3 * wake["min"] and not deep_idle_limited(cfg):
-            tips.append(f"Blocking wake-up p50 ({fmt_ns(p50)}) is {p50 / wake['min']:.0f}x its minimum "
+            tip(f"Blocking wake-up p50 ({fmt_ns(p50)}) is {p50 / wake['min']:.0f}x its minimum "
                         f"({fmt_ns(wake['min'])}): most of it is likely the sleeping core leaving a deep idle state. "
                         f"Compare with a --no-idle run; latency-critical threads should spin/poll or run with deep idle blocked.")
         elif p50:
             over = (wake.get("metrics") or {}).get("over_100us")
             slow = (f" About 1 in {1 / over:.0f} wake-ups takes longer than 100 us." if over else "")
-            tips.append(f"A blocking hand-off (mutex/condvar wake-up) costs {fmt_ns(p50)} typically and "
+            tip(f"A blocking hand-off (mutex/condvar wake-up) costs {fmt_ns(p50)} typically and "
                         f"{fmt_ns(p99)} at p99: avoid blocking on the critical path below that budget.{slow}")
     create = named.get("thread.create_to_start")
     if create and create["percentiles"].get("p99"):
-        tips.append(f"Starting a thread costs {fmt_ns(create['percentiles']['p50'])} typically but "
+        tip(f"Starting a thread costs {fmt_ns(create['percentiles']['p50'])} typically but "
                     f"{fmt_ns(create['percentiles']['p99'])} at p99 (max {fmt_ns(create['max'])}): reuse threads "
                     f"from a pool instead of spawning per task.")
     def by_param(name):
         return {next(iter(r["params"].values())): r for r in results if r["name"] == name and len(r["params"]) == 1}
 
+    group = "hw"
     c2c = [r for r in results if r["name"] == "multicore.c2c_latency" and r["percentiles"].get("p50")]
     if len(c2c) >= 2:
         v = sorted(r["percentiles"]["p50"] for r in c2c)
         if v[-1] > 2 * v[0]:
-            tips.append(f"Where threads run matters: handing a cache line to another CPU costs {fmt_ns(v[0])} on the "
+            tip(f"Where threads run matters: handing a cache line to another CPU costs {fmt_ns(v[0])} on the "
                         f"fastest pair but {fmt_ns(v[-1])} on the slowest ({v[-1] / v[0]:.0f}x). Keep communicating "
                         f"threads on nearby CPUs (see the core-to-core matrix).")
 
+    group = "hw"
     ilp = ilp_summary(results)
     if "fp_add" in ilp and ilp["fp_add"]["speedup"] >= 1.5:
         f = ilp["fp_add"]
-        tips.append(f"Loop unrolling: a floating-point sum with one accumulator runs at {fmt_ns(f['latency'])} per add "
+        tip(f"Loop unrolling: a floating-point sum with one accumulator runs at {fmt_ns(f['latency'])} per add "
                     f"(the add latency); with {f['chains']} independent accumulators it reaches {fmt_ns(f['best'])} "
                     f"({f['speedup']:.1f}x). Split reductions into {f['chains']} partial sums (the compiler does it "
                     f"for integers, for floating point only with -ffast-math / -fassociative-math).")
     if "load_mem" in ilp and ilp["load_mem"]["speedup"] >= 2:
         m = ilp["load_mem"]
-        tips.append(f"Memory-level parallelism: one chain of dependent DRAM misses costs {fmt_ns(m['latency'])} per "
+        tip(f"Memory-level parallelism: one chain of dependent DRAM misses costs {fmt_ns(m['latency'])} per "
                     f"load, but {m['chains']} independent chains overlap to {fmt_ns(m['best'])} ({m['speedup']:.0f}x). "
                     f"Batch independent lookups (hash probes, tree searches, pointer chasing) {m['chains']} at a time, "
                     f"or prefetch ahead, instead of finishing one before starting the next.")
 
+    group = "hw"
     fs = false_sharing(results).get("atomic")
     pad = safe_padding(fs) if fs else None
     if pad and fs["points"][0][1] > 1.5 * fs["alone"]:
@@ -639,7 +647,7 @@ def build_guidance(summary, caches, platform, results, cfg):
         extra = (f" That is more than the {line}-byte cache line; the adjacent-line prefetcher pulls lines "
                  f"in pairs, probably the reason: alignas({line}) is not enough here, whatever "
                  f"std::hardware_destructive_interference_size says.") if pad > line else ""
-        tips.append(f"False sharing: two cores updating counters in the same cache line pay {fmt_ns(worst)} per atomic "
+        tip(f"False sharing: two cores updating counters in the same cache line pay {fmt_ns(worst)} per atomic "
                     f"increment instead of {fmt_ns(fs['alone'])} ({worst / fs['alone']:.0f}x). Keep data written by "
                     f"different threads at least {pad} bytes apart (alignas({pad}) or padding).{extra}")
     fsp = false_sharing(results).get("plain")
@@ -650,6 +658,7 @@ def build_guidance(summary, caches, platform, results, cfg):
                     f"{fmt_ns(fsp['alone'])}, and the slow state comes and goes for several samples. Keep such counters "
                     f"at least {ppad} bytes apart on this CPU; the atomic figure above does not cover them.")
 
+    group = "sw"
     lat = by_param("pattern.spsc_latency")
     if "mutex_condvar" in lat and ("lockfree_cached" in lat or "lockfree" in lat):
         lf = lat.get("lockfree_cached") or lat["lockfree"]
@@ -657,18 +666,19 @@ def build_guidance(summary, caches, platform, results, cfg):
         head = (f"Thread-to-thread hand-off: a blocking mutex+condvar queue takes {fmt_ns(a['p50'])} (p99 "
                 f"{fmt_ns(a['p99'])}), a polling lock-free SPSC ring {fmt_ns(b['p50'])} (p99 {fmt_ns(b['p99'])})")
         if b["p50"] < a["p50"]:
-            tips.append(f"{head}: {a['p50'] / b['p50']:.0f}x faster, at the price of a core spinning while it waits. "
+            tip(f"{head}: {a['p50'] / b['p50']:.0f}x faster, at the price of a core spinning while it waits. "
                         f"Give each polling thread its own core.")
         else:
-            tips.append(f"{head}: here polling is {b['p50'] / a['p50']:.0f}x slower, because producer and consumer "
+            tip(f"{head}: here polling is {b['p50'] / a['p50']:.0f}x slower, because producer and consumer "
                         f"{'share a CPU' if cfg.get('affinity') == 'same' else 'compete for CPU time'} and the spinner "
                         f"burns the time slice the other side needs. Never spin-wait on a shared core; block instead.")
     thr = by_param("pattern.spsc_throughput")
     if len(thr) >= 2:
         best = min(thr.items(), key=lambda kv: kv[1]["percentiles"]["p50"])
         worst = max(thr.items(), key=lambda kv: kv[1]["percentiles"]["p50"])
-        tips.append(f"Streaming between two threads: {best[0]} moves {1e3 / best[1]['percentiles']['p50']:.3g} M items/s, "
+        tip(f"Streaming between two threads: {best[0]} moves {1e3 / best[1]['percentiles']['p50']:.3g} M items/s, "
                     f"{worst[1]['percentiles']['p50'] / best[1]['percentiles']['p50']:.1f}x more than {worst[0]}.")
+    group = "hw"
     cont = {}
     for r in results:
         if r["name"] == "multicore.atomic_contention" and "threads" in r["params"] and r["percentiles"].get("p50"):
@@ -676,7 +686,7 @@ def build_guidance(summary, caches, platform, results, cfg):
     fa, sh = cont.get("fetch_add", {}), cont.get("sharded", {})
     if fa and sh and max(fa) > 1 and 1 in fa:
         n = max(fa)
-        tips.append(f"Shared atomic counters do not scale: with {n} cores incrementing one std::atomic, each increment "
+        tip(f"Shared atomic counters do not scale: with {n} cores incrementing one std::atomic, each increment "
                     f"costs {fmt_ns(fa[n])} instead of {fmt_ns(fa[1])} on one core ({fa[n] / fa[1]:.0f}x), while a "
                     f"counter per thread stays at {fmt_ns(sh.get(n, sh[min(sh)]))}. Give each thread its own counter "
                     f"(padded to 128 bytes) and sum them when reading.")
@@ -684,28 +694,30 @@ def build_guidance(summary, caches, platform, results, cfg):
     if "store_seq_cst" in od and "store_release" in od:
         a, b = od["store_seq_cst"]["percentiles"]["p50"], od["store_release"]["percentiles"]["p50"]
         if a > 2 * b:
-            tips.append(f"Memory order: a seq_cst atomic store (the default of std::atomic::store and operator=) "
+            tip(f"Memory order: a seq_cst atomic store (the default of std::atomic::store and operator=) "
                         f"costs {fmt_ns(a)}, a release store {fmt_ns(b)}. Publishing data to another thread only needs "
                         f"store(release) paired with load(acquire).")
+    group = "os"
     jg = next((r for r in results if r["name"] == "os.jitter_gap" and r["percentiles"].get("p50") is not None), None)
     j1 = next((r for r in results if r["name"] == "os.jitter_rate" and r.get("params", {}).get("threshold_us") == "1"
                and r["percentiles"].get("p50") is not None), None)
     if jg and j1:
-        tips.append(f"OS jitter: the measurement core was taken away for more than 1 µs about {fmt_count(j1['mean'])} times a "
+        tip(f"OS jitter: the measurement core was taken away for more than 1 µs about {fmt_count(j1['mean'])} times a "
                     f"second on average, and the longest gap in a 20 ms window is {fmt_ns(jg['percentiles']['p50'])} "
                     f"typically and {fmt_ns(jg['percentiles'].get('p99'))} at p99. Budget deadlines above that tail, or "
                     f"keep the latency-critical thread on a CPU the rest of the system does not use (isolated CPUs, "
                     f"the expert tier in docs/expert-setup.md).")
+    group = "os"
     oc = by_param("os.call")
     if "syscall_getpid" in oc and "clock_monotonic" in oc:
         sc, cm = oc["syscall_getpid"]["percentiles"]["p50"], oc["clock_monotonic"]["percentiles"]["p50"]
         if cm > 0.6 * sc:
-            tips.append(f"clock_gettime(CLOCK_MONOTONIC) costs {fmt_ns(cm)}, about as much as a system call "
+            tip(f"clock_gettime(CLOCK_MONOTONIC) costs {fmt_ns(cm)}, about as much as a system call "
                         f"({fmt_ns(sc)}): the vDSO fast path is not in use (unstable TSC or a clock source without vDSO "
                         f"support, common in VMs). Check /sys/devices/system/clocksource/clocksource0/current_clocksource "
                         f"and avoid timestamps on the hot path here.")
         else:
-            tips.append(f"System calls: a kernel round trip costs {fmt_ns(sc)} here, reading CLOCK_MONOTONIC through the "
+            tip(f"System calls: a kernel round trip costs {fmt_ns(sc)} here, reading CLOCK_MONOTONIC through the "
                         f"vDSO {fmt_ns(cm)}. Take timestamps freely, but keep system calls (I/O, futex waits, "
                         f"getpid-style queries) off the hot path or batch them (io_uring, sendmmsg, recvmmsg).")
     ov = {}
@@ -719,8 +731,9 @@ def build_guidance(summary, caches, platform, results, cfg):
         if "nanosleep_slack1" in ov and ov["nanosleep_slack1"]["p50"] < 0.7 * a["p50"]:
             msg += (f"; prctl(PR_SET_TIMERSLACK, 1) brings that to {fmt_ns(ov['nanosleep_slack1']['p50'])} "
                     f"(real-time threads get this by default)")
-        tips.append(msg + ". Do not sleep for waits shorter than that: spin with a pause instruction, or block on "
+        tip(msg + ". Do not sleep for waits shorter than that: spin with a pause instruction, or block on "
                     "the event itself.")
+    group = "hw"
     br = branch_summary(results)
     if br and br["penalty"] > 0:
         cross, worst = br["crossover"], br["curves"]["branchy"][-1][1]
@@ -729,9 +742,10 @@ def build_guidance(summary, caches, platform, results, cfg):
         rule = (f"keep the branch when the condition goes the same way more than {100 - cross:.0f}% of the time, "
                 f"go branchless (masks, cmov, min/max) when it is less predictable{gain}"
                 if cross else f"branchless code won at every predictability in this test{gain}")
-        tips.append(f"Branches: a mispredict costs about {fmt_ns(br['penalty'])} on this core. For a few cycles of "
+        tip(f"Branches: a mispredict costs about {fmt_ns(br['penalty'])} on this core. For a few cycles of "
                     f"work per element, {rule}. "
                     f"Sorting or partitioning the data first makes any branch predictable.")
+    group = "sw"
     dm, d1 = by_param("pattern.dispatch_mixed"), by_param("pattern.dispatch_one_type")
     if "virtual" in dm and "template" in dm:
         v, t = dm["virtual"]["percentiles"]["p50"], dm["template"]["percentiles"]["p50"]
@@ -740,21 +754,22 @@ def build_guidance(summary, caches, platform, results, cfg):
         alt = min((k for k in ("switch", "variant") if k in dm), key=lambda k: dm[k]["percentiles"]["p50"], default=None)
         mid = (f" A {'std::variant' if alt == 'variant' else 'switch on a type tag'} sits between "
                f"({fmt_ns(dm[alt]['percentiles']['p50'])})." if alt else "")
-        tips.append(f"Dispatch: calling through a virtual function on objects of mixed types costs {fmt_ns(v)} per call, "
+        tip(f"Dispatch: calling through a virtual function on objects of mixed types costs {fmt_ns(v)} per call, "
                     f"{v / t:.0f}x the {fmt_ns(t)} of the same work with the type known at compile time (templates, "
                     f"objects grouped by type).{one}{mid} On a hot loop over mixed objects, keep one container per type "
                     f"or sort by type.")
+    group = "sw"
     lst = by_param("pattern.alloc_list")
     if "new_delete" in lst and "pmr_monotonic" in lst:
         a, b = lst["new_delete"]["percentiles"]["p50"], lst["pmr_monotonic"]["percentiles"]["p50"]
-        tips.append(f"Node-based containers: a std::pmr::monotonic_buffer_resource arena makes building a list "
+        tip(f"Node-based containers: a std::pmr::monotonic_buffer_resource arena makes building a list "
                     f"{a / b:.1f}x cheaper than new/delete ({fmt_ns(b)} vs {fmt_ns(a)} per node). Use arenas for "
                     f"short-lived, per-request or per-frame data that is freed all at once.")
     vec = by_param("pattern.alloc_vector")
     if "new_delete" in vec and "reserve" in vec:
         a, b = vec["new_delete"]["percentiles"]["p50"], vec["reserve"]["percentiles"]["p50"]
         if a > b * 1.15:
-            tips.append(f"std::vector: reserve() up front saves {100 * (1 - b / a):.0f}% of the build cost "
+            tip(f"std::vector: reserve() up front saves {100 * (1 - b / a):.0f}% of the build cost "
                         f"by avoiding regrowth copies.")
     return tips
 
@@ -862,6 +877,8 @@ GROUP_TITLES = {
 
 # Report sections in roadmap order: hints first, then hardware, OS latency and
 # software patterns. The full results table always comes last.
+CATEGORY_NAMES = {0: "Hardware", 1: "OS latency", 2: "Performance patterns"}
+HINT_GROUPS = [("hw", "Hardware"), ("os", "OS latency"), ("sw", "Performance patterns")]
 SECTION_CATEGORY = {"hints": -1, "memory": 0, "cpu": 0, "branch": 0, "multicore": 0,
                     "sync": 1, "thread": 1, "os": 1, "os-jitter": 1,
                     "alloc": 2, "patterns": 2}
@@ -1408,8 +1425,12 @@ def build_report(doc, src_path, charts_dir):
     unopt = unoptimised_languages(plat)
     tips = [] if unopt else build_guidance(summary, caches, plat, results, cfg)
     if tips:
-        sections.insert(0, ("hints", "Design hints for this machine",
-                            "<ul class='tips'>" + "".join(f"<li>{e(t)}</li>" for t in tips) + "</ul>"))
+        hint_html = ""
+        for key, title in HINT_GROUPS:
+            items = [t for g, t in tips if g == key]
+            if items:
+                hint_html += f"<h3>{title}</h3><ul class='tips'>" + "".join(f"<li>{e(t)}</li>" for t in items) + "</ul>"
+        sections.insert(0, ("hints", "Design hints for this machine", hint_html))
 
     # ---- full table
     other = [r for r in results if not r["name"].startswith("mem.")]
@@ -1485,9 +1506,18 @@ def build_report(doc, src_path, charts_dir):
     out.append(f"<p class='guide'>Terms used below (cache line, TLB, AVX-512, read for ownership, p99, ...) are "
                f"explained in the <a href='{GLOSSARY_URL}'>glossary</a>.</p>")
     sections.sort(key=lambda sec: SECTION_CATEGORY.get(sec[0], 3))  # stable: keeps order within a category
-    out.append("<nav>" + "".join(f"<a href='#{a}'>{e(t)}</a>" for a, t, _ in sections) + "</nav>")
+    nav, body_out, last = [], [], None
     for a, t, body in sections:
-        out.append(f"<h2 id='{a}'>{e(t)}</h2>{body}")
+        rank = SECTION_CATEGORY.get(a, 3)
+        if rank in CATEGORY_NAMES and rank != last:
+            nav.append(f"<span class='cat'>{CATEGORY_NAMES[rank]}</span>")
+            body_out.append(f"<h2 class='cat' id='cat-{rank}'>{CATEGORY_NAMES[rank]}</h2>")
+        last = rank
+        nav.append(f"<a href='#{a}'>{e(t)}</a>")
+        level = "h3" if rank in CATEGORY_NAMES else "h2"
+        body_out.append(f"<{level} id='{a}'>{e(t)}</{level}>{body}")
+    out.append("<nav>" + "".join(nav) + "</nav>")
+    out.extend(body_out)
     out.append(f"<p class='note'>Generated from {e(src_path.name)} by tools/olt-report.py. "
                f"Charts are also saved as standalone SVG files in {e(charts_dir.name)}/.</p>")
     out.append(f"<script>{JS}</script></main></body></html>")
@@ -1505,9 +1535,22 @@ def build_report(doc, src_path, charts_dir):
     md.append(f"> [!WARNING]\n> {HOT_PATH_WARNING}\n")
     md.append(f"Terms used below (cache line, TLB, AVX-512, read for ownership, p99, ...) are explained in the "
               f"[glossary]({GLOSSARY_URL}).\n")
-    md.append("".join(f"- [{t}](#{a})\n" for a, t, _ in sections))
+    toc, last = [], None
+    for a, t, _ in sections:
+        rank = SECTION_CATEGORY.get(a, 3)
+        if rank in CATEGORY_NAMES and rank != last:
+            toc.append(f"- **{CATEGORY_NAMES[rank]}**\n")
+        last = rank
+        toc.append(f"{'  ' if rank in CATEGORY_NAMES else ''}- [{t}](#{a})\n")
+    md.append("".join(toc))
+    last = None
     for a, t, body in sections:
-        md.append(f'<a id="{a}"></a>\n\n## {t}\n\n{html_to_markdown(body)}')
+        rank = SECTION_CATEGORY.get(a, 3)
+        if rank in CATEGORY_NAMES and rank != last:
+            md.append(f"## {CATEGORY_NAMES[rank]}\n")
+        last = rank
+        level = "###" if rank in CATEGORY_NAMES else "##"
+        md.append(f'<a id="{a}"></a>\n\n{level} {t}\n\n{html_to_markdown(body)}')
     md.append(f"*Generated from {src_path.name} by tools/olt-report.py. An interactive version with hover "
               f"details is in report.html next to this file.*\n")
     return "\n".join(out), "\n".join(md), charts
