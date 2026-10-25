@@ -52,8 +52,8 @@ The six with the biggest x86 vs ARM differences and the clearest hints.
   clock, rdtsc/cntvct; `nanosleep`/`timerfd`/epoll timeout overshoot; active
   CPU vulnerability mitigations listed in the report (`os.call`,
   `os.timer_overshoot`)
-- [ ] **OS jitter on the measurement core**: tight timestamp loop recording gaps
-  (osnoise style); interruptions per second and worst gap
+- [x] **OS jitter on the measurement core**: tight timestamp loop recording gaps
+  (osnoise style); interruptions per second and worst gap (`os.jitter`)
 - [ ] **SMT siblings: logical vs physical cores**: the report's platform block
   shows the topology (which logical CPUs share a physical core and its L1/L2)
   and warns when two benchmark threads land on siblings. A new benchmark runs

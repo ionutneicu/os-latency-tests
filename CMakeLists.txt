@@ -147,6 +147,7 @@ add_executable(os-latency-tests
   src/main.cpp
   src/benchmarks/alloc.cpp
   src/benchmarks/atomic.cpp
+  src/benchmarks/jitter.cpp
   src/benchmarks/branch.cpp
   src/benchmarks/ilp.cpp
   src/benchmarks/memory.cpp
