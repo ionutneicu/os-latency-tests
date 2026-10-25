@@ -398,11 +398,46 @@ fastest wake-up, but it keeps a core busy) or sleeping in the kernel until woken
 ## Power and frequency
 
 **C-states (idle states).** Power-saving states an idle core enters. C0 is
-running, C1 is halted (wakes in about a microsecond), deeper states such as C6
-switch off parts of the core (tens to hundreds of microseconds to wake). A
-thread woken on a deeply idle core waits for that exit, and on laptops that is
-often most of a blocking hand-off: measured 15 µs on the i7-1165G7 against
-2.2 µs with deep idle blocked.
+running, C1 is halted (wakes in about a microsecond, unless the core has moved
+on to C1E, see below), deeper states such as C6 switch off parts of the core
+(tens to hundreds of microseconds to wake). A thread woken on a deeply idle core
+waits for that exit, and on laptops that exit is often most of a blocking
+hand-off. The states that matter most for wake-ups are C1E and package C-states,
+below.
+
+**Core C-state and SMT.** The two hardware threads of a core share one idle state,
+and the core goes only as deep as the shallower of the two requests. Limiting one
+logical CPU therefore also keeps its SMT sibling's core shallow.
+
+**ACPI idle-state names (`C1_ACPI`, `C2_ACPI`, ...).** The names that `intel_idle`
+or `acpi_idle` show when the states come from the firmware's `_CST` table. The
+`ACPI_FFH_MWAIT_0x..` hint gives the real depth: `0x0` is C1, `0x31` is about C6,
+`0x60` is about C8 or C10. The latency the kernel lists is an estimate from the
+firmware, not a measurement.
+
+**C1E (Enhanced Halt State).** A deeper form of C1. While halted, the core also
+drops to its lowest frequency and voltage, which saves more power. Waking means
+ramping the voltage and clock back up, so a wake-up can take 10 to 20 µs instead
+of about 1 µs. Many BIOSes enable C1E auto-promotion: the OS asks for C1, and the
+hardware enters C1E without telling the kernel, whose table still lists 1 µs for
+C1. The symptom is a second cluster of wake-up times at 10 to 20 µs. To test for
+it, disable C1E in the BIOS, or clear bit 1 of MSR 0x1FC on each benchmark CPU.
+The 10 to 20 µs figure is an estimate until a run confirms it.
+
+**Package C-states (PC2 to PC10).** Idle states for the whole chip. They apply
+only when every core is idle, and they also power down the uncore, the last-level
+cache and the memory controller. Leaving them takes 100 µs to over 1 ms, which
+is where the largest wake-up tails come from.
+
+**Polling idle (POLL, `idle=poll`).** The idle loop spins instead of halting, so
+the core never enters a C-state. Wake-ups are the fastest and most even, but the
+core never rests: it uses more power and heat, and leaves less turbo headroom for
+the other cores. `--idle-latency-us 0` gives the benchmark CPUs this behaviour.
+
+**MSR (model-specific register).** A CPU control register for settings such as
+C1E and turbo. It is read with `rdmsr` and written with `wrmsr` (from the `msr`
+kernel module, root only). A write can change every program on the machine, so
+read a register before writing it.
 
 **`/dev/cpu_dma_latency` and `pm_qos_resume_latency_us` (PM QoS).** Writing the
 longest acceptable wake-up latency to `/dev/cpu_dma_latency`, and keeping the
