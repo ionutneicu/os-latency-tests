@@ -50,6 +50,15 @@ def null_deep_percentile(doc):
     return d
 
 
+def second_wakeup_cluster(doc):
+    # Wake-up p90 five times p50: the design hint for a second cluster (C1E, idle exit) fires.
+    d = copy.deepcopy(doc)
+    for r in d["results"]:
+        if r["name"] == "sync.mutex_wakeup" and "p50" in r["percentiles"]:
+            r["percentiles"]["p90"] = 5 * r["percentiles"]["p50"]
+    return d
+
+
 def no_results(doc):
     d = copy.deepcopy(doc)
     d["results"] = []
@@ -60,6 +69,7 @@ VARIANTS = {
     "recorded": as_recorded,
     "older-fields": without_newer_fields,
     "null-percentile": null_deep_percentile,
+    "second-cluster": second_wakeup_cluster,
     "no-results": no_results,
 }
 
