@@ -107,16 +107,23 @@ struct alignas(4096) Page {
     unsigned char bytes[4096];
 };
 
-// Second CPU for the false-sharing pair: one that does not share an L1 with
-// `a` (an SMT sibling shares the line and would hide the effect), or -1.
-int other_core(int a, const std::vector<int>& cpus)
+// True if CPUs a and c share an L1 (or are the same CPU): an SMT sibling
+// shares the line and would hide the effect.
+bool shares_l1(int a, int c)
 {
-    const std::vector<int> siblings = olt::l1_siblings(a);
-    for (int c : cpus) {
-        bool shared = c == a;
-        for (int s : siblings) shared = shared || s == c;
-        if (!shared) return c;
-    }
+    if (a == c) return true;
+    for (int s : olt::l1_siblings(a))
+        if (s == c) return true;
+    return false;
+}
+
+// Second CPU for the false-sharing pair: the worker CPU when it is a different
+// physical core from `a`, else the first allowed CPU that is, or -1.
+int second_core(int a, const olt::Config& cfg)
+{
+    if (cfg.worker_cpu >= 0 && !shares_l1(a, cfg.worker_cpu)) return cfg.worker_cpu;
+    for (int c : cfg.allowed_cpus)
+        if (!shares_l1(a, c)) return c;
     return -1;
 }
 
@@ -164,7 +171,7 @@ OLT_BENCHMARK("multicore.false_sharing",
     const olt::Config& cfg = ctx.config();
     const std::vector<int>& cpus = cfg.allowed_cpus;
     const int a = cfg.main_cpu >= 0 ? cfg.main_cpu : (cpus.empty() ? -1 : cpus[0]);
-    const int b = a < 0 ? -1 : other_core(a, cpus);
+    const int b = a < 0 ? -1 : second_core(a, cfg);
     if (b < 0) {
         ctx.add_result("multicore.false_sharing", {}, {}, "needs two allowed CPUs on different physical cores");
         return;
@@ -185,12 +192,21 @@ OLT_BENCHMARK("multicore.false_sharing",
         olt::Params params{{"op", op}};
         params.insert(params.end(), pair.begin(), pair.end());
         ctx.add_result("multicore.false_sharing_alone", params, std::move(alone));
-        for (size_t d : k_distances) {
-            std::vector<double> lat;
-            if (!samples(b, d, rmw, lat)) return;
-            olt::Params dp{{"op", op}, {"distance", std::to_string(d)}};
+        // Distances interleaved within each round, so a slow stretch of the machine
+        // hits every distance alike instead of landing on one of them.
+        constexpr size_t nd = sizeof(k_distances) / sizeof(k_distances[0]);
+        std::vector<std::vector<double>> lat(nd);
+        for (size_t s = 0; s < cfg.sweep_samples + 1; ++s) {  // the first round warms up
+            for (size_t i = 0; i < nd; ++i) {
+                const double v = increment_race(a, b, k_distances[i], rmw);
+                if (v < 0) return;  // pinning not permitted
+                if (s > 0) lat[i].push_back(v);
+            }
+        }
+        for (size_t i = 0; i < nd; ++i) {
+            olt::Params dp{{"op", op}, {"distance", std::to_string(k_distances[i])}};
             dp.insert(dp.end(), pair.begin(), pair.end());
-            ctx.add_result("multicore.false_sharing", dp, std::move(lat));
+            ctx.add_result("multicore.false_sharing", dp, std::move(lat[i]));
         }
     }
 }
