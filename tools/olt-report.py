@@ -848,6 +848,13 @@ GROUP_TITLES = {
 }
 
 
+# Report sections in roadmap order: hints first, then hardware, OS latency and
+# software patterns. The full results table always comes last.
+SECTION_CATEGORY = {"hints": -1, "memory": 0, "cpu": 0, "branch": 0, "multicore": 0,
+                    "sync": 1, "thread": 1, "os": 1, "os-jitter": 1,
+                    "alloc": 2, "patterns": 2}
+
+
 UNOPTIMISED_WARNING = (
     "The {langs} code of this binary was compiled without optimisation. Its timed loops then measure the "
     "compiler's stack traffic instead of the hardware: results come out up to several times too slow, and no "
@@ -1116,7 +1123,7 @@ def build_report(doc, src_path, charts_dir):
     # ---- latency distributions, one chart per benchmark group
     groups = {}
     for r in results:
-        if r["params"] or r["name"].startswith(("mem.", "alloc.", "pattern.", "multicore.")):
+        if r["params"] or r["name"].startswith(("mem.", "alloc.", "pattern.", "multicore.", "os.")):
             continue
         groups.setdefault(r["name"].split(".")[0], []).append(r)
     for g, rs in groups.items():
@@ -1465,6 +1472,7 @@ def build_report(doc, src_path, charts_dir):
     out.append(f"<div class='caution'>{e(HOT_PATH_WARNING)}</div>")
     out.append(f"<p class='guide'>Terms used below (cache line, TLB, AVX-512, read for ownership, p99, ...) are "
                f"explained in the <a href='{GLOSSARY_URL}'>glossary</a>.</p>")
+    sections.sort(key=lambda sec: SECTION_CATEGORY.get(sec[0], 3))  # stable: keeps order within a category
     out.append("<nav>" + "".join(f"<a href='#{a}'>{e(t)}</a>" for a, t, _ in sections) + "</nav>")
     for a, t, body in sections:
         out.append(f"<h2 id='{a}'>{e(t)}</h2>{body}")
