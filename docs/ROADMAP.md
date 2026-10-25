@@ -36,6 +36,9 @@ Every item carries one tag. The tags also order the benchmark guide and the repo
 
 Items with no tag are infrastructure or platform work, not measurements.
 
+The rules every measurement must meet, including the C++-first rule for
+assembly, are in [REQUIREMENTS.md](REQUIREMENTS.md).
+
 ## Done
 
 - [x] [OS] Thread create/join, mutex and condvar wake-up
