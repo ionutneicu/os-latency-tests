@@ -1400,9 +1400,11 @@ def build_report(doc, src_path, charts_dir):
         for r in other:
             label = r["name"] + (" [" + ", ".join(f"{k}={v}" for k, v in r["params"].items()) + "]" if r["params"] else "")
             unrel = set(r.get("unreliable_percentiles", []))
-            cells = "".join(f"<td class='{'unrel' if c in unrel else ''}'>{fmt_ns(r['percentiles'].get(c))}</td>" for c in pcols)
-            rows.append(f"<tr><td>{e(label)}</td><td>{r['count']}</td><td>{fmt_ns(r['min'])}</td>{cells}"
-                        f"<td>{fmt_ns(r['max'])}</td></tr>")
+            # rates (per second) are counts, everything else in this table is a time
+            fmt = fmt_count if r.get("unit") == "per s" else fmt_ns
+            cells = "".join(f"<td class='{'unrel' if c in unrel else ''}'>{fmt(r['percentiles'].get(c))}</td>" for c in pcols)
+            rows.append(f"<tr><td>{e(label)}</td><td>{r['count']}</td><td>{fmt(r['min'])}</td>{cells}"
+                        f"<td>{fmt(r['max'])}</td></tr>")
         sections.append(("table", "All latency results",
                          "<p class='sub'>Grey values have fewer than ~10 samples beyond the percentile and are not "
                          "statistically reliable.</p><div class='table-wrap'><table><tr><th>benchmark</th><th>n</th>"
