@@ -178,8 +178,9 @@ void print_table_header(std::ostream& os)
 {
     os << std::left << std::setw(58) << "benchmark" << std::right << std::setw(7) << "n"
        << std::setw(10) << "min" << std::setw(10) << "p50" << std::setw(10) << "p90" << std::setw(10)
-       << "p99" << std::setw(10) << "p99.9" << std::setw(10) << "p99.99" << std::setw(10) << "max" << "\n";
-    os << std::string(58 + 7 + 10 * 7, '-') << "\n";
+       << "p99" << std::setw(10) << "p99.9" << std::setw(10) << "p99.99" << std::setw(10) << "p99.999"
+       << std::setw(10) << "max" << "\n";
+    os << std::string(58 + 7 + 10 * 8, '-') << "\n";
 }
 
 void print_table_row(std::ostream& os, const SummarizedResult& r)
@@ -196,7 +197,7 @@ void print_table_row(std::ostream& os, const SummarizedResult& r)
     os << std::left << std::setw(58) << label << std::right << std::setw(7) << s.count << std::setw(10)
        << format_ns(s.min) << std::setw(10) << cell(50) << std::setw(10) << cell(90) << std::setw(10)
        << cell(99) << std::setw(10) << cell(99.9) << std::setw(10) << cell(99.99) << std::setw(10)
-       << format_ns(s.max) << "\n";
+       << cell(99.999) << std::setw(10) << format_ns(s.max) << "\n";
     if (!r.result->note.empty()) os << "    note: " << r.result->note << "\n";
     if (!r.result->metrics.empty()) {
         os << "    metrics:";

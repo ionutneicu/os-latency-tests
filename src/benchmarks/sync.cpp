@@ -49,7 +49,9 @@ OLT_BENCHMARK("sync.mutex_wakeup",
         done.store(i, std::memory_order_release);
     }
     worker.join();
+    const double over_100us = olt::share_over(samples, 100e3), over_1ms = olt::share_over(samples, 1e6);
     ctx.add_result("sync.mutex_wakeup", {}, std::move(samples));
+    ctx.results().back().metrics = {{"over_100us", over_100us}, {"over_1ms", over_1ms}};
 }
 
 OLT_BENCHMARK("sync.condvar_wakeup",
@@ -95,6 +97,8 @@ OLT_BENCHMARK("sync.condvar_wakeup",
         done.store(i, std::memory_order_release);
     }
     worker.join();
+    const double over_100us = olt::share_over(samples, 100e3), over_1ms = olt::share_over(samples, 1e6);
     ctx.add_result("sync.condvar_wakeup", {}, std::move(samples),
                    "includes the worker's mutex unlock and notify_one() call");
+    ctx.results().back().metrics = {{"over_100us", over_100us}, {"over_1ms", over_1ms}};
 }

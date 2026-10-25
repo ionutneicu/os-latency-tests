@@ -597,8 +597,10 @@ def build_guidance(summary, caches, platform, results, cfg):
                         f"({fmt_ns(wake['min'])}): most of it is likely the sleeping core leaving a deep idle state. "
                         f"Compare with a --no-idle run; latency-critical threads should spin/poll or run with deep idle blocked.")
         elif p50:
+            over = (wake.get("metrics") or {}).get("over_100us")
+            slow = (f" About 1 in {1 / over:.0f} wake-ups takes longer than 100 us." if over else "")
             tips.append(f"A blocking hand-off (mutex/condvar wake-up) costs {fmt_ns(p50)} typically and "
-                        f"{fmt_ns(p99)} at p99: avoid blocking on the critical path below that budget.")
+                        f"{fmt_ns(p99)} at p99: avoid blocking on the critical path below that budget.{slow}")
     create = named.get("thread.create_to_start")
     if create and create["percentiles"].get("p99"):
         tips.append(f"Starting a thread costs {fmt_ns(create['percentiles']['p50'])} typically but "
@@ -1412,7 +1414,7 @@ def build_report(doc, src_path, charts_dir):
     # ---- full table
     other = [r for r in results if not r["name"].startswith("mem.")]
     if other:
-        pcols = ["p50", "p90", "p99", "p99_9", "p99_99"]
+        pcols = ["p50", "p90", "p99", "p99_9", "p99_99", "p99_999"]
         rows = []
         for r in other:
             label = r["name"] + (" [" + ", ".join(f"{k}={v}" for k, v in r["params"].items()) + "]" if r["params"] else "")
