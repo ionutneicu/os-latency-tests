@@ -110,12 +110,15 @@ def false_sharing(results):
 
 
 def safe_padding(fs):
-    """Smallest distance from which the contended cost stays within 25% of one core alone, or None."""
+    """Smallest distance from which the contended cost stays within 25% of one core alone, or None.
+
+    Judged on p90, not the median: plain stores can sit in the slow state for a stretch of
+    samples, which a median at one distance can hide."""
     if not fs.get("alone") or not fs["points"]:
         return None
     ok = None
-    for dist, p50, _, _ in reversed(fs["points"]):
-        if p50 > 1.25 * fs["alone"]:
+    for dist, _, _, p90 in reversed(fs["points"]):
+        if p90 is None or p90 > 1.25 * fs["alone"]:
             break
         ok = dist
     return ok
@@ -631,12 +634,19 @@ def build_guidance(summary, caches, platform, results, cfg):
     if pad and fs["points"][0][1] > 1.5 * fs["alone"]:
         worst = max(p[1] for p in fs["points"])
         line = platform.get("cache_line_size", 64)
-        extra = (f" That is more than the {line}-byte cache line because the adjacent-line prefetcher pulls lines "
-                 f"in pairs: alignas({line}) is not enough here, whatever "
+        extra = (f" That is more than the {line}-byte cache line; the adjacent-line prefetcher pulls lines "
+                 f"in pairs, probably the reason: alignas({line}) is not enough here, whatever "
                  f"std::hardware_destructive_interference_size says.") if pad > line else ""
         tips.append(f"False sharing: two cores updating counters in the same cache line pay {fmt_ns(worst)} per atomic "
                     f"increment instead of {fmt_ns(fs['alone'])} ({worst / fs['alone']:.0f}x). Keep data written by "
                     f"different threads at least {pad} bytes apart (alignas({pad}) or padding).{extra}")
+    fsp = false_sharing(results).get("plain")
+    ppad = safe_padding(fsp) if fsp else None
+    if ppad and fsp["points"][0][1] > 1.5 * fsp["alone"]:
+        worst = max(p[3] for p in fsp["points"] if p[3] is not None)
+        tips.append(f"False sharing with plain ++ stores: two cores pay up to {fmt_ns(worst)} per increment instead of "
+                    f"{fmt_ns(fsp['alone'])}, and the slow state comes and goes for several samples. Keep such counters "
+                    f"at least {ppad} bytes apart on this CPU; the atomic figure above does not cover them.")
 
     lat = by_param("pattern.spsc_latency")
     if "mutex_condvar" in lat and ("lockfree_cached" in lat or "lockfree" in lat):
