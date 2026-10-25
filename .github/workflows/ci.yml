@@ -42,6 +42,16 @@ jobs:
           name: os-latency-tests-aarch64
           path: build-arm64/os-latency-tests
 
+  python:
+    name: Python tools (lint)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ruff
+        run: pip install ruff==0.16.9
+      - name: Lint
+        run: ruff check --config ruff.toml tools tests
+
   deb:
     name: Debian package (amd64)
     runs-on: ubuntu-24.04

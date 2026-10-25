@@ -1,0 +1,7 @@
+# Lint for the Python tools (CI job "python"). Only errors that break the code:
+# syntax errors and pyflakes findings (unused names, undefined names, bad
+# format strings). Style is left to the author.
+target-version = "py39"
+
+[lint]
+select = ["E9", "F"]

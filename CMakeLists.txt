@@ -196,6 +196,11 @@ if(OLT_BUILD_TESTS)
     add_test(NAME report COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/olt-report.py
                                  ${CMAKE_CURRENT_BINARY_DIR}/smoke-results/results.json)
     set_tests_properties(report PROPERTIES DEPENDS smoke_run)
+    # The report also renders a recorded run and variants of it (older fields, nulls, no results)
+    add_test(NAME report_fixtures COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/report_fixtures.py
+                                          ${CMAKE_CURRENT_SOURCE_DIR}/tools/olt-report.py
+                                          ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/report-results.json
+                                          ${CMAKE_CURRENT_BINARY_DIR}/report-fixtures)
   endif()
 endif()
 
