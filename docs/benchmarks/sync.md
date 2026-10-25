@@ -35,6 +35,25 @@ waiter, and, if that CPU was idle, its exit from a C-state.
   real software cost.
 * The tail (p99.9, max) shows scheduler and interrupt interference; real-time
   priority (`-p`) and isolated cores reduce it.
+* `over_100us` and `over_1ms` in the JSON are the share of wake-ups slower than
+  100 us and 1 ms. They stay comparable across sample counts, which a tail
+  percentile does not.
+
+## The deep tail
+
+A percentile needs about 10 samples beyond it, so p99.99 needs 100,000
+wake-ups and p99.999 needs 1,000,000. Each sample waits `--park-us` (200 us by
+default) so the peer is really asleep, so a million samples take about 200
+seconds per benchmark. The default run stops at 10,000 samples and marks the
+deeper percentiles unreliable.
+
+To read the deep tail, raise the sample count for these benchmarks only:
+
+    os-latency-tests -t sync.mutex_wakeup -n 1000000 --cpus 2,3 --yes
+
+Run it with real-time priority and a quiet machine. The deep tail mostly shows
+interrupts, other tasks and frequency changes, not the lock: unprivileged, it
+says little about the code.
 
 ## Using it in C++
 

@@ -9,7 +9,7 @@ namespace olt {
 // Percentiles reported for every benchmark.
 inline const std::vector<double>& default_percentiles()
 {
-    static const std::vector<double> p{50.0, 90.0, 99.0, 99.9, 99.99};
+    static const std::vector<double> p{50.0, 90.0, 99.0, 99.9, 99.99, 99.999};
     return p;
 }
 
