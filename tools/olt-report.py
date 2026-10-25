@@ -430,7 +430,7 @@ class BarChart:
                          f'data-x="-10" data-tip="{html.escape(r["tip"], quote=True)}"/>')
         o.append(f'<text class="ax" x="{lw}" y="{h - 8}">{html.escape(self.x_label)}</text>')
         if not standalone:
-            o.append(f'<line class="cross" x1="0" x2="0" y1="0" y2="0" visibility="hidden"/>')
+            o.append('<line class="cross" x1="0" x2="0" y1="0" y2="0" visibility="hidden"/>')
         else:
             o.append("</g>")
         o.append("</svg>")

@@ -1,0 +1,2412 @@
+{
+ "schema": "olt-results/1",
+ "platform": {
+  "arch": "x86_64",
+  "os": "linux",
+  "cpu_model": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+  "board": "",
+  "cpu_count": 4,
+  "kernel_release": "6.18.44-fc-v153",
+  "kernel_version": "#1 SMP PREEMPT_DYNAMIC @0",
+  "preempt_model": "PREEMPT_DYNAMIC",
+  "governor": "",
+  "cpuidle_driver": "none",
+  "isolated_cpus": "",
+  "cpu_vulnerabilities": {
+   "gather_data_sampling": "Not affected",
+   "ghostwrite": "Not affected",
+   "indirect_target_selection": "Not affected",
+   "itlb_multihit": "Not affected",
+   "l1tf": "Not affected",
+   "mds": "Not affected",
+   "meltdown": "Not affected",
+   "mmio_stale_data": "Not affected",
+   "old_microcode": "Not affected",
+   "reg_file_data_sampling": "Not affected",
+   "retbleed": "Not affected",
+   "spec_rstack_overflow": "Not affected",
+   "spec_store_bypass": "Mitigation: Speculative Store Bypass disabled via prctl",
+   "spectre_v1": "Mitigation: usercopy/swapgs barriers and __user pointer sanitization",
+   "spectre_v2": "Mitigation: Enhanced / Automatic IBRS; IBPB: conditional; PBRSB-eIBRS: SW sequence; BHI: Vulnerable",
+   "srbds": "Not affected",
+   "tsa": "Not affected",
+   "tsx_async_abort": "Not affected",
+   "vmscape": "Not affected"
+  },
+  "thp_mode": "madvise",
+  "physical_memory": 16872804352,
+  "cache_line_size": 64,
+  "caches": [
+   {
+    "level": 1,
+    "type": "Data",
+    "size_bytes": 49152,
+    "line_size": 64,
+    "ways": 12,
+    "shared_cpus": "3"
+   },
+   {
+    "level": 1,
+    "type": "Instruction",
+    "size_bytes": 32768,
+    "line_size": 64,
+    "ways": 8,
+    "shared_cpus": "3"
+   },
+   {
+    "level": 2,
+    "type": "Unified",
+    "size_bytes": 2097152,
+    "line_size": 64,
+    "ways": 16,
+    "shared_cpus": "3"
+   },
+   {
+    "level": 3,
+    "type": "Unified",
+    "size_bytes": 272629760,
+    "line_size": 64,
+    "ways": 20,
+    "shared_cpus": "0-3"
+   }
+  ],
+  "perf": {
+   "backend": "linux-perf_event",
+   "events": [
+    "context_switches",
+    "cpu_migrations",
+    "page_faults"
+   ]
+  },
+  "compiler": "gcc 13.3.0",
+  "build_type": "RelWithDebInfo",
+  "git_commit": "25c7dbbe47d96347430bc11e79c7d30ca8df2e56",
+  "git_dirty": true,
+  "optimized": {
+   "c": true,
+   "cxx": true
+  },
+  "cycle_counter": {
+   "ticks_per_ns": 2.100002214,
+   "from_hardware": false
+  },
+  "timer": {
+   "now_ns_min": 24,
+   "now_ns_median": 27,
+   "cycles_ns_min": 22.85711876,
+   "cycles_ns_median": 24.76187866,
+   "os_resolution_ns": 1
+  }
+ },
+ "config": {
+  "samples": 200,
+  "warmup": 10,
+  "affinity": "different",
+  "main_cpu": 3,
+  "worker_cpu": 2,
+  "rt_priority": 0,
+  "lock_memory": false,
+  "block_deep_idle": false,
+  "idle_limit": null,
+  "park_us": 20,
+  "cpu_warmup_ms": 200,
+  "sweep_samples": 3,
+  "hugepages": false
+ },
+ "warnings": [],
+ "results": [
+  {
+   "name": "alloc.malloc",
+   "params": {
+    "size": "16"
+   },
+   "unit": "ns",
+   "source": {
+    "file": "src/benchmarks/alloc.cpp",
+    "line": 23
+   },
+   "note": "best case: same block reused every iteration, memory never touched",
+   "count": 200,
+   "min": 30,
+   "max": 32,
+   "mean": 30.895,
+   "stddev": 0.675467454,
+   "mad": 0,
+   "percentiles": {
+    "p50": 31,
+    "p90": 32,
+    "p99": 32,
+    "p99_9": 32,
+    "p99_99": 32
+   },
+   "unreliable_percentiles": [
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "alloc.free",
+   "params": {
+    "size": "16"
+   },
+   "unit": "ns",
+   "source": {
+    "file": "src/benchmarks/alloc.cpp",
+    "line": 23
+   },
+   "count": 200,
+   "min": 29,
+   "max": 260,
+   "mean": 33.735,
+   "stddev": 18.94224958,
+   "mad": 0,
+   "percentiles": {
+    "p50": 31,
+    "p90": 32,
+    "p99": 82.62,
+    "p99_9": 236.916,
+    "p99_99": 257.6916
+   },
+   "unreliable_percentiles": [
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "alloc.malloc",
+   "params": {
+    "size": "64"
+   },
+   "unit": "ns",
+   "source": {
+    "file": "src/benchmarks/alloc.cpp",
+    "line": 23
+   },
+   "count": 200,
+   "min": 30,
+   "max": 33,
+   "mean": 30.91,
+   "stddev": 0.6886736214,
+   "mad": 0,
+   "percentiles": {
+    "p50": 31,
+    "p90": 32,
+    "p99": 32.01,
+    "p99_9": 33,
+    "p99_99": 33
+   },
+   "unreliable_percentiles": [
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "alloc.free",
+   "params": {
+    "size": "64"
+   },
+   "unit": "ns",
+   "source": {
+    "file": "src/benchmarks/alloc.cpp",
+    "line": 23
+   },
+   "count": 200,
+   "min": 29,
+   "max": 103,
+   "mean": 31.245,
+   "stddev": 5.166083341,
+   "mad": 0,
+   "percentiles": {
+    "p50": 31,
+    "p90": 32,
+    "p99": 33.04,
+    "p99_9": 89.866,
+    "p99_99": 101.6866
+   },
+   "unreliable_percentiles": [
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "alloc.malloc",
+   "params": {
+    "size": "256"
+   },
+   "unit": "ns",
+   "source": {
+    "file": "src/benchmarks/alloc.cpp",
+    "line": 23
+   },
+   "count": 200,
+   "min": 30,
+   "max": 33,
+   "mean": 30.895,
+   "stddev": 0.6527675908,
+   "mad": 0,
+   "percentiles": {
+    "p50": 31,
+    "p90": 32,
+    "p99": 32,
+    "p99_9": 32.801,
+    "p99_99": 32.9801
+   },
+   "unreliable_percentiles": [
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "alloc.free",
+   "params": {
+    "size": "256"
+   },
+   "unit": "ns",
+   "source": {
+    "file": "src/benchmarks/alloc.cpp",
+    "line": 23
+   },
+   "count": 200,
+   "min": 29,
+   "max": 157,
+   "mean": 32.28,
+   "stddev": 10.61674036,
+   "mad": 0,
+   "percentiles": {
+    "p50": 31,
+    "p90": 32,
+    "p99": 54.5,
+    "p99_9": 146.453,
+    "p99_99": 155.9453
+   },
+   "unreliable_percentiles": [
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "multicore.atomic_contention",
+   "params": {
+    "op": "fetch_add",
+    "threads": "1"
+   },
+   "unit": "ns/op",
+   "source": {
+    "file": "src/benchmarks/atomic.cpp",
+    "line": 116
+   },
+   "count": 3,
+   "min": 5.65246582,
+   "max": 5.892349243,
+   "mean": 5.777475993,
+   "stddev": 0.1202625546,
+   "mad": 0.1047363281,
+   "percentiles": {
+    "p50": 5.787612915,
+    "p90": 5.871401978,
+    "p99": 5.890254517,
+    "p99_9": 5.892139771,
+    "p99_99": 5.892328296
+   },
+   "unreliable_percentiles": [
+    "p90",
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "multicore.atomic_contention",
+   "params": {
+    "op": "fetch_add",
+    "threads": "2"
+   },
+   "unit": "ns/op",
+   "source": {
+    "file": "src/benchmarks/atomic.cpp",
+    "line": 116
+   },
+   "count": 3,
+   "min": 36.58456421,
+   "max": 40.20317078,
+   "mean": 38.60981242,
+   "stddev": 1.847559202,
+   "mad": 1.161468506,
+   "percentiles": {
+    "p50": 39.04170227,
+    "p90": 39.97087708,
+    "p99": 40.17994141,
+    "p99_9": 40.20084784,
+    "p99_99": 40.20293848
+   },
+   "unreliable_percentiles": [
+    "p90",
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "multicore.atomic_contention",
+   "params": {
+    "op": "fetch_add",
+    "threads": "3"
+   },
+   "unit": "ns/op",
+   "source": {
+    "file": "src/benchmarks/atomic.cpp",
+    "line": 116
+   },
+   "count": 3,
+   "min": 89.23974609,
+   "max": 93.56604004,
+   "mean": 90.92774963,
+   "stddev": 2.314408925,
+   "mad": 0.7377166748,
+   "percentiles": {
+    "p50": 89.97746277,
+    "p90": 92.84832458,
+    "p99": 93.49426849,
+    "p99_9": 93.55886288,
+    "p99_99": 93.56532232
+   },
+   "unreliable_percentiles": [
+    "p90",
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "multicore.atomic_order",
+   "params": {
+    "op": "load_relaxed"
+   },
+   "unit": "ns/op",
+   "source": {
+    "file": "src/benchmarks/atomic.cpp",
+    "line": 157
+   },
+   "count": 200,
+   "min": 0.3349609375,
+   "max": 5.065429688,
+   "mean": 0.3610791016,
+   "stddev": 0.3343307948,
+   "mad": 0.0009765625,
+   "percentiles": {
+    "p50": 0.3369140625,
+    "p90": 0.337890625,
+    "p99": 0.3449902344,
+    "p99_9": 4.131256836,
+    "p99_99": 4.972012402
+   },
+   "unreliable_percentiles": [
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "multicore.atomic_order",
+   "params": {
+    "op": "load_acquire"
+   },
+   "unit": "ns/op",
+   "source": {
+    "file": "src/benchmarks/atomic.cpp",
+    "line": 157
+   },
+   "count": 200,
+   "min": 0.3359375,
+   "max": 3.287109375,
+   "mean": 0.3721484375,
+   "stddev": 0.2656208929,
+   "mad": 0.0009765625,
+   "percentiles": {
+    "p50": 0.337890625,
+    "p90": 0.3671875,
+    "p99": 0.5189355469,
+    "p99_9": 3.167009766,
+    "p99_99": 3.275099414
+   },
+   "unreliable_percentiles": [
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "multicore.atomic_order",
+   "params": {
+    "op": "load_seq_cst"
+   },
+   "unit": "ns/op",
+   "source": {
+    "file": "src/benchmarks/atomic.cpp",
+    "line": 157
+   },
+   "count": 200,
+   "min": 0.3359375,
+   "max": 0.3994140625,
+   "mean": 0.3375390625,
+   "stddev": 0.005089964335,
+   "mad": 0.0009765625,
+   "percentiles": {
+    "p50": 0.3369140625,
+    "p90": 0.337890625,
+    "p99": 0.3440234375,
+    "p99_9": 0.3937783203,
+    "p99_99": 0.3988504883
+   },
+   "unreliable_percentiles": [
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "os.jitter_gap",
+   "params": {},
+   "unit": "ns",
+   "source": {
+    "file": "src/benchmarks/jitter.cpp",
+    "line": 58
+   },
+   "note": "gaps between consecutive clock reads on the main benchmark CPU",
+   "count": 200,
+   "min": 21348,
+   "max": 72326096,
+   "mean": 630437.405,
+   "stddev": 5122773.1,
+   "mad": 40699,
+   "percentiles": {
+    "p50": 72308,
+    "p90": 713715.7,
+    "p99": 2728797.86,
+    "p99_9": 58577060.63,
+    "p99_99": 70951192.46
+   },
+   "unreliable_percentiles": [
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "os.jitter_rate",
+   "params": {
+    "threshold_us": "1"
+   },
+   "unit": "per s",
+   "source": {
+    "file": "src/benchmarks/jitter.cpp",
+    "line": 58
+   },
+   "note": "gaps between consecutive clock reads on the main benchmark CPU",
+   "count": 200,
+   "min": 2150,
+   "max": 12250,
+   "mean": 4495.75,
+   "stddev": 1573.443057,
+   "mad": 650,
+   "percentiles": {
+    "p50": 4025,
+    "p90": 6605,
+    "p99": 10563,
+    "p99_9": 12170.4,
+    "p99_99": 12242.04
+   },
+   "unreliable_percentiles": [
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "os.jitter_rate",
+   "params": {
+    "threshold_us": "10"
+   },
+   "unit": "per s",
+   "source": {
+    "file": "src/benchmarks/jitter.cpp",
+    "line": 58
+   },
+   "note": "gaps between consecutive clock reads on the main benchmark CPU",
+   "count": 200,
+   "min": 1150,
+   "max": 2400,
+   "mean": 1457,
+   "stddev": 194.5255793,
+   "mad": 100,
+   "percentiles": {
+    "p50": 1400,
+    "p90": 1705,
+    "p99": 2100.5,
+    "p99_9": 2350.25,
+    "p99_99": 2395.025
+   },
+   "unreliable_percentiles": [
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "cpu.branch",
+   "params": {
+    "code": "branchy",
+    "taken": "0"
+   },
+   "unit": "ns/element",
+   "source": {
+    "file": "src/benchmarks/branch.cpp",
+    "line": 77
+   },
+   "count": 20,
+   "min": 0.3078613281,
+   "max": 0.9765625,
+   "mean": 0.3590698242,
+   "stddev": 0.1454994283,
+   "mad": 0.000732421875,
+   "percentiles": {
+    "p50": 0.3275146484,
+    "p90": 0.3316162109,
+    "p99": 0.8549829102,
+    "p99_9": 0.964404541,
+    "p99_99": 0.9753467041
+   },
+   "unreliable_percentiles": [
+    "p90",
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "cpu.branch",
+   "params": {
+    "code": "branchy",
+    "taken": "1"
+   },
+   "unit": "ns/element",
+   "source": {
+    "file": "src/benchmarks/branch.cpp",
+    "line": 77
+   },
+   "count": 20,
+   "min": 0.4829101562,
+   "max": 1.096435547,
+   "mean": 0.5411193848,
+   "stddev": 0.1328346498,
+   "mad": 0.009521484375,
+   "percentiles": {
+    "p50": 0.5048828125,
+    "p90": 0.5565063477,
+    "p99": 0.9969592285,
+    "p99_9": 1.086487915,
+    "p99_99": 1.095440784
+   },
+   "unreliable_percentiles": [
+    "p90",
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "cpu.branch",
+   "params": {
+    "code": "branchy",
+    "taken": "2"
+   },
+   "unit": "ns/element",
+   "source": {
+    "file": "src/benchmarks/branch.cpp",
+    "line": 77
+   },
+   "count": 20,
+   "min": 0.6013183594,
+   "max": 1.102172852,
+   "mean": 0.6801330566,
+   "stddev": 0.1024511148,
+   "mad": 0.01916503906,
+   "percentiles": {
+    "p50": 0.6626586914,
+    "p90": 0.6881713867,
+    "p99": 1.025078125,
+    "p99_9": 1.094463379,
+    "p99_99": 1.101401904
+   },
+   "unreliable_percentiles": [
+    "p90",
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "cpu.branch_sorted",
+   "params": {
+    "code": "branchy"
+   },
+   "unit": "ns/element",
+   "source": {
+    "file": "src/benchmarks/branch.cpp",
+    "line": 77
+   },
+   "count": 20,
+   "min": 0.5074462891,
+   "max": 1.163696289,
+   "mean": 0.7348571777,
+   "stddev": 0.1717402988,
+   "mad": 0.1228637695,
+   "percentiles": {
+    "p50": 0.7561645508,
+    "p90": 0.8818725586,
+    "p99": 1.12586792,
+    "p99_9": 1.159913452,
+    "p99_99": 1.163318005
+   },
+   "unreliable_percentiles": [
+    "p90",
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "cpu.branch_sorted",
+   "params": {
+    "code": "branchless"
+   },
+   "unit": "ns/element",
+   "source": {
+    "file": "src/benchmarks/branch.cpp",
+    "line": 90
+   },
+   "count": 20,
+   "min": 0.8016357422,
+   "max": 3.71496582,
+   "mean": 1.099389648,
+   "stddev": 0.6235510011,
+   "mad": 0.06036376953,
+   "percentiles": {
+    "p50": 0.9489135742,
+    "p90": 1.039599609,
+    "p99": 3.252861328,
+    "p99_9": 3.668755371,
+    "p99_99": 3.710344775
+   },
+   "unreliable_percentiles": [
+    "p90",
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "cpu.branch_sorted",
+   "params": {
+    "code": "ternary"
+   },
+   "unit": "ns/element",
+   "source": {
+    "file": "src/benchmarks/branch.cpp",
+    "line": 98
+   },
+   "count": 20,
+   "min": 0.5020751953,
+   "max": 1.064941406,
+   "mean": 0.6593994141,
+   "stddev": 0.1140565501,
+   "mad": 0.041015625,
+   "percentiles": {
+    "p50": 0.6567993164,
+    "p90": 0.7239868164,
+    "p99": 1.002435303,
+    "p99_9": 1.058690796,
+    "p99_99": 1.064316345
+   },
+   "unreliable_percentiles": [
+    "p90",
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "cpu.ilp",
+   "params": {
+    "op": "int_mul",
+    "chains": "1"
+   },
+   "unit": "ns",
+   "source": {
+    "file": "src/benchmarks/ilp.cpp",
+    "line": 136
+   },
+   "count": 3,
+   "min": 0.9375762939,
+   "max": 0.9387207031,
+   "mean": 0.9380289714,
+   "stddev": 0.0006085049988,
+   "mad": 0.0002136230469,
+   "percentiles": {
+    "p50": 0.937789917,
+    "p90": 0.9385345459,
+    "p99": 0.9387020874,
+    "p99_9": 0.9387188416,
+    "p99_99": 0.938720517
+   },
+   "unreliable_percentiles": [
+    "p90",
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "cpu.ilp",
+   "params": {
+    "op": "int_mul",
+    "chains": "2"
+   },
+   "unit": "ns",
+   "source": {
+    "file": "src/benchmarks/ilp.cpp",
+    "line": 136
+   },
+   "count": 3,
+   "min": 0.4689102173,
+   "max": 0.5567855835,
+   "mean": 0.4998626709,
+   "stddev": 0.04935958419,
+   "mad": 0.004981994629,
+   "percentiles": {
+    "p50": 0.4738922119,
+    "p90": 0.5402069092,
+    "p99": 0.5551277161,
+    "p99_9": 0.5566197968,
+    "p99_99": 0.5567690048
+   },
+   "unreliable_percentiles": [
+    "p90",
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "cpu.ilp",
+   "params": {
+    "op": "int_mul",
+    "chains": "3"
+   },
+   "unit": "ns",
+   "source": {
+    "file": "src/benchmarks/ilp.cpp",
+    "line": 136
+   },
+   "count": 3,
+   "min": 0.312616984,
+   "max": 0.434850057,
+   "mean": 0.3533850776,
+   "stddev": 0.07055075065,
+   "mad": 7.120768229e-05,
+   "percentiles": {
+    "p50": 0.3126881917,
+    "p90": 0.4104176839,
+    "p99": 0.4324068197,
+    "p99_9": 0.4346057332,
+    "p99_99": 0.4348256246
+   },
+   "unreliable_percentiles": [
+    "p90",
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "mem.latency_random",
+   "params": {
+    "size": "1K",
+    "bytes": "1024",
+    "pages": "base"
+   },
+   "unit": "ns/access",
+   "source": {
+    "file": "src/benchmarks/memory.cpp",
+    "line": 147
+   },
+   "note": "latency includes TLB misses once the buffer exceeds TLB reach (try --hugepages)",
+   "count": 3,
+   "min": 1.612586975,
+   "max": 1.734642029,
+   "mean": 1.666389465,
+   "stddev": 0.06229737151,
+   "mad": 0.03935241699,
+   "percentiles": {
+    "p50": 1.651939392,
+    "p90": 1.718101501,
+    "p99": 1.732987976,
+    "p99_9": 1.734476624,
+    "p99_99": 1.734625488
+   },
+   "unreliable_percentiles": [
+    "p90",
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "mem.read_seq",
+   "params": {
+    "size": "1K",
+    "bytes": "1024",
+    "pages": "base",
+    "isa": "avx512"
+   },
+   "unit": "ns/line",
+   "source": {
+    "file": "src/benchmarks/memory.cpp",
+    "line": 147
+   },
+   "count": 3,
+   "min": 0.2823638916,
+   "max": 0.32771492,
+   "mean": 0.297700882,
+   "stddev": 0.02599501381,
+   "mad": 0.000659942627,
+   "percentiles": {
+    "p50": 0.2830238342,
+    "p90": 0.3187767029,
+    "p99": 0.3268210983,
+    "p99_9": 0.3276255379,
+    "p99_99": 0.3277059818
+   },
+   "unreliable_percentiles": [
+    "p90",
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "mem.write_seq",
+   "params": {
+    "size": "1K",
+    "bytes": "1024",
+    "pages": "base",
+    "isa": "avx512"
+   },
+   "unit": "ns/line",
+   "source": {
+    "file": "src/benchmarks/memory.cpp",
+    "line": 147
+   },
+   "count": 3,
+   "min": 0.3715000153,
+   "max": 0.3730583191,
+   "mean": 0.3724892934,
+   "stddev": 0.000859963267,
+   "mad": 0.0001487731934,
+   "percentiles": {
+    "p50": 0.3729095459,
+    "p90": 0.3730285645,
+    "p99": 0.3730553436,
+    "p99_9": 0.3730580215,
+    "p99_99": 0.3730582893
+   },
+   "unreliable_percentiles": [
+    "p90",
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "mem.write_nt",
+   "params": {
+    "size": "1K",
+    "bytes": "1024",
+    "pages": "base"
+   },
+   "unit": "ns/line",
+   "source": {
+    "file": "src/benchmarks/memory.cpp",
+    "line": 147
+   },
+   "count": 3,
+   "min": 21.66457748,
+   "max": 24.04999924,
+   "mean": 22.90403175,
+   "stddev": 1.195455591,
+   "mad": 1.052480698,
+   "percentiles": {
+    "p50": 22.99751854,
+    "p90": 23.8395031,
+    "p99": 24.02894962,
+    "p99_9": 24.04789428,
+    "p99_99": 24.04978874
+   },
+   "unreliable_percentiles": [
+    "p90",
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "mem.write_random",
+   "params": {
+    "size": "1K",
+    "bytes": "1024",
+    "pages": "base"
+   },
+   "unit": "ns/store",
+   "source": {
+    "file": "src/benchmarks/memory.cpp",
+    "line": 147
+   },
+   "count": 3,
+   "min": 0.6455535889,
+   "max": 0.656791687,
+   "mean": 0.6529388428,
+   "stddev": 0.006397823929,
+   "mad": 0.0003204345703,
+   "percentiles": {
+    "p50": 0.6564712524,
+    "p90": 0.6567276001,
+    "p99": 0.6567852783,
+    "p99_9": 0.6567910461,
+    "p99_99": 0.6567916229
+   },
+   "unreliable_percentiles": [
+    "p90",
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "mem.latency_random",
+   "params": {
+    "size": "1.19K",
+    "bytes": "1216",
+    "pages": "base"
+   },
+   "unit": "ns/access",
+   "source": {
+    "file": "src/benchmarks/memory.cpp",
+    "line": 147
+   },
+   "count": 3,
+   "min": 1.629417419,
+   "max": 1.784118652,
+   "mean": 1.715838114,
+   "stddev": 0.07892982225,
+   "mad": 0.05014038086,
+   "percentiles": {
+    "p50": 1.733978271,
+    "p90": 1.774090576,
+    "p99": 1.783115845,
+    "p99_9": 1.784018372,
+    "p99_99": 1.784108624
+   },
+   "unreliable_percentiles": [
+    "p90",
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "mem.read_seq",
+   "params": {
+    "size": "1.19K",
+    "bytes": "1216",
+    "pages": "base",
+    "isa": "avx512"
+   },
+   "unit": "ns/line",
+   "source": {
+    "file": "src/benchmarks/memory.cpp",
+    "line": 147
+   },
+   "count": 3,
+   "min": 0.2934028374,
+   "max": 0.3443959976,
+   "mean": 0.3169815711,
+   "stddev": 0.02571205945,
+   "mad": 0.01974304101,
+   "percentiles": {
+    "p50": 0.3131458784,
+    "p90": 0.3381459738,
+    "p99": 0.3437709952,
+    "p99_9": 0.3443334974,
+    "p99_99": 0.3443897476
+   },
+   "unreliable_percentiles": [
+    "p90",
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "mem.write_seq",
+   "params": {
+    "size": "1.19K",
+    "bytes": "1216",
+    "pages": "base",
+    "isa": "avx512"
+   },
+   "unit": "ns/line",
+   "source": {
+    "file": "src/benchmarks/memory.cpp",
+    "line": 147
+   },
+   "count": 3,
+   "min": 0.3769068791,
+   "max": 0.3977180394,
+   "mean": 0.3841014256,
+   "stddev": 0.01179865714,
+   "mad": 0.0007724791431,
+   "percentiles": {
+    "p50": 0.3776793582,
+    "p90": 0.3937103032,
+    "p99": 0.3973172658,
+    "p99_9": 0.397677962,
+    "p99_99": 0.3977140317
+   },
+   "unreliable_percentiles": [
+    "p90",
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "mem.write_nt",
+   "params": {
+    "size": "1.19K",
+    "bytes": "1216",
+    "pages": "base"
+   },
+   "unit": "ns/line",
+   "source": {
+    "file": "src/benchmarks/memory.cpp",
+    "line": 147
+   },
+   "count": 3,
+   "min": 20.02243051,
+   "max": 21.04369562,
+   "mean": 20.40236563,
+   "stddev": 0.5585616011,
+   "mad": 0.1185402624,
+   "percentiles": {
+    "p50": 20.14097077,
+    "p90": 20.86315065,
+    "p99": 21.02564112,
+    "p99_9": 21.04189017,
+    "p99_99": 21.04351507
+   },
+   "unreliable_percentiles": [
+    "p90",
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "mem.write_random",
+   "params": {
+    "size": "1.19K",
+    "bytes": "1216",
+    "pages": "base"
+   },
+   "unit": "ns/store",
+   "source": {
+    "file": "src/benchmarks/memory.cpp",
+    "line": 147
+   },
+   "count": 3,
+   "min": 0.6871643066,
+   "max": 0.6994934082,
+   "mean": 0.6914901733,
+   "stddev": 0.006938585144,
+   "mad": 0.0006484985352,
+   "percentiles": {
+    "p50": 0.6878128052,
+    "p90": 0.6971572876,
+    "p99": 0.6992597961,
+    "p99_9": 0.699470047,
+    "p99_99": 0.6994910721
+   },
+   "unreliable_percentiles": [
+    "p90",
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "mem.latency_random",
+   "params": {
+    "size": "1.38K",
+    "bytes": "1408",
+    "pages": "base"
+   },
+   "unit": "ns/access",
+   "source": {
+    "file": "src/benchmarks/memory.cpp",
+    "line": 147
+   },
+   "count": 3,
+   "min": 1.562072754,
+   "max": 1.65852356,
+   "mean": 1.624430339,
+   "stddev": 0.05408183767,
+   "mad": 0.005828857422,
+   "percentiles": {
+    "p50": 1.652694702,
+    "p90": 1.657357788,
+    "p99": 1.658406982,
+    "p99_9": 1.658511902,
+    "p99_99": 1.658522394
+   },
+   "unreliable_percentiles": [
+    "p90",
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "mem.read_seq",
+   "params": {
+    "size": "1.38K",
+    "bytes": "1408",
+    "pages": "base",
+    "isa": "avx512"
+   },
+   "unit": "ns/line",
+   "source": {
+    "file": "src/benchmarks/memory.cpp",
+    "line": 147
+   },
+   "count": 3,
+   "min": 0.2918257732,
+   "max": 0.3513567126,
+   "mean": 0.311674506,
+   "stddev": 0.03436579988,
+   "mad": 1.525896369e-05,
+   "percentiles": {
+    "p50": 0.2918410321,
+    "p90": 0.3394535765,
+    "p99": 0.350166399,
+    "p99_9": 0.3512376812,
+    "p99_99": 0.3513448095
+   },
+   "unreliable_percentiles": [
+    "p90",
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "mem.write_seq",
+   "params": {
+    "size": "1.38K",
+    "bytes": "1408",
+    "pages": "base",
+    "isa": "avx512"
+   },
+   "unit": "ns/line",
+   "source": {
+    "file": "src/benchmarks/memory.cpp",
+    "line": 147
+   },
+   "count": 3,
+   "min": 0.3714470457,
+   "max": 0.4228163469,
+   "mean": 0.3885860408,
+   "stddev": 0.02964432423,
+   "mad": 4.768426152e-05,
+   "percentiles": {
+    "p50": 0.3714947299,
+    "p90": 0.4125520235,
+    "p99": 0.4217899146,
+    "p99_9": 0.4227137037,
+    "p99_99": 0.4228060826
+   },
+   "unreliable_percentiles": [
+    "p90",
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "mem.write_nt",
+   "params": {
+    "size": "1.38K",
+    "bytes": "1408",
+    "pages": "base"
+   },
+   "unit": "ns/line",
+   "source": {
+    "file": "src/benchmarks/memory.cpp",
+    "line": 147
+   },
+   "count": 3,
+   "min": 17.05745572,
+   "max": 18.3589366,
+   "mean": 17.54355862,
+   "stddev": 0.7104784887,
+   "mad": 0.156827814,
+   "percentiles": {
+    "p50": 17.21428353,
+    "p90": 18.13000599,
+    "p99": 18.33604354,
+    "p99_9": 18.3566473,
+    "p99_99": 18.35870767
+   },
+   "unreliable_percentiles": [
+    "p90",
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "mem.write_random",
+   "params": {
+    "size": "1.38K",
+    "bytes": "1408",
+    "pages": "base"
+   },
+   "unit": "ns/store",
+   "source": {
+    "file": "src/benchmarks/memory.cpp",
+    "line": 147
+   },
+   "count": 3,
+   "min": 0.7100982666,
+   "max": 0.7231216431,
+   "mean": 0.7177454631,
+   "stddev": 0.006802221724,
+   "mad": 0.003105163574,
+   "percentiles": {
+    "p50": 0.7200164795,
+    "p90": 0.7225006104,
+    "p99": 0.7230595398,
+    "p99_9": 0.7231154327,
+    "p99_99": 0.723121022
+   },
+   "unreliable_percentiles": [
+    "p90",
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "multicore.false_sharing_alone",
+   "params": {
+    "op": "plain",
+    "cpu_a": "3",
+    "cpu_b": "0"
+   },
+   "unit": "ns",
+   "source": {
+    "file": "src/benchmarks/multicore.cpp",
+    "line": 160
+   },
+   "count": 3,
+   "min": 0.3154602051,
+   "max": 0.6617355347,
+   "mean": 0.4387359619,
+   "stddev": 0.1934819903,
+   "mad": 0.02355194092,
+   "percentiles": {
+    "p50": 0.339012146,
+    "p90": 0.5971908569,
+    "p99": 0.6552810669,
+    "p99_9": 0.6610900879,
+    "p99_99": 0.66167099
+   },
+   "unreliable_percentiles": [
+    "p90",
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "multicore.false_sharing",
+   "params": {
+    "op": "plain",
+    "distance": "8",
+    "cpu_a": "3",
+    "cpu_b": "0"
+   },
+   "unit": "ns",
+   "source": {
+    "file": "src/benchmarks/multicore.cpp",
+    "line": 160
+   },
+   "count": 3,
+   "min": 0.3522644043,
+   "max": 0.4650344849,
+   "mean": 0.4105300903,
+   "stddev": 0.05647905145,
+   "mad": 0.05074310303,
+   "percentiles": {
+    "p50": 0.4142913818,
+    "p90": 0.4548858643,
+    "p99": 0.4640196228,
+    "p99_9": 0.4649329987,
+    "p99_99": 0.4650243362
+   },
+   "unreliable_percentiles": [
+    "p90",
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "multicore.false_sharing",
+   "params": {
+    "op": "plain",
+    "distance": "16",
+    "cpu_a": "3",
+    "cpu_b": "0"
+   },
+   "unit": "ns",
+   "source": {
+    "file": "src/benchmarks/multicore.cpp",
+    "line": 160
+   },
+   "count": 3,
+   "min": 0.3753585815,
+   "max": 0.4335784912,
+   "mean": 0.4006525675,
+   "stddev": 0.02985086807,
+   "mad": 0.01766204834,
+   "percentiles": {
+    "p50": 0.3930206299,
+    "p90": 0.4254669189,
+    "p99": 0.432767334,
+    "p99_9": 0.4334973755,
+    "p99_99": 0.4335703796
+   },
+   "unreliable_percentiles": [
+    "p90",
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "multicore.false_sharing",
+   "params": {
+    "op": "plain",
+    "distance": "32",
+    "cpu_a": "3",
+    "cpu_b": "0"
+   },
+   "unit": "ns",
+   "source": {
+    "file": "src/benchmarks/multicore.cpp",
+    "line": 160
+   },
+   "count": 3,
+   "min": 0.3911895752,
+   "max": 0.6828689575,
+   "mean": 0.4982757568,
+   "stddev": 0.1605450685,
+   "mad": 0.0295791626,
+   "percentiles": {
+    "p50": 0.4207687378,
+    "p90": 0.6304489136,
+    "p99": 0.6776269531,
+    "p99_9": 0.6823447571,
+    "p99_99": 0.6828165375
+   },
+   "unreliable_percentiles": [
+    "p90",
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "multicore.false_sharing_alone",
+   "params": {
+    "op": "atomic",
+    "cpu_a": "3",
+    "cpu_b": "0"
+   },
+   "unit": "ns",
+   "source": {
+    "file": "src/benchmarks/multicore.cpp",
+    "line": 160
+   },
+   "count": 3,
+   "min": 6.062973022,
+   "max": 7.609367371,
+   "mean": 6.731742859,
+   "stddev": 0.7940712037,
+   "mad": 0.4599151611,
+   "percentiles": {
+    "p50": 6.522888184,
+    "p90": 7.392071533,
+    "p99": 7.587637787,
+    "p99_9": 7.607194412,
+    "p99_99": 7.609150075
+   },
+   "unreliable_percentiles": [
+    "p90",
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "multicore.c2c_latency",
+   "params": {
+    "cpu_a": "0",
+    "cpu_b": "1"
+   },
+   "unit": "ns",
+   "source": {
+    "file": "src/benchmarks/multicore.cpp",
+    "line": 198
+   },
+   "count": 3,
+   "min": 91.5725,
+   "max": 114.8555,
+   "mean": 99.99216667,
+   "stddev": 12.90988584,
+   "mad": 1.976,
+   "percentiles": {
+    "p50": 93.5485,
+    "p90": 110.5941,
+    "p99": 114.42936,
+    "p99_9": 114.812886,
+    "p99_99": 114.8512386
+   },
+   "unreliable_percentiles": [
+    "p90",
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "multicore.c2c_latency",
+   "params": {
+    "cpu_a": "0",
+    "cpu_b": "2"
+   },
+   "unit": "ns",
+   "source": {
+    "file": "src/benchmarks/multicore.cpp",
+    "line": 198
+   },
+   "count": 3,
+   "min": 93.4985,
+   "max": 96.724,
+   "mean": 94.64116667,
+   "stddev": 1.806626022,
+   "mad": 0.2025,
+   "percentiles": {
+    "p50": 93.701,
+    "p90": 96.1194,
+    "p99": 96.66354,
+    "p99_9": 96.717954,
+    "p99_99": 96.7233954
+   },
+   "unreliable_percentiles": [
+    "p90",
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "multicore.c2c_latency",
+   "params": {
+    "cpu_a": "0",
+    "cpu_b": "3"
+   },
+   "unit": "ns",
+   "source": {
+    "file": "src/benchmarks/multicore.cpp",
+    "line": 198
+   },
+   "count": 3,
+   "min": 78.495,
+   "max": 83.944,
+   "mean": 81.097,
+   "stddev": 2.732749348,
+   "mad": 2.357,
+   "percentiles": {
+    "p50": 80.852,
+    "p90": 83.3256,
+    "p99": 83.88216,
+    "p99_9": 83.937816,
+    "p99_99": 83.9433816
+   },
+   "unreliable_percentiles": [
+    "p90",
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "pattern.alloc_vector",
+   "params": {
+    "allocator": "new_delete"
+   },
+   "unit": "ns/element",
+   "source": {
+    "file": "src/benchmarks/pattern_alloc.cpp",
+    "line": 38
+   },
+   "count": 200,
+   "min": 1.5859375,
+   "max": 3.70703125,
+   "mean": 1.9878125,
+   "stddev": 0.2767899965,
+   "mad": 0.19921875,
+   "percentiles": {
+    "p50": 1.970703125,
+    "p90": 2.2578125,
+    "p99": 3.109492187,
+    "p99_9": 3.590429688,
+    "p99_99": 3.695371094
+   },
+   "unreliable_percentiles": [
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "pattern.alloc_vector",
+   "params": {
+    "allocator": "reserve"
+   },
+   "unit": "ns/element",
+   "source": {
+    "file": "src/benchmarks/pattern_alloc.cpp",
+    "line": 38
+   },
+   "count": 200,
+   "min": 1.1171875,
+   "max": 3.26171875,
+   "mean": 1.442070313,
+   "stddev": 0.2812786547,
+   "mad": 0.12109375,
+   "percentiles": {
+    "p50": 1.376953125,
+    "p90": 1.76171875,
+    "p99": 2.469179687,
+    "p99_9": 3.11246875,
+    "p99_99": 3.24679375
+   },
+   "unreliable_percentiles": [
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "pattern.alloc_vector",
+   "params": {
+    "allocator": "pmr_monotonic"
+   },
+   "unit": "ns/element",
+   "source": {
+    "file": "src/benchmarks/pattern_alloc.cpp",
+    "line": 38
+   },
+   "count": 200,
+   "min": 1.3984375,
+   "max": 220.09375,
+   "mean": 3.371972656,
+   "stddev": 15.41067852,
+   "mad": 0.279296875,
+   "percentiles": {
+    "p50": 2.140625,
+    "p90": 3.1078125,
+    "p99": 3.669726562,
+    "p99_9": 177.2139141,
+    "p99_99": 215.8057664
+   },
+   "unreliable_percentiles": [
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "pattern.alloc_list",
+   "params": {
+    "allocator": "new_delete"
+   },
+   "unit": "ns/element",
+   "source": {
+    "file": "src/benchmarks/pattern_alloc.cpp",
+    "line": 38
+   },
+   "count": 200,
+   "min": 27.57421875,
+   "max": 162.9296875,
+   "mean": 31.35347656,
+   "stddev": 13.14524756,
+   "mad": 0.244140625,
+   "percentiles": {
+    "p50": 28.7109375,
+    "p90": 31.475,
+    "p99": 102.9444141,
+    "p99_9": 155.3614688,
+    "p99_99": 162.1728656
+   },
+   "unreliable_percentiles": [
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "pattern.alloc_list",
+   "params": {
+    "allocator": "pmr_monotonic"
+   },
+   "unit": "ns/element",
+   "source": {
+    "file": "src/benchmarks/pattern_alloc.cpp",
+    "line": 38
+   },
+   "count": 200,
+   "min": 4.9453125,
+   "max": 6.625,
+   "mean": 4.986835938,
+   "stddev": 0.1782338711,
+   "mad": 0.00390625,
+   "percentiles": {
+    "p50": 4.95703125,
+    "p90": 4.96875,
+    "p99": 6.004140625,
+    "p99_9": 6.506066406,
+    "p99_99": 6.613106641
+   },
+   "unreliable_percentiles": [
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "pattern.alloc_list",
+   "params": {
+    "allocator": "pmr_pool"
+   },
+   "unit": "ns/element",
+   "source": {
+    "file": "src/benchmarks/pattern_alloc.cpp",
+    "line": 38
+   },
+   "count": 200,
+   "min": 17.69921875,
+   "max": 95.95703125,
+   "mean": 19.50664062,
+   "stddev": 7.507880008,
+   "mad": 0.322265625,
+   "percentiles": {
+    "p50": 18.38867188,
+    "p90": 18.73046875,
+    "p99": 49.67820312,
+    "p99_9": 92.41312109,
+    "p99_99": 95.60264023
+   },
+   "unreliable_percentiles": [
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "pattern.dispatch_one_type",
+   "params": {
+    "impl": "virtual"
+   },
+   "unit": "ns/call",
+   "source": {
+    "file": "src/benchmarks/pattern_dispatch.cpp",
+    "line": 147
+   },
+   "count": 200,
+   "min": 1.529296875,
+   "max": 9.714599609,
+   "mean": 1.956949463,
+   "stddev": 0.6719763595,
+   "mad": 0.2000732422,
+   "percentiles": {
+    "p50": 1.853393555,
+    "p90": 2.50300293,
+    "p99": 3.260612793,
+    "p99_9": 8.648958496,
+    "p99_99": 9.608035498
+   },
+   "unreliable_percentiles": [
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "pattern.dispatch_one_type",
+   "params": {
+    "impl": "std_function"
+   },
+   "unit": "ns/call",
+   "source": {
+    "file": "src/benchmarks/pattern_dispatch.cpp",
+    "line": 157
+   },
+   "count": 200,
+   "min": 1.286132812,
+   "max": 9.379882812,
+   "mean": 1.671153564,
+   "stddev": 0.8207671747,
+   "mad": 0.2624511719,
+   "percentiles": {
+    "p50": 1.579467773,
+    "p90": 2.055078125,
+    "p99": 6.661989746,
+    "p99_9": 8.923241943,
+    "p99_99": 9.334218726
+   },
+   "unreliable_percentiles": [
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "pattern.dispatch_one_type",
+   "params": {
+    "impl": "function_ptr"
+   },
+   "unit": "ns/call",
+   "source": {
+    "file": "src/benchmarks/pattern_dispatch.cpp",
+    "line": 167
+   },
+   "count": 200,
+   "min": 1.265380859,
+   "max": 4.886230469,
+   "mean": 1.318674316,
+   "stddev": 0.3061658637,
+   "mad": 0.000244140625,
+   "percentiles": {
+    "p50": 1.266845703,
+    "p90": 1.269042969,
+    "p99": 2.071945801,
+    "p99_9": 4.488230469,
+    "p99_99": 4.846430469
+   },
+   "unreliable_percentiles": [
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "pattern.dispatch_mixed",
+   "params": {
+    "impl": "virtual"
+   },
+   "unit": "ns/call",
+   "source": {
+    "file": "src/benchmarks/pattern_dispatch.cpp",
+    "line": 147
+   },
+   "count": 200,
+   "min": 8.261962891,
+   "max": 17.98706055,
+   "mean": 9.672730713,
+   "stddev": 1.607186293,
+   "mad": 0.4384765625,
+   "percentiles": {
+    "p50": 9.098266602,
+    "p90": 10.84575195,
+    "p99": 16.76333252,
+    "p99_9": 17.94848486,
+    "p99_99": 17.98320298
+   },
+   "unreliable_percentiles": [
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "pattern.dispatch_mixed",
+   "params": {
+    "impl": "std_function"
+   },
+   "unit": "ns/call",
+   "source": {
+    "file": "src/benchmarks/pattern_dispatch.cpp",
+    "line": 157
+   },
+   "count": 200,
+   "min": 6.556396484,
+   "max": 16.14453125,
+   "mean": 7.789127197,
+   "stddev": 1.249913363,
+   "mad": 0.3836669922,
+   "percentiles": {
+    "p50": 7.376953125,
+    "p90": 8.874609375,
+    "p99": 12.20347412,
+    "p99_9": 15.99241479,
+    "p99_99": 16.1293196
+   },
+   "unreliable_percentiles": [
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "pattern.dispatch_mixed",
+   "params": {
+    "impl": "function_ptr"
+   },
+   "unit": "ns/call",
+   "source": {
+    "file": "src/benchmarks/pattern_dispatch.cpp",
+    "line": 167
+   },
+   "count": 200,
+   "min": 6.444824219,
+   "max": 16.33129883,
+   "mean": 7.948840332,
+   "stddev": 1.445227184,
+   "mad": 0.5869140625,
+   "percentiles": {
+    "p50": 7.718017578,
+    "p90": 8.888891602,
+    "p99": 14.35255615,
+    "p99_9": 15.96672461,
+    "p99_99": 16.29484141
+   },
+   "unreliable_percentiles": [
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "pattern.spsc_latency",
+   "params": {
+    "queue": "mutex_condvar"
+   },
+   "unit": "ns",
+   "source": {
+    "file": "src/benchmarks/pattern_spsc.cpp",
+    "line": 74
+   },
+   "metrics": {
+    "cpu_cores": 0.8374485157
+   },
+   "count": 200,
+   "min": 12964.5,
+   "max": 34797,
+   "mean": 14996.6575,
+   "stddev": 2878.378423,
+   "mad": 708,
+   "percentiles": {
+    "p50": 14164,
+    "p90": 16736.35,
+    "p99": 26579.25,
+    "p99_9": 34634.3175,
+    "p99_99": 34780.73175
+   },
+   "unreliable_percentiles": [
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "pattern.spsc_throughput",
+   "params": {
+    "queue": "mutex_condvar"
+   },
+   "unit": "ns/item",
+   "source": {
+    "file": "src/benchmarks/pattern_spsc.cpp",
+    "line": 74
+   },
+   "metrics": {
+    "cpu_cores": 1.551707492
+   },
+   "count": 3,
+   "min": 218.9289246,
+   "max": 336.6719398,
+   "mean": 294.0139453,
+   "stddev": 65.22643965,
+   "mad": 10.23096848,
+   "percentiles": {
+    "p50": 326.4409714,
+    "p90": 334.6257462,
+    "p99": 336.4673205,
+    "p99_9": 336.6514779,
+    "p99_99": 336.6698937
+   },
+   "unreliable_percentiles": [
+    "p90",
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "pattern.spsc_latency",
+   "params": {
+    "queue": "mutex_poll"
+   },
+   "unit": "ns",
+   "source": {
+    "file": "src/benchmarks/pattern_spsc.cpp",
+    "line": 99
+   },
+   "metrics": {
+    "cpu_cores": 1.494573719
+   },
+   "count": 200,
+   "min": 559,
+   "max": 29953,
+   "mean": 2405.9525,
+   "stddev": 3319.005808,
+   "mad": 282.75,
+   "percentiles": {
+    "p50": 1323,
+    "p90": 7946.05,
+    "p99": 12283.585,
+    "p99_9": 26714.275,
+    "p99_99": 29629.1275
+   },
+   "unreliable_percentiles": [
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "pattern.spsc_throughput",
+   "params": {
+    "queue": "mutex_poll"
+   },
+   "unit": "ns/item",
+   "source": {
+    "file": "src/benchmarks/pattern_spsc.cpp",
+    "line": 99
+   },
+   "metrics": {
+    "cpu_cores": 1.405786477
+   },
+   "count": 3,
+   "min": 185.8423615,
+   "max": 306.730587,
+   "mean": 228.5152791,
+   "stddev": 67.83020636,
+   "mad": 7.130527496,
+   "percentiles": {
+    "p50": 192.9728889,
+    "p90": 283.9790474,
+    "p99": 304.455433,
+    "p99_9": 306.5030716,
+    "p99_99": 306.7078355
+   },
+   "unreliable_percentiles": [
+    "p90",
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "pattern.spsc_latency",
+   "params": {
+    "queue": "spinlock"
+   },
+   "unit": "ns",
+   "source": {
+    "file": "src/benchmarks/pattern_spsc.cpp",
+    "line": 137
+   },
+   "metrics": {
+    "cpu_cores": 1.536562464
+   },
+   "count": 200,
+   "min": 518,
+   "max": 3114.5,
+   "mean": 757.1725,
+   "stddev": 303.2269147,
+   "mad": 59.75,
+   "percentiles": {
+    "p50": 699.75,
+    "p90": 838.3,
+    "p99": 2441.225,
+    "p99_9": 3034.2035,
+    "p99_99": 3106.47035
+   },
+   "unreliable_percentiles": [
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "pattern.spsc_throughput",
+   "params": {
+    "queue": "spinlock"
+   },
+   "unit": "ns/item",
+   "source": {
+    "file": "src/benchmarks/pattern_spsc.cpp",
+    "line": 137
+   },
+   "metrics": {
+    "cpu_cores": 1.932470797
+   },
+   "count": 3,
+   "min": 514.9121056,
+   "max": 565.1058922,
+   "mean": 541.3056437,
+   "stddev": 25.19718074,
+   "mad": 21.20695877,
+   "percentiles": {
+    "p50": 543.8989334,
+    "p90": 560.8645004,
+    "p99": 564.681753,
+    "p99_9": 565.0634783,
+    "p99_99": 565.1016508
+   },
+   "unreliable_percentiles": [
+    "p90",
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "sync.mutex_wakeup",
+   "params": {},
+   "unit": "ns",
+   "source": {
+    "file": "src/benchmarks/sync.cpp",
+    "line": 16
+   },
+   "count": 200,
+   "min": 11678,
+   "max": 190963,
+   "mean": 15849.08,
+   "stddev": 14361.98448,
+   "mad": 1023,
+   "percentiles": {
+    "p50": 13167.5,
+    "p90": 17135.1,
+    "p99": 57951.45,
+    "p99_9": 168344.262,
+    "p99_99": 188701.1262
+   },
+   "unreliable_percentiles": [
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "sync.condvar_wakeup",
+   "params": {},
+   "unit": "ns",
+   "source": {
+    "file": "src/benchmarks/sync.cpp",
+    "line": 55
+   },
+   "note": "includes the worker's mutex unlock and notify_one() call",
+   "count": 200,
+   "min": 11944,
+   "max": 3863096,
+   "mean": 37281.08,
+   "stddev": 275342.8955,
+   "mad": 844.5,
+   "percentiles": {
+    "p50": 13834,
+    "p90": 18254.2,
+    "p99": 59069.21,
+    "p99_9": 3219024.938,
+    "p99_99": 3798688.894
+   },
+   "unreliable_percentiles": [
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "thread.create_to_start",
+   "params": {},
+   "unit": "ns",
+   "source": {
+    "file": "src/benchmarks/threads.cpp",
+    "line": 20
+   },
+   "note": "new threads inherit the main thread's affinity",
+   "count": 200,
+   "min": 6149,
+   "max": 420132,
+   "mean": 17459.755,
+   "stddev": 51499.80685,
+   "mad": 835,
+   "percentiles": {
+    "p50": 8097.5,
+    "p90": 11934.3,
+    "p99": 338641.52,
+    "p99_9": 409934.444,
+    "p99_99": 419112.2444
+   },
+   "unreliable_percentiles": [
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "thread.exit_to_join",
+   "params": {},
+   "unit": "ns",
+   "source": {
+    "file": "src/benchmarks/threads.cpp",
+    "line": 20
+   },
+   "note": "new threads inherit the main thread's affinity",
+   "count": 200,
+   "min": 4783,
+   "max": 61605,
+   "mean": 6604.085,
+   "stddev": 4235.634159,
+   "mad": 474.5,
+   "percentiles": {
+    "p50": 5955,
+    "p90": 8347.2,
+    "p99": 12183.14,
+    "p99_9": 52206.23,
+    "p99_99": 60665.123
+   },
+   "unreliable_percentiles": [
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "os.call",
+   "params": {
+    "call": "syscall_getpid"
+   },
+   "unit": "ns/call",
+   "source": {
+    "file": "src/benchmarks/syscall_linux.cpp",
+    "line": 105
+   },
+   "count": 200,
+   "min": 110.3359375,
+   "max": 325.546875,
+   "mean": 131.2216016,
+   "stddev": 25.85672095,
+   "mad": 4.16796875,
+   "percentiles": {
+    "p50": 125.46875,
+    "p90": 143.8910156,
+    "p99": 267.6176172,
+    "p99_9": 315.6435156,
+    "p99_99": 324.5565391
+   },
+   "unreliable_percentiles": [
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "os.call",
+   "params": {
+    "call": "clock_monotonic"
+   },
+   "unit": "ns/call",
+   "source": {
+    "file": "src/benchmarks/syscall_linux.cpp",
+    "line": 105
+   },
+   "count": 200,
+   "min": 28.5546875,
+   "max": 171.0195312,
+   "mean": 37.00742187,
+   "stddev": 13.81742955,
+   "mad": 0.634765625,
+   "percentiles": {
+    "p50": 35.71875,
+    "p90": 36.37578125,
+    "p99": 124.1183984,
+    "p99_9": 162.0178906,
+    "p99_99": 170.1193672
+   },
+   "unreliable_percentiles": [
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "os.call",
+   "params": {
+    "call": "clock_realtime"
+   },
+   "unit": "ns/call",
+   "source": {
+    "file": "src/benchmarks/syscall_linux.cpp",
+    "line": 105
+   },
+   "count": 200,
+   "min": 27.43359375,
+   "max": 123.4570312,
+   "mean": 35.46113281,
+   "stddev": 9.446780116,
+   "mad": 2.640625,
+   "percentiles": {
+    "p50": 32.77734375,
+    "p90": 41.59960937,
+    "p99": 64.33902344,
+    "p99_9": 118.6794766,
+    "p99_99": 122.9792758
+   },
+   "unreliable_percentiles": [
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "os.timer_overshoot",
+   "params": {
+    "method": "nanosleep",
+    "request_us": "1"
+   },
+   "unit": "ns",
+   "source": {
+    "file": "src/benchmarks/syscall_linux.cpp",
+    "line": 119
+   },
+   "count": 200,
+   "min": 56390,
+   "max": 250092,
+   "mean": 68856.515,
+   "stddev": 21204.24183,
+   "mad": 1386,
+   "percentiles": {
+    "p50": 65287,
+    "p90": 69946.5,
+    "p99": 213536.86,
+    "p99_9": 248587.162,
+    "p99_99": 249941.5162
+   },
+   "unreliable_percentiles": [
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "os.timer_overshoot",
+   "params": {
+    "method": "nanosleep",
+    "request_us": "10"
+   },
+   "unit": "ns",
+   "source": {
+    "file": "src/benchmarks/syscall_linux.cpp",
+    "line": 119
+   },
+   "count": 200,
+   "min": 15732,
+   "max": 104726,
+   "mean": 65604.785,
+   "stddev": 6333.437526,
+   "mad": 812.5,
+   "percentiles": {
+    "p50": 64608.5,
+    "p90": 69532.7,
+    "p99": 84631.57,
+    "p99_9": 102117.508,
+    "p99_99": 104465.1508
+   },
+   "unreliable_percentiles": [
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  },
+  {
+   "name": "os.timer_overshoot",
+   "params": {
+    "method": "nanosleep",
+    "request_us": "100"
+   },
+   "unit": "ns",
+   "source": {
+    "file": "src/benchmarks/syscall_linux.cpp",
+    "line": 119
+   },
+   "count": 200,
+   "min": 51643,
+   "max": 110207,
+   "mean": 67029.545,
+   "stddev": 5982.908491,
+   "mad": 1290.5,
+   "percentiles": {
+    "p50": 65438,
+    "p90": 71511.5,
+    "p99": 92622.61,
+    "p99_9": 108138.196,
+    "p99_99": 110000.1196
+   },
+   "unreliable_percentiles": [
+    "p99",
+    "p99_9",
+    "p99_99"
+   ]
+  }
+ ]
+}
