@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.16)
 project(os-latency-tests VERSION 0.2.0 LANGUAGES C CXX)
 
+# compile_commands.json lets editors (VS Code's C/C++ extension, clangd) find the include paths
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
