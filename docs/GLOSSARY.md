@@ -417,8 +417,8 @@ firmware, not a measurement.
 
 **C1E (Enhanced Halt State).** A deeper form of C1. While halted, the core also
 drops to its lowest frequency and voltage, which saves more power. Waking means
-ramping the voltage and clock back up, so a wake-up can take 10 to 20 µs instead
-of about 1 µs. Many BIOSes enable C1E auto-promotion: the OS asks for C1, and the
+ramping the voltage and clock back up, so a wake-up takes longer than the 1 µs
+the kernel lists for C1. Estimates put it at 10 to 20 µs. Many BIOSes enable C1E auto-promotion: the OS asks for C1, and the
 hardware enters C1E without telling the kernel, whose table still lists 1 µs for
 C1. The symptom is a second cluster of wake-up times at 10 to 20 µs. To test for
 it, disable C1E in the BIOS, or clear bit 1 of MSR 0x1FC on each benchmark CPU.

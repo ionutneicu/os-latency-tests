@@ -611,8 +611,9 @@ def build_guidance(summary, caches, platform, results, cfg):
         p90 = wake["percentiles"].get("p90")
         if p50 and p90 and p90 > 4 * p50:
             tip(f"Blocking wake-ups form a second cluster: p90 ({fmt_ns(p90)}) is {p90 / p50:.0f}x p50 "
-                        f"({fmt_ns(p50)}). A core that enters C1E (see the glossary) takes 10 to 20 us to wake, "
-                        f"which fits this. Compare with a run using --idle-latency-us 0 before trusting the tail.")
+                        f"({fmt_ns(p50)}). A core that enters C1E (see the glossary) can take longer to wake; "
+                        f"estimates run to 10 to 20 us, and this pattern fits that cause. "
+                        f"Compare with a run using --idle-latency-us 0 before trusting the tail.")
     create = named.get("thread.create_to_start")
     if create and create["percentiles"].get("p99"):
         tip(f"Starting a thread costs {fmt_ns(create['percentiles']['p50'])} typically but "
