@@ -170,9 +170,11 @@ measuring thread on the same core. Use it only to see what polling buys over C1.
 Boot options make the limit permanent: `intel_idle.max_cstate=1` or
 `processor.max_cstate=1`, or `idle=poll` for always-spinning idle loops.
 
-**What to expect.** On a laptop run, mutex wake-up p50 dropped from 15 us to
-2.2 us with `--no-idle`. The boot options give the same effect without needing
-root at run time.
+**What to expect.** Polling takes the idle-exit cost out of a wake-up, so p50 and
+the tail both fall. On the laptop, after the optimised rebuild (issue #12), the
+mutex wake-up p50 was 1.9 us with C1 allowed and 1.4 us with polling only (issue
+#11). Figures from before that rebuild came from an unoptimised build and are not
+valid. The boot options give the same effect without needing root at run time.
 
 **Costs.** Much higher idle power and heat. `idle=poll` also slows SMT siblings,
 which share the core with a spinning idle loop.
