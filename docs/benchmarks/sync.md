@@ -30,9 +30,12 @@ waiter, and, if that CPU was idle, its exit from a C-state.
 
 ## Reading the result
 
-* With deep idle allowed, p50 is often 10 to 60 us on laptops: most of it is the
-  CPU waking up. With `--no-idle` (C-states blocked) it drops to 1 to 5 us, the
-  real software cost.
+* The p50 depends on the idle state of the sleeping core. On the laptop, after
+  the optimised rebuild (issue #12), it was 1.9 us with C1 allowed and 1.4 us with
+  polling only (issue #11). A deeper idle state adds its exit time to every
+  wake-up. A second cluster at 10 to 20 us can appear when C1E is entered (see the
+  glossary); `--idle-latency-us 0` measures without idle exits. Figures from before
+  the rebuild came from an unoptimised build and are not valid.
 * The tail (p99.9, max) shows scheduler and interrupt interference; real-time
   priority (`-p`) and isolated cores reduce it.
 * `over_100us` and `over_1ms` in the JSON are the share of wake-ups slower than
