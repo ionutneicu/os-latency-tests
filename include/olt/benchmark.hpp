@@ -10,6 +10,7 @@
 //   }
 #pragma once
 
+#include <algorithm>
 #include <cstdint>
 #include <functional>
 #include <string>
@@ -70,7 +71,7 @@ std::string source_path(const char* file);
 // Samples from time_batch or time_each, with the number of operations each one covers.
 struct Timed {
     std::vector<double> samples;  // ns per operation
-    uint64_t ops_per_sample = 1;
+    uint64_t ops_per_sample = 1;  // 1 = per call (time_each); n = batch of n calls (time_batch)
 };
 
 struct Result {
@@ -81,8 +82,10 @@ struct Result {
     std::string note;  // caveats shown next to the result
     std::vector<std::pair<std::string, double>> metrics;  // extra per-result figures, e.g. cpu_cores
     SourceLine source;  // the code measured; defaults to the benchmark's OLT_BENCHMARK line
-    uint64_t ops_per_sample = 1;  // operations behind one sample (batch timing divides by this)
-    bool at_floor = false;        // per-call value below ~3x the clock-read cost: not a measurement
+    // Operations behind one sample. 0 = not declared (add_result with plain samples): the
+    // floor check does not apply, and the JSON says null. 1 = per call. n > 1 = batch.
+    uint64_t ops_per_sample = 0;
+    bool at_floor = false;  // per-call value below ~3x the clock-read cost: not a measurement
 };
 
 class Context {
@@ -133,12 +136,25 @@ private:
     double clock_floor_ns_ = 0;
 };
 
-// Per-call timing: one clock pair around each operation. Only meaningful when the
-// operation is much slower than the clock read; otherwise use time_batch.
+// Per-call timing: one clock pair around each call of op (a bare operation, which
+// must not time itself). Only meaningful when op is much slower than the clock
+// read; otherwise use time_batch. Samples are marked at floor when they are close
+// to the clock read cost.
 template <class Fn>
 Timed time_each(const Context& ctx, Fn&& op)
 {
-    return Timed{ctx.run_samples(std::forward<Fn>(op)), 1};
+    const Config& cfg = ctx.config();
+    auto run_once = [&op]() {
+        const uint64_t t0 = now_ns();
+        op();
+        return now_ns() - t0;
+    };
+    for (size_t i = 0; i < cfg.warmup; ++i) run_once();
+    Timed out;
+    out.ops_per_sample = 1;
+    out.samples.reserve(cfg.samples);
+    for (size_t i = 0; i < cfg.samples; ++i) out.samples.push_back(static_cast<double>(run_once()));
+    return out;
 }
 
 // Batch timing: one clock pair around n operations, divided by n. n doubles until
@@ -150,15 +166,27 @@ template <class Fn>
 Timed time_batch(const Context& ctx, Fn&& op)
 {
     const double target_ns = kBatchFloorMultiple * (ctx.clock_floor_ns() > 1.0 ? ctx.clock_floor_ns() : 1.0);
+    const Config& cfg = ctx.config();
     auto run = [&op](uint64_t n) {
         const uint64_t t0 = now_ns();
         for (uint64_t i = 0; i < n; ++i) op();
         return now_ns() - t0;
     };
-    uint64_t n = 1;
-    while (n < (uint64_t(1) << 40) && static_cast<double>(run(n)) < target_ns) n *= 2;
 
-    const Config& cfg = ctx.config();
+    // Untimed warm-up first, so a slow first call (page faults, cold code, heap
+    // growth) is not taken for the cost of one operation when choosing n.
+    for (size_t i = 0; i < cfg.warmup; ++i) op();
+
+    // Double n until the fastest of three runs lasts the target. Taking the minimum
+    // keeps one slow run (an interrupt, a fault) from ending the search early.
+    uint64_t n = 1;
+    while (n < (uint64_t(1) << 40)) {
+        uint64_t best = run(n);
+        for (int k = 0; k < 2; ++k) best = std::min(best, run(n));
+        if (static_cast<double>(best) >= target_ns) break;
+        n *= 2;
+    }
+
     for (size_t i = 0; i < cfg.warmup; ++i) run(n);
     Timed out;
     out.ops_per_sample = n;

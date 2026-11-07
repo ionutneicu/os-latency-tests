@@ -288,7 +288,7 @@ void write_json(const std::string& path, const PlatformInfo& p, const Config& cf
         if (r.source.file)
             f << "      \"source\": {\"file\": " << q(source_path(r.source.file)) << ", \"line\": " << r.source.line << "},\n";
         if (!r.note.empty()) f << "      \"note\": " << q(r.note) << ",\n";
-        f << "      \"ops_per_sample\": " << r.ops_per_sample << ",\n";
+        f << "      \"ops_per_sample\": " << (r.ops_per_sample ? std::to_string(r.ops_per_sample) : std::string("null")) << ",\n";
         if (r.at_floor) f << "      \"at_floor\": true,\n";
         if (!r.metrics.empty()) {
             f << "      \"metrics\": {";

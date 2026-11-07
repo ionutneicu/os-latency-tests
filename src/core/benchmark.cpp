@@ -55,7 +55,8 @@ void Context::warm_cpus() const
 
 void Context::add_result(std::string name, Params params, std::vector<double> samples, std::string note)
 {
-    add_timed_result(std::move(name), std::move(params), Timed{std::move(samples), 1}, std::move(note));
+    // Plain samples do not declare their operation count, so no floor check applies.
+    add_timed_result(std::move(name), std::move(params), Timed{std::move(samples), 0}, std::move(note));
 }
 
 void Context::add_timed_result(std::string name, Params params, Timed timed, std::string note)
