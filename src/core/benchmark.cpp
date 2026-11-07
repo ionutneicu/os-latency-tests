@@ -1,6 +1,8 @@
 #include "olt/benchmark.hpp"
 
+#include <algorithm>
 #include <atomic>
+#include <cstddef>
 #include <thread>
 
 #include "olt/hal/arch.h"
@@ -53,12 +55,26 @@ void Context::warm_cpus() const
 
 void Context::add_result(std::string name, Params params, std::vector<double> samples, std::string note)
 {
+    add_timed_result(std::move(name), std::move(params), Timed{std::move(samples), 1}, std::move(note));
+}
+
+void Context::add_timed_result(std::string name, Params params, Timed timed, std::string note)
+{
     Result r;
     r.name = std::move(name);
     r.params = std::move(params);
-    r.samples = std::move(samples);
+    r.samples = std::move(timed.samples);
+    r.ops_per_sample = timed.ops_per_sample;
     r.note = std::move(note);
     r.source = source_;
+
+    // A per-call sample under 3x the clock-read pair is dominated by the clock itself.
+    if (r.ops_per_sample == 1 && clock_floor_ns_ > 0 && !r.samples.empty()) {
+        std::vector<double> sorted = r.samples;
+        const auto mid = sorted.begin() + static_cast<std::ptrdiff_t>(sorted.size() / 2);
+        std::nth_element(sorted.begin(), mid, sorted.end());
+        r.at_floor = *mid < 3.0 * clock_floor_ns_;
+    }
     results_.push_back(std::move(r));
 }
 

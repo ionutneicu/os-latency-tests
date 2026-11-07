@@ -198,6 +198,9 @@ void print_table_row(std::ostream& os, const SummarizedResult& r)
        << format_ns(s.min) << std::setw(10) << cell(50) << std::setw(10) << cell(90) << std::setw(10)
        << cell(99) << std::setw(10) << cell(99.9) << std::setw(10) << cell(99.99) << std::setw(10)
        << cell(99.999) << std::setw(10) << format_ns(s.max) << "\n";
+    if (r.result->ops_per_sample > 1) os << "    ops per sample: " << r.result->ops_per_sample << "\n";
+    if (r.result->at_floor)
+        os << "    at floor: per-call value under 3x the clock-read cost, not a measurement\n";
     if (!r.result->note.empty()) os << "    note: " << r.result->note << "\n";
     if (!r.result->metrics.empty()) {
         os << "    metrics:";
@@ -285,6 +288,8 @@ void write_json(const std::string& path, const PlatformInfo& p, const Config& cf
         if (r.source.file)
             f << "      \"source\": {\"file\": " << q(source_path(r.source.file)) << ", \"line\": " << r.source.line << "},\n";
         if (!r.note.empty()) f << "      \"note\": " << q(r.note) << ",\n";
+        f << "      \"ops_per_sample\": " << r.ops_per_sample << ",\n";
+        if (r.at_floor) f << "      \"at_floor\": true,\n";
         if (!r.metrics.empty()) {
             f << "      \"metrics\": {";
             for (size_t k = 0; k < r.metrics.size(); ++k)

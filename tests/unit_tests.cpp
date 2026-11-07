@@ -120,6 +120,45 @@ static void test_hal()
     }
 }
 
+static void test_floor_and_batch()
+{
+    olt::Config cfg;
+    cfg.samples = 50;
+    cfg.warmup = 2;
+    olt::TickCalibration cal;
+    olt::Context ctx(cfg, cal);
+    ctx.set_clock_floor_ns(10.0);
+
+    // Per-call samples under 3x the clock-read cost are at floor, larger ones are not.
+    ctx.add_result("t.fast", {}, std::vector<double>(50, 5.0));
+    ctx.add_result("t.slow", {}, std::vector<double>(50, 50.0));
+    CHECK(ctx.results()[0].at_floor);
+    CHECK(!ctx.results()[1].at_floor);
+    CHECK(ctx.results()[0].ops_per_sample == 1);
+
+    // A batch covers many operations, so it is never marked at floor.
+    ctx.add_timed_result("t.batch", {}, olt::Timed{std::vector<double>(50, 1.0), 1000});
+    CHECK(!ctx.results()[2].at_floor);
+    CHECK(ctx.results()[2].ops_per_sample == 1000);
+
+    // Without a measured floor nothing is marked.
+    olt::Context bare(cfg, cal);
+    bare.add_result("t.bare", {}, std::vector<double>(50, 1.0));
+    CHECK(!bare.results()[0].at_floor);
+
+    // time_batch returns one value per sample and a batch size of at least 1.
+    volatile uint64_t sink = 0;
+    const olt::Timed b = olt::time_batch(ctx, [&] { sink = sink + 1; });
+    CHECK(b.ops_per_sample >= 1);
+    CHECK(b.samples.size() == cfg.samples);
+    for (double s : b.samples) CHECK(std::isfinite(s) && s >= 0);
+
+    // time_each keeps one operation per sample.
+    const olt::Timed e = olt::time_each(ctx, [&] { return 1.0; });
+    CHECK(e.ops_per_sample == 1);
+    CHECK(e.samples.size() == cfg.samples);
+}
+
 static void test_build_optimization()
 {
     // This file is built with the same C++ flags as the library, so they must agree.
@@ -143,6 +182,7 @@ int main()
     test_summary();
     test_glob();
     test_hal();
+    test_floor_and_batch();
     test_build_optimization();
     if (g_failures) {
         std::fprintf(stderr, "%d check(s) failed\n", g_failures);
