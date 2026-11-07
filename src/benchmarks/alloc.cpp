@@ -44,7 +44,8 @@ OLT_BENCHMARK("alloc.malloc_free",
         }
         const olt::Params params{{"size", size_label(size)}};
         const char* note = size == 16 ? "best case: same block reused every iteration, memory never touched" : "";
-        ctx.add_result("alloc.malloc", params, std::move(m), note);
-        ctx.add_result("alloc.free", params, std::move(f));
+        // Per-call samples (one malloc or free each), so the floor check applies.
+        ctx.add_timed_result("alloc.malloc", params, olt::Timed{std::move(m), 1}, note);
+        ctx.add_timed_result("alloc.free", params, olt::Timed{std::move(f), 1});
     }
 }

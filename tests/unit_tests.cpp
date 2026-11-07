@@ -1,9 +1,12 @@
 // Unit tests for the statistics, glob filter, HAL primitives and build checks.
 // Deliberately dependency-free so it builds on any target toolchain.
 
+#include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <thread>
 #include <vector>
 
 #include "olt/benchmark.hpp"
@@ -158,6 +161,17 @@ static void test_floor_and_batch()
     CHECK(b.ops_per_sample >= 1);
     CHECK(b.samples.size() == cfg.samples);
     for (double s : b.samples) CHECK(std::isfinite(s) && s >= 0);
+
+    // time_each reports real time: an operation that sleeps 1 ms gives about 1 ms per sample.
+    const olt::Timed slept = olt::time_each(ctx, [] {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    });
+    CHECK(slept.samples.size() == cfg.samples);
+    if (!slept.samples.empty()) {
+        std::vector<double> sorted = slept.samples;
+        std::sort(sorted.begin(), sorted.end());
+        CHECK(sorted[sorted.size() / 2] >= 0.9e6 && sorted[sorted.size() / 2] < 50e6);
+    }
 
     // time_each keeps one operation per sample and takes a bare operation.
     const olt::Timed e = olt::time_each(ctx, [&] { sink = sink + 1; });
