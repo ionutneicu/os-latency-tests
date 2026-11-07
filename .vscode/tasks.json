@@ -1,0 +1,26 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build",
+      "type": "shell",
+      "command": "cmake -S . -B build && cmake --build build -j",
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "run alloc tests",
+      "type": "shell",
+      "command": "./build/os-latency-tests -t alloc.malloc_free -n 1000 --yes",
+      "dependsOn": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "run unit tests",
+      "type": "shell",
+      "command": "ctest --test-dir build --output-on-failure",
+      "dependsOn": "build",
+      "problemMatcher": []
+    }
+  ]
+}
