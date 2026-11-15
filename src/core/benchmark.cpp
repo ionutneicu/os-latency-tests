@@ -85,12 +85,14 @@ void Context::warm_cpus() const
     const uint64_t t0 = now_ns();
     std::vector<double> trace;
     std::vector<double> window_end_ms;
+    std::vector<std::pair<double, double>> warm_trace;
     bool stable = false;
     double ramp_ms = 0;
     for (;;) {
         trace.push_back(reference_window());
         const double now_ms = static_cast<double>(now_ns() - t0) / 1e6;
         window_end_ms.push_back(now_ms);
+        warm_trace.emplace_back(now_ms, trace.back());
         if (trace_settled(trace, kSettleWindows, kSettleBand)) {
             // The settled run starts kSettleWindows - 1 windows before this one.
             ramp_ms = window_end_ms[window_end_ms.size() - kSettleWindows];
@@ -103,7 +105,11 @@ void Context::warm_cpus() const
     // Hold for twice the ramp, at least kMinHoldMs, within the cap.
     if (stable) {
         const double hold = warmup_hold_ms(ramp_ms, kMinHoldMs, cap_ms);
-        while (static_cast<double>(now_ns() - t0) / 1e6 < hold) reference_window();
+        for (;;) {
+            const double now_ms = static_cast<double>(now_ns() - t0) / 1e6;
+            if (now_ms >= hold) break;
+            warm_trace.emplace_back(now_ms, reference_window());
+        }
     }
 
     const double after_hold = median3(reference_window(), reference_window(), reference_window());
@@ -115,6 +121,7 @@ void Context::warm_cpus() const
     warmup_.ramp_ms = ramp_ms;
     warmup_.total_ms = static_cast<double>(now_ns() - t0) / 1e6;
     warmup_.reference_ns = after_hold;
+    warmup_.trace = std::move(warm_trace);
 }
 
 double Context::clock_check() const

@@ -81,6 +81,8 @@ struct WarmupInfo {
     double ramp_ms = 0;        // time until the settled windows began
     double total_ms = 0;       // time spent warming up, including the hold
     double reference_ns = 0;   // reference loop ns per operation after the hold
+    // The reference loop over the whole warm-up: (ms since start, ns per operation).
+    std::vector<std::pair<double, double>> trace;
 };
 
 struct Result {
@@ -120,6 +122,9 @@ public:
     // Reference loop on the calling thread, after a benchmark: ns per operation.
     // Compare with WarmupInfo::reference_ns to see whether the clock changed.
     double clock_check() const;
+
+    // The warm-up done by the last warm_cpus() call.
+    const WarmupInfo& last_warmup() const { return warmup_; }
 
     // Calls fn() config.warmup times (discarded) then config.samples times;
     // fn returns one sample, in the result's unit.

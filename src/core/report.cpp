@@ -210,12 +210,26 @@ void print_table_row(std::ostream& os, const SummarizedResult& r)
 }
 
 void write_json(const std::string& path, const PlatformInfo& p, const Config& cfg,
-                const std::vector<SummarizedResult>& results, const std::vector<std::string>& warnings)
+                const std::vector<SummarizedResult>& results, const std::vector<std::string>& warnings,
+                const std::vector<WarmupRecord>& warmups)
 {
     std::ofstream f(path);
     if (!f) throw std::runtime_error("cannot write " + path);
 
     f << "{\n  \"schema\": \"olt-results/1\",\n";
+    // CPU warm-up before each benchmark: how long the clock took to settle, and the
+    // reference loop over the whole warm-up (ms since start, ns per operation).
+    f << "  \"warmups\": [";
+    for (size_t i = 0; i < warmups.size(); ++i) {
+        const WarmupInfo& w = warmups[i].info;
+        f << (i ? "," : "") << "\n    {\"benchmark\": " << q(warmups[i].benchmark) << ", \"ran\": " << (w.ran ? "true" : "false")
+          << ", \"stable\": " << (w.stable ? "true" : "false") << ", \"ramp_ms\": " << num(w.ramp_ms)
+          << ", \"total_ms\": " << num(w.total_ms) << ", \"reference_ns\": " << num(w.reference_ns) << ", \"trace\": [";
+        for (size_t k = 0; k < w.trace.size(); ++k)
+            f << (k ? ", " : "") << "[" << num(w.trace[k].first) << ", " << num(w.trace[k].second) << "]";
+        f << "]}";
+    }
+    f << "],\n";
     f << "  \"platform\": {\n";
     f << "    \"arch\": " << q(p.arch) << ",\n";
     f << "    \"os\": " << q(p.os) << ",\n";
