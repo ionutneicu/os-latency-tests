@@ -10,6 +10,7 @@
 //   }
 #pragma once
 
+#include <algorithm>
 #include <cstdint>
 #include <functional>
 #include <string>
@@ -67,6 +68,12 @@ struct SourceLine {
 // Path of a source file relative to the source tree ("src/benchmarks/x.cpp").
 std::string source_path(const char* file);
 
+// Samples from time_batch or time_each, with the number of operations each one covers.
+struct Timed {
+    std::vector<double> samples;  // ns per operation
+    uint64_t ops_per_sample = 1;  // 1 = per call (time_each); n = batch of n calls (time_batch)
+};
+
 struct Result {
     std::string name;
     Params params;
@@ -75,6 +82,10 @@ struct Result {
     std::string note;  // caveats shown next to the result
     std::vector<std::pair<std::string, double>> metrics;  // extra per-result figures, e.g. cpu_cores
     SourceLine source;  // the code measured; defaults to the benchmark's OLT_BENCHMARK line
+    // Operations behind one sample. 0 = not declared (add_result with plain samples): the
+    // floor check does not apply, and the JSON says null. 1 = per call. n > 1 = batch.
+    uint64_t ops_per_sample = 0;
+    bool at_floor = false;  // per-call value below ~3x the clock-read cost: not a measurement
 };
 
 class Context {
@@ -83,6 +94,11 @@ public:
 
     const Config& config() const { return config_; }
     const TickCalibration& ticks() const { return cal_; }
+
+    // Cost of one back-to-back clock read pair, in ns (from measure_timer_overhead).
+    // Results whose per-call value is within a few times this are marked at floor.
+    void set_clock_floor_ns(double ns) { clock_floor_ns_ = ns; }
+    double clock_floor_ns() const { return clock_floor_ns_; }
 
     // Applies worker affinity and RT priority to the calling (worker) thread.
     void setup_worker_thread() const;
@@ -104,6 +120,8 @@ public:
     }
 
     void add_result(std::string name, Params params, std::vector<double> samples, std::string note = {});
+    // Same, for samples from time_batch or time_each (records ops_per_sample).
+    void add_timed_result(std::string name, Params params, Timed timed, std::string note = {});
 
     // Source of the benchmark now running: the default for its results.
     void set_benchmark_source(SourceLine s) { source_ = s; }
@@ -115,7 +133,67 @@ private:
     const TickCalibration& cal_;
     std::vector<Result> results_;
     SourceLine source_;
+    double clock_floor_ns_ = 0;
 };
+
+// Per-call timing: one clock pair around each call of op (a bare operation, which
+// must not time itself). Only meaningful when op is much slower than the clock
+// read; otherwise use time_batch. Samples are marked at floor when they are close
+// to the clock read cost.
+template <class Fn>
+Timed time_each(const Context& ctx, Fn&& op)
+{
+    const Config& cfg = ctx.config();
+    auto run_once = [&op]() {
+        const uint64_t t0 = now_ns();
+        op();
+        return now_ns() - t0;
+    };
+    for (size_t i = 0; i < cfg.warmup; ++i) run_once();
+    Timed out;
+    out.ops_per_sample = 1;
+    out.samples.reserve(cfg.samples);
+    for (size_t i = 0; i < cfg.samples; ++i) out.samples.push_back(static_cast<double>(run_once()));
+    return out;
+}
+
+// Batch timing: one clock pair around n operations, divided by n. n doubles until
+// one batch lasts at least kBatchFloorMultiple clock-read costs, so the clock read
+// is a negligible share of each sample.
+inline constexpr double kBatchFloorMultiple = 100.0;
+
+template <class Fn>
+Timed time_batch(const Context& ctx, Fn&& op)
+{
+    const double target_ns = kBatchFloorMultiple * (ctx.clock_floor_ns() > 1.0 ? ctx.clock_floor_ns() : 1.0);
+    const Config& cfg = ctx.config();
+    auto run = [&op](uint64_t n) {
+        const uint64_t t0 = now_ns();
+        for (uint64_t i = 0; i < n; ++i) op();
+        return now_ns() - t0;
+    };
+
+    // Untimed warm-up first, so a slow first call (page faults, cold code, heap
+    // growth) is not taken for the cost of one operation when choosing n.
+    for (size_t i = 0; i < cfg.warmup; ++i) op();
+
+    // Double n until the fastest of three runs lasts the target. Taking the minimum
+    // keeps one slow run (an interrupt, a fault) from ending the search early.
+    uint64_t n = 1;
+    while (n < (uint64_t(1) << 40)) {
+        uint64_t best = run(n);
+        for (int k = 0; k < 2; ++k) best = std::min(best, run(n));
+        if (static_cast<double>(best) >= target_ns) break;
+        n *= 2;
+    }
+
+    for (size_t i = 0; i < cfg.warmup; ++i) run(n);
+    Timed out;
+    out.ops_per_sample = n;
+    out.samples.reserve(cfg.samples);
+    for (size_t i = 0; i < cfg.samples; ++i) out.samples.push_back(static_cast<double>(run(n)) / static_cast<double>(n));
+    return out;
+}
 
 struct BenchmarkInfo {
     std::string name;

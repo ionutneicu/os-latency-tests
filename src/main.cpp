@@ -268,6 +268,7 @@ int main(int argc, char** argv)
     olt::print_platform(std::cout, platform, opt.config);
 
     olt::Context ctx(opt.config, cal);
+    ctx.set_clock_floor_ns(timer.now_ns_median);
     std::vector<olt::SummarizedResult> summaries;
     olt::print_table_header(std::cout);
     for (const auto* b : todo) {
