@@ -521,6 +521,12 @@ OLT_BENCHMARK("mem.example", "What is measured, precisely")
 }
 ```
 
+Read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) first: it says which layer
+owns what, and lists the steps for a new benchmark. Benchmarks share code and
+lean on each other's numbers, so add the new one to the
+[dependency map](docs/DEPENDENCIES.md) and re-run the benchmarks it lists
+against any shared part you change.
+
 Add the file to the `os-latency-tests` target in `CMakeLists.txt`.
 Then add a page to [docs/benchmarks/](docs/benchmarks/README.md) (goal, what
 is measured, how to read the result, how to apply it in C++) and link it from

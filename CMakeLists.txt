@@ -194,6 +194,9 @@ if(OLT_BUILD_TESTS)
   # Intrinsics and assembly stay in the HAL, except the opaque-value idiom (docs/REQUIREMENTS.md, section 1)
   add_test(NAME hal_scope COMMAND ${CMAKE_COMMAND} "-DSRC=${CMAKE_CURRENT_SOURCE_DIR}"
                                   -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/hal_scope.cmake)
+  # Every benchmark and shared helper is named in the dependency map (docs/DEPENDENCIES.md)
+  add_test(NAME dependency_map COMMAND ${CMAKE_COMMAND} "-DSRC=${CMAKE_CURRENT_SOURCE_DIR}"
+                                       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/dependency_map.cmake)
   find_package(Python3 COMPONENTS Interpreter QUIET)
   if(Python3_Interpreter_FOUND)
     add_test(NAME report COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/olt-report.py

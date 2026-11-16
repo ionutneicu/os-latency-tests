@@ -104,6 +104,20 @@ Topics are grouped as in the [roadmap](ROADMAP.md): hardware (HW), OS latency
 - Every hint keeps the "hot path only" warning: the techniques cost
   maintainability and portability.
 
+## 10. Know what a change affects
+
+- Benchmarks share code and lean on each other's numbers. The links are in the
+  [dependency map](DEPENDENCIES.md); the layers and the measurement lifecycle
+  are in [ARCHITECTURE](ARCHITECTURE.md).
+- A change to the engine, the HAL or a shared helper lists the affected
+  benchmarks from the map in its pull request, and says they were run again
+  and compared with the run before the change.
+- A new shared helper, a new benchmark or a new cross-reference between
+  results is added to the map in the same pull request. The `dependency_map`
+  test fails while a benchmark or a helper is missing from it.
+- A change to what a layer owns, to the measurement lifecycle or to the
+  `results.json` fields updates ARCHITECTURE in the same pull request.
+
 ## Open questions
 
 - Which self-checks are enough for HW items that have no exact C++ equivalent
