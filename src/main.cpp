@@ -50,7 +50,7 @@ void usage(const char* argv0)
         << "      --idle-latency-us N    with --no-idle, allow idle states that wake within N us instead;\n"
         << "                             0 = polling only (idle CPUs spin: costs turbo headroom and SMT\n"
         << "                             sibling resources). Implies --no-idle\n"
-        << "      --cpu-warmup-ms N      busy-spin the benchmark CPUs for N ms before each benchmark\n"
+        << "      --cpu-warmup-ms N      cap, in ms, for the CPU warm-up before each benchmark; the clock must settle first (0 = off)\n"
         << "                             so frequency scaling has ramped up (default 200, 0 = off)\n"
         << "      --park-us N            how long a signalling thread waits so its peer is\n"
         << "                             blocked in the kernel (default 200)\n"
@@ -270,15 +270,22 @@ int main(int argc, char** argv)
     olt::Context ctx(opt.config, cal);
     ctx.set_clock_floor_ns(timer.now_ns_median);
     std::vector<olt::SummarizedResult> summaries;
+    std::vector<olt::WarmupRecord> warmups;
     olt::print_table_header(std::cout);
     for (const auto* b : todo) {
         std::cerr << "running " << b->name << " ...\r" << std::flush;
         const size_t first = ctx.results().size();
         ctx.warm_cpus();
+        warmups.push_back({b->name, ctx.last_warmup()});
+        // The clock floor is read again once the CPUs are warm, not at start-up.
+        ctx.set_clock_floor_ns(olt::measure_timer_overhead(cal, 2000).now_ns_median);
         ctx.set_benchmark_source(b->source);
         b->run(ctx);
+        // Reference loop after the benchmark: if it moved, the clock changed during the run.
+        const double reference_after = ctx.clock_check();
         std::cerr << std::string(b->name.size() + 12, ' ') << "\r" << std::flush;
         for (size_t i = first; i < ctx.results().size(); ++i) {
+            if (reference_after > 0) ctx.results()[i].metrics.push_back({"reference_after_ns", reference_after});
             olt::SummarizedResult s{nullptr, olt::summarize(ctx.results()[i].samples)};
             summaries.push_back(s);
             // results() may still grow, so pointers are fixed up after the run
@@ -294,7 +301,7 @@ int main(int argc, char** argv)
     if (opt.raw)
         for (const auto& r : ctx.results()) olt::write_raw_csv((fs::path(opt.out_dir) / "raw").string(), r);
     const std::string json = (fs::path(opt.out_dir) / "results.json").string();
-    olt::write_json(json, platform, opt.config, summaries, warnings);
+    olt::write_json(json, platform, opt.config, summaries, warnings, warmups);
 
     // under sudo, hand the results back to the invoking user
     olt_os_restore_owner(opt.out_dir.c_str());

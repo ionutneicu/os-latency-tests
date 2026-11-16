@@ -30,9 +30,16 @@ void print_platform(std::ostream& os, const PlatformInfo& p, const Config& cfg);
 void print_table_header(std::ostream& os);
 void print_table_row(std::ostream& os, const SummarizedResult& r);
 
-// results.json: platform, config, and summary stats of every result.
+// The CPU warm-up done before one benchmark.
+struct WarmupRecord {
+    std::string benchmark;
+    WarmupInfo info;
+};
+
+// results.json: platform, config, warm-ups, and summary stats of every result.
 void write_json(const std::string& path, const PlatformInfo& p, const Config& cfg,
-                const std::vector<SummarizedResult>& results, const std::vector<std::string>& warnings = {});
+                const std::vector<SummarizedResult>& results, const std::vector<std::string>& warnings = {},
+                const std::vector<WarmupRecord>& warmups = {});
 
 // One CSV per result with every raw sample; returns the file name used.
 std::string write_raw_csv(const std::string& dir, const Result& r);

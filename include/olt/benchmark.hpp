@@ -44,7 +44,7 @@ struct Config {
     int idle_latency_us = -1;      // their exit-latency limit; -1 = the shallowest halting state (C1)
     IdleLimit idle_limit;          // what was applied, filled in at start-up
     unsigned park_us = 200;  // how long a signalling thread waits so the other side is truly blocked
-    unsigned cpu_warmup_ms = 200;  // busy-spin main and worker CPUs before each benchmark (frequency ramp-up)
+    unsigned cpu_warmup_ms = 500;  // cap for the CPU warm-up before each benchmark; 0 = no warm-up
 
     // memory hierarchy sweeps
     size_t mem_min_bytes = 1024;
@@ -72,6 +72,17 @@ std::string source_path(const char* file);
 struct Timed {
     std::vector<double> samples;  // ns per operation
     uint64_t ops_per_sample = 1;  // 1 = per call (time_each); n = batch of n calls (time_batch)
+};
+
+// Outcome of the CPU warm-up before a benchmark. Recorded with each result as metrics.
+struct WarmupInfo {
+    bool ran = false;          // false: warm-up off (cpu_warmup_ms == 0) or not run yet
+    bool stable = false;       // the clock settled before the cap
+    double ramp_ms = 0;        // time until the settled windows began
+    double total_ms = 0;       // time spent warming up, including the hold
+    double reference_ns = 0;   // reference loop ns per operation after the hold
+    // The reference loop over the whole warm-up: (ms since start, ns per operation).
+    std::vector<std::pair<double, double>> trace;
 };
 
 struct Result {
@@ -103,9 +114,17 @@ public:
     // Applies worker affinity and RT priority to the calling (worker) thread.
     void setup_worker_thread() const;
 
-    // Busy-spins the main and the worker CPU for config.cpu_warmup_ms so that
-    // frequency scaling has ramped up before measuring.
+    // Spins a reference loop on the main and the worker CPU until the clock is
+    // stable, then holds for twice the ramp (at least 50 ms, at most
+    // config.cpu_warmup_ms). The outcome is kept for the next results.
     void warm_cpus() const;
+
+    // Reference loop on the calling thread, after a benchmark: ns per operation.
+    // Compare with WarmupInfo::reference_ns to see whether the clock changed.
+    double clock_check() const;
+
+    // The warm-up done by the last warm_cpus() call.
+    const WarmupInfo& last_warmup() const { return warmup_; }
 
     // Calls fn() config.warmup times (discarded) then config.samples times;
     // fn returns one sample, in the result's unit.
@@ -134,6 +153,7 @@ private:
     std::vector<Result> results_;
     SourceLine source_;
     double clock_floor_ns_ = 0;
+    mutable WarmupInfo warmup_;
 };
 
 // Per-call timing: one clock pair around each call of op (a bare operation, which

@@ -1,6 +1,7 @@
 #include "olt/clock.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <vector>
 
 #include "olt/stats.hpp"
@@ -57,6 +58,23 @@ TimerOverhead measure_timer_overhead(const TickCalibration& cal, size_t iteratio
     o.cycles_ns_min = s.min;
     o.cycles_ns_median = s.at(50.0);
     return o;
+}
+
+bool trace_settled(const std::vector<double>& trace, size_t need, double band)
+{
+    if (need == 0 || trace.size() < need) return false;
+    std::vector<double> last(trace.end() - static_cast<std::ptrdiff_t>(need), trace.end());
+    std::sort(last.begin(), last.end());
+    const double median = last[last.size() / 2];
+    if (!(median > 0)) return false;
+    for (double v : last)
+        if (std::fabs(v - median) > band * median) return false;
+    return true;
+}
+
+double warmup_hold_ms(double ramp_ms, double min_ms, double cap_ms)
+{
+    return std::min(cap_ms, std::max(min_ms, 2.0 * ramp_ms));
 }
 
 }  // namespace olt

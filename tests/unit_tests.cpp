@@ -192,6 +192,33 @@ static void test_floor_and_batch()
     CHECK(slow_first.ops_per_sample >= 2);
 }
 
+static void test_warmup_logic()
+{
+    // A flat trace is settled once `need` windows are in it.
+    CHECK(olt::trace_settled({10, 10, 10, 10, 10}, 5, 0.03));
+    CHECK(!olt::trace_settled({10, 10, 10, 10}, 5, 0.03));
+    CHECK(!olt::trace_settled({10, 10, 10, 10, 10}, 0, 0.03));
+
+    // Still ramping: the last windows disagree.
+    CHECK(!olt::trace_settled({10, 11, 12, 13, 14}, 5, 0.03));
+
+    // A ramp followed by a flat tail settles; only the tail decides.
+    CHECK(olt::trace_settled({20, 15, 10, 10, 10, 10, 10}, 5, 0.03));
+
+    // One slow window in the last five keeps the trace unsettled.
+    CHECK(!olt::trace_settled({10, 10, 10, 10, 20}, 5, 0.03));
+
+    // Within the band (3%) counts as agreeing; 5% does not.
+    CHECK(olt::trace_settled({100, 102, 98, 101, 100}, 5, 0.03));
+    CHECK(!olt::trace_settled({100, 106, 94, 105, 100}, 5, 0.03));
+
+    // Hold: twice the ramp, at least the minimum, never over the cap.
+    CHECK(olt::warmup_hold_ms(0, 50, 500) == 50);
+    CHECK(olt::warmup_hold_ms(10, 50, 500) == 50);
+    CHECK(olt::warmup_hold_ms(100, 50, 500) == 200);
+    CHECK(olt::warmup_hold_ms(400, 50, 500) == 500);
+}
+
 static void test_build_optimization()
 {
     // This file is built with the same C++ flags as the library, so they must agree.
@@ -216,6 +243,7 @@ int main()
     test_glob();
     test_hal();
     test_floor_and_batch();
+    test_warmup_logic();
     test_build_optimization();
     if (g_failures) {
         std::fprintf(stderr, "%d check(s) failed\n", g_failures);

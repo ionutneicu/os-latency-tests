@@ -7,7 +7,9 @@
 //    meaningful on one CPU. Convert with TickCalibration::to_ns().
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
+#include <vector>
 
 #include "olt/hal/arch.h"
 #include "olt/hal/os.h"
@@ -54,5 +56,14 @@ struct TimerOverhead {
 };
 
 TimerOverhead measure_timer_overhead(const TickCalibration& cal, size_t iterations = 10000);
+
+// Warm-up decisions, kept apart from the timing so they can be unit tested.
+// A reference loop is timed in short windows; the CPU counts as warm once the
+// last `need` windows agree within `band` (relative) of their median.
+// trace holds ns per operation of each window, oldest first.
+bool trace_settled(const std::vector<double>& trace, size_t need, double band);
+
+// Total warm-up time: twice the ramp, but at least min_ms and at most cap_ms.
+double warmup_hold_ms(double ramp_ms, double min_ms, double cap_ms);
 
 }  // namespace olt
