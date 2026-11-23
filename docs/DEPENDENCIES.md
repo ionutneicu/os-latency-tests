@@ -63,6 +63,7 @@ There are three kinds of link:
 | `sync.mutex_wakeup`, `sync.condvar_wakeup`, `thread.create`, `os.timer_overshoot`, `os.jitter` | All depend on the idle-state limit (`--no-idle`) and on priority. Compare them only within one run. |
 | `alloc.malloc_free`, `pattern.alloc` | The container results include the allocator's cost. The guide page of `pattern.alloc` must not contradict the raw costs. |
 | `alloc.malloc_free`, `alloc.churn` (planned, #36), `alloc.vs_fastest` (planned, #45) | `alloc.vs_fastest` quotes the matched-pair cost from `alloc.malloc_free` and the aged-heap cost from `alloc.churn`. One implementation of each, in `alloc_util.hpp`. |
+| `alloc.side_by_side` (planned, #52): blocked by `alloc.malloc_free` (#35), `alloc.churn` (planned, #36) and `alloc.vs_fastest` (planned, #45), and by the shared core in `alloc_util.hpp` (planned, #35) | It draws the results of those three side by side: the happy path from #35, the stress from #36, the reference ladder from #35 and #45. It adds no measurements of its own. It is re-evaluated when the three are merged, so the row can change then. |
 | Design hints in `tools/olt-report.py` (`build_guidance`) | A hint combines results of several benchmarks and the platform data. A changed result name, parameter or unit drops the hint without an error. |
 
 ## 3. Outputs: what changes together with a benchmark
